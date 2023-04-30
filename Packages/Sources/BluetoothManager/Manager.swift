@@ -8,110 +8,135 @@
 import Foundation
 import CoreBluetooth
 import Model
+import MovesenseApi
 
 public class BluetoothManager: NSObject {
-    typealias PeripheralContinuation = CheckedContinuation<CBPeripheral, Error>
-
-    private var centralManager: CBCentralManager!
-    private var connectingPeripheral: CBPeripheral?
     
-    private var connectingContinuation: PeripheralContinuation?
+    private var connectingContinuation: CheckedContinuation<MovesenseDevice, Error>!
     
+    var discoveredDeviceContinuation: AsyncStream<MovesenseDevice>.Continuation!
     var peripheralContinuation: AsyncStream<CBPeripheral>.Continuation!
-    var ecgPacketContinuation: AsyncStream<ECGPacket>.Continuation!
+    var ecgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation!
 
-    lazy var peripheralStream: AsyncStream<CBPeripheral> = {
+    public lazy var peripheralStream: AsyncStream<CBPeripheral> = {
         .init { cont in
         peripheralContinuation = cont
         }}()
     
-    public lazy var ecgPacketsStream: AsyncStream<ECGPacket> = {
+    public lazy var discoveredDevicesStream: AsyncStream<MovesenseDevice> = {
+        .init { cont in
+            discoveredDeviceContinuation = cont
+        }}()
+    
+    public lazy var ecgPacketsStream: AsyncStream<MovesenseEcg> = {
         .init { cont in
             ecgPacketContinuation = cont
         }}()
     
     public override init() {
         super.init()
-        centralManager = CBCentralManager(delegate: self, queue: nil)
+        Movesense.api.addObserver(self)
     }
 }
 
 //MARK: Public Interface
 public extension BluetoothManager {
-    func scanAvailableDevices() -> AsyncStream<CBPeripheral> {
-        centralManager.scanForPeripherals(withServices: nil)
-        return peripheralStream
+    func scanAvailableDevices() {
+        Movesense.api.startScan()
     }
     
-    func connectToPeripheral(_ peripheral: CBPeripheral) async throws -> CBPeripheral {
+    func connectToPeripheral(_ device: MovesenseDevice) async throws -> MovesenseDevice {
+        Movesense.api.connectDevice(device)
         return try await withCheckedThrowingContinuation { cont in
             connectingContinuation = cont
-            centralManager.connect(peripheral)
-            connectingPeripheral = peripheral
         }
     }
 }
 
-//MARK: CBCentralManagerDelegate
-extension BluetoothManager: CBCentralManagerDelegate {
-    public func centralManagerDidUpdateState(
-        _ central: CBCentralManager
-    ) {
-        if central.state == .poweredOn {
-            print("🔌 powered on")
-//            centralManager.scanForPeripherals(withServices: nil)
+//MARK: MoverSenseAPI
+extension BluetoothManager: Observer {
+    public func handleEvent(_ event: ObserverEvent) {
+        
+        switch event {
+        case let event as MovesenseObserverEventApi:
+            didReceiveApiEvent(event)
+        case let event as MovesenseObserverEventDevice:
+            didReceiveApiEvent(event)
+        case let event as MovesenseObserverEventOperation:
+            didReceiveOperationEvent(event)
+        default: return
         }
     }
     
-    public func centralManager(
-        _ central: CBCentralManager,
-        didDiscover peripheral: CBPeripheral,
-        advertisementData: [String : Any], rssi RSSI: NSNumber
-    ) {
-        peripheralContinuation.yield(peripheral)
-    }
-    
-    public func centralManager(
-        _ central: CBCentralManager,
-        didConnect peripheral: CBPeripheral
-    ) {
-        if peripheral == connectingPeripheral {
-            connectingContinuation?.resume(returning: peripheral)
-        } else {
-            connectingContinuation?.resume(throwing: BluetoothError.failedToConnectToGivenDevice)
+    private func didReceiveApiEvent(_ event: MovesenseObserverEventApi) {
+        switch event {
+        case .apiDeviceDiscovered(let device):
+            deviceDiscovered(device)
+        case .apiDeviceConnected(let device):
+            deviceConnected(device)
+        default: print(event)
         }
     }
     
-    public func centralManager(
-        _ central: CBCentralManager,
-        didFailToConnect peripheral: CBPeripheral,
-        error: Error?
-    ) {
-        if let error = error {
-            connectingContinuation?.resume(throwing: error)
-        } else {
-            connectingContinuation?.resume(throwing: BluetoothError.failedToConnect)
+    private func didReceiveApiEvent(_ event: MovesenseObserverEventDevice) {
+        switch event {
+        case .deviceConnecting(let device):
+            print(device)
+            
+        case .deviceConnected(let device):
+            connectingContinuation.resume(returning: device)
+            
+        case .deviceDisconnected(let device):
+            print(device)
+            
+        case .deviceOperationInitiated(let device, operation: _):
+            print(device)
+
+        case .deviceError(let device, let error):
+            print(device)
+            connectingContinuation.resume(throwing: error)
+
         }
+    }
+    
+    private func didReceiveOperationEvent(_ event: MovesenseObserverEventOperation) {
+        switch event {
+        case .operationResponse:
+            print(event)
+            
+        case .operationEvent(let opEvent):
+            switch opEvent {
+            case .acc(_, let acc):
+                print(acc)
+                
+            case .ecg(_, let ecg):
+                ecgPacketContinuation.yield(ecg)
+                
+            case .gyroscope(_, let gyro):
+                print(gyro)
+                
+            case .heartRate(_, let heartRate):
+                print(heartRate)
+                
+            }
+        case .operationFinished:
+            print(event)
+            
+        case .operationError(let error):
+            print(error.localizedDescription)
+
+        }
+    }
+    
+    private func deviceDiscovered(_ device: MovesenseDevice) {
+        discoveredDeviceContinuation.yield(device)
+    }
+    
+    private func deviceConnected(_ device: MovesenseDevice) {
+        
     }
 }
 
-extension BluetoothManager: CBPeripheralDelegate {
-    public func peripheral(
-        _ peripheral: CBPeripheral,
-        didDiscoverIncludedServicesFor service: CBService,
-        error: Error?
-    ) {
-        
-    }
-    
-    public func peripheral(
-        _ peripheral: CBPeripheral,
-        didDiscoverCharacteristicsFor service: CBService,
-        error: Error?
-    ) {
-        
-    }
-}
 
 enum BluetoothError: Error {
     case  failedToConnect

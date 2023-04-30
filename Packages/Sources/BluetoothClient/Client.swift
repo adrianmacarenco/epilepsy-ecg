@@ -10,21 +10,28 @@ import CoreBluetooth
 import Dependencies
 import BluetoothManager
 import Model
+import MovesenseApi
 
 public struct BluetoothClient {
     public var getBatteryLevel: () async -> Int
-    public var scanForDevices: () -> AsyncStream<CBPeripheral>
-    public var connectToPeripheral: (CBPeripheral) async throws -> CBPeripheral
-    public var ecgPacketsStream: () -> AsyncStream<ECGPacket>
+    public var scanDevices: () -> ()
+    public var discoveredDevicesStream: () -> AsyncStream<MovesenseDevice>
+    public var discoveredPeripheralsStream: () -> AsyncStream<CBPeripheral>
+    public var connectToPeripheral: (MovesenseDevice) async throws -> MovesenseDevice
+    public var ecgPacketsStream: () -> AsyncStream<MovesenseEcg>
     
     public init(
         getBatteryLevel: @escaping () -> Int,
-        scanForDevices: @escaping () -> AsyncStream<CBPeripheral>,
-        connectToPeripheral: @escaping (CBPeripheral) async throws -> CBPeripheral,
-        ecgPacketsStream: @escaping () -> AsyncStream<ECGPacket>
+        scanDevices: @escaping () -> (),
+        discoveredDevicesStream: @escaping () -> AsyncStream<MovesenseDevice>,
+        discoveredPeripheralsStream: @escaping () -> AsyncStream<CBPeripheral>,
+        connectToPeripheral: @escaping (MovesenseDevice) async throws -> MovesenseDevice,
+        ecgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
         self.getBatteryLevel = getBatteryLevel
-        self.scanForDevices = scanForDevices
+        self.scanDevices = scanDevices
+        self.discoveredDevicesStream = discoveredDevicesStream
+        self.discoveredPeripheralsStream = discoveredPeripheralsStream
         self.connectToPeripheral = connectToPeripheral
         self.ecgPacketsStream = ecgPacketsStream
     }
@@ -36,7 +43,9 @@ extension BluetoothClient: DependencyKey {
         
         return .init(
             getBatteryLevel: { return 5 },
-            scanForDevices: { bluetoothManager.scanAvailableDevices() },
+            scanDevices: { bluetoothManager.scanAvailableDevices() },
+            discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
+            discoveredPeripheralsStream: { bluetoothManager.peripheralStream },
             connectToPeripheral: { try await bluetoothManager.connectToPeripheral($0) },
             ecgPacketsStream: { bluetoothManager.ecgPacketsStream }
         )
@@ -44,7 +53,7 @@ extension BluetoothClient: DependencyKey {
 }
 
 
-extension DependencyValues {
+public extension DependencyValues {
     var bluetoothClient: BluetoothClient {
         get { self[BluetoothClient.self] }
         set { self[BluetoothClient.self] = newValue }

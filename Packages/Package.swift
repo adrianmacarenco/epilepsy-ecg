@@ -26,7 +26,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "0.1.4"),
-
+        .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main")
     ],
     targets: [
         .target(
@@ -35,12 +35,14 @@ let package = Package(
                 "Model",
                 "BluetoothManager",
                 .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
             ]
         ),
         .target(
             name: "BluetoothManager",
             dependencies: [
                 "Model",
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
             ]
         ),
         .target(

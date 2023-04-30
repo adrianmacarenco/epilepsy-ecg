@@ -11,7 +11,7 @@ import SwiftUI
 struct Epilepsy_ECGApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView(viewModel: .init())
         }
     }
 }
