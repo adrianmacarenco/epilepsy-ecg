@@ -16,12 +16,16 @@ let package = Package(
             name: "BluetoothManager",
             targets: ["BluetoothManager"]),
         .library(
+            name: "Model",
+            targets: ["Model"]
+        ),
+        .library(
             name: "Packages",
             targets: ["Packages"]
         ),
         .library(
-            name: "Model",
-            targets: ["Model"]
+            name: "StylePackage",
+            targets: ["StylePackage"]
         )
     ],
     dependencies: [
@@ -51,9 +55,20 @@ let package = Package(
         ),
         .target(
             name: "Packages",
-            dependencies: []),
+            dependencies: []
+        ),
+        .target(
+            name: "StylePackage",
+            dependencies: [],
+            resources: [
+                .process("Fonts"),
+//                .copy("Images.xcassets"),
+                .copy("Colors.xcassets")
+            ]
+        ),
         .testTarget(
             name: "PackagesTests",
-            dependencies: ["Packages"]),
+            dependencies: ["Packages"]
+        )
     ]
 )

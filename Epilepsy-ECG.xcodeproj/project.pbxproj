@@ -292,6 +292,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Epilepsy-ECG-Info.plist";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We need to access bluetooth for always in usage";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We need to access bluetooth";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -334,6 +335,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Epilepsy-ECG-Info.plist";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We need to access bluetooth for always in usage";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We need to access bluetooth";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
