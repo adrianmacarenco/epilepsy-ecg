@@ -6,12 +6,18 @@
 //
 
 import SwiftUI
+import ScanDevices
+import StylePackage
 
 @main
 struct Epilepsy_ECGApp: App {
+    init() {
+        StylePackage.registerFonts()
+    }
     var body: some Scene {
         WindowGroup {
-            HomeView(viewModel: .init())
+//            HomeView(viewModel: .init())
+            ScanDevicesView(viewModel: .init())
         }
     }
 }

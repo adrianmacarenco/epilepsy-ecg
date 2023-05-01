@@ -88,6 +88,7 @@ public struct MyButtonStyle: ButtonStyle {
 //                                    bottom: 0,
 //                                    trailing: leadingPadding))
         }
+        .frame(height: 61)
         .background(isEnabled ? style.backgroundColor : style.disabledBackgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
         .scaleEffect(configuration.isPressed ? 0.95 : 1)

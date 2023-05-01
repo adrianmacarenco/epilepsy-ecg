@@ -10,7 +10,7 @@ import UIKit
 public extension UIFont {
     class func sfProRegular(withSize size: CGFloat, shouldScale: Bool = true) -> UIFont {
       
-        let font = UIFont(name: "SF-Pro-Display-Regular", size: size)!
+        let font = UIFont(name: "SFProDisplay-Regular", size: size)!
         if shouldScale {
             return UIFontMetrics.default.scaledFont(for: font)
         } else {
@@ -19,7 +19,7 @@ public extension UIFont {
     }
 
     class func sfProMedium(withSize size: CGFloat, shouldScale: Bool = true) -> UIFont {
-        let font = UIFont(name: "SF-Pro-Display-Medium", size: size)!
+        let font = UIFont(name: "SFProDisplay-Medium", size: size)!
         if shouldScale {
             return UIFontMetrics.default.scaledFont(for: font)
         } else {
@@ -28,7 +28,7 @@ public extension UIFont {
     }
 
     class func sfProBold(withSize size: CGFloat, shouldScale: Bool = true) -> UIFont {
-        let font = UIFont(name: "SF-Pro-Display-Bold", size: size)!
+        let font = UIFont(name: "SFProDisplay-Bold", size: size)!
         if shouldScale {
             return UIFontMetrics.default.scaledFont(for: font)
         } else {
@@ -44,13 +44,13 @@ public func registerFonts() -> Bool {
     [
         UIFont.registerFont(
             bundles: .myModule,
-            fontName: "SF-Pro-Display-Bold", fontExtension: "ttf"),
+            fontName: "SFProDisplay-Bold", fontExtension: "ttf"),
         UIFont.registerFont(
             bundles: .myModule,
-            fontName: "SF-Pro-Display-Medium", fontExtension: "ttf"),
+            fontName: "SFProDisplay-Medium", fontExtension: "ttf"),
         UIFont.registerFont(
             bundles: .myModule,
-            fontName: "SF-Pro-Display-Regular", fontExtension: "ttf"),
+            fontName: "SFProDisplay-Regular", fontExtension: "ttf"),
     ]
     .allSatisfy { $0 }
 }
