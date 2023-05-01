@@ -20,8 +20,14 @@ public class ScanDevicesViewModel: ObservableObject {
     
     @Dependency(\.bluetoothClient) var bluetoothClient
     
+    @Published var connectedDevice: MovesenseDevice?
+    
     var isConnectButtonEnabled: Bool {
-        return selectedIndex != nil
+        return selectedIndex != nil && connectedDevice == nil
+    }
+    
+    var isDisconnectButtonEnabled: Bool {
+        return connectedDevice != nil
     }
 
     public init(){}
@@ -30,12 +36,38 @@ public class ScanDevicesViewModel: ObservableObject {
     func task() async {
         bluetoothClient.scanDevices()
         for await device in bluetoothClient.discoveredDevicesStream() {
+            print(device.isConnected)
             discoveredDevices.append(device)
         }
     }
     
     func connectButtonTapped() {
-        
+        guard let selectedIndex = selectedIndex, selectedIndex < discoveredDevices.count else { return }
+        bluetoothClient.stopScanningDevices()
+        Task { @MainActor in
+            do {
+                let device = try await bluetoothClient.connectToDevice(discoveredDevices[selectedIndex])
+                print("🔌 connected to \(device.localName)")
+                connectedDevice = device
+                
+            } catch {
+                print("❌ Couldn't connect to \(discoveredDevices[selectedIndex]) error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func disconnectButtonTapped() {
+        guard let connectedDevice = connectedDevice else { return }
+        Task { @MainActor in
+            do {
+                let device = try await bluetoothClient.disconnectDevice(connectedDevice)
+                print("🔌 disconnected \(device.localName)")
+                self.connectedDevice = nil
+                
+            } catch {
+                print("❌ Couldn't disconnect \(connectedDevice) error: \(error.localizedDescription)")
+            }
+        }
     }
     
     func didTapCell(index: Int) {
@@ -65,9 +97,16 @@ public struct ScanDevicesView: View {
                 }
             }
             Spacer()
+            Button("Disconnnect", action: viewModel.disconnectButtonTapped)
+                .buttonStyle(MyButtonStyle(
+                    style: .primary,
+                    isEnabled: viewModel.isDisconnectButtonEnabled
+                ))
             Button("Connect", action: viewModel.connectButtonTapped)
-                .buttonStyle(MyButtonStyle(style: .primary, isEnabled: viewModel.isConnectButtonEnabled))
-
+                .buttonStyle(MyButtonStyle(
+                    style: .primary,
+                    isEnabled: viewModel.isConnectButtonEnabled
+                ))
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 16)

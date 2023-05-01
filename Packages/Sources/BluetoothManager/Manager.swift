@@ -9,14 +9,17 @@ import Foundation
 import CoreBluetooth
 import Model
 import MovesenseApi
+import Dependencies
 
 public class BluetoothManager: NSObject {
     
     private var connectingContinuation: CheckedContinuation<MovesenseDevice, Error>!
-    
+    private var disconnectingContinuation: CheckedContinuation<MovesenseDevice, Error>?
+
     var discoveredDeviceContinuation: AsyncStream<MovesenseDevice>.Continuation!
     var peripheralContinuation: AsyncStream<CBPeripheral>.Continuation!
     var ecgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation!
+    @Dependency (\.continuousClock) var clock
 
     public lazy var peripheralStream: AsyncStream<CBPeripheral> = {
         .init { cont in
@@ -45,10 +48,28 @@ public extension BluetoothManager {
         Movesense.api.startScan()
     }
     
-    func connectToPeripheral(_ device: MovesenseDevice) async throws -> MovesenseDevice {
+    func stopScanningDevices() {
+        Movesense.api.stopScan()
+    }
+    
+    func connectToDevice(_ device: MovesenseDevice) async throws -> MovesenseDevice {
         Movesense.api.connectDevice(device)
         return try await withCheckedThrowingContinuation { cont in
             connectingContinuation = cont
+        }
+    }
+    
+    func disconnectDevice(_ device: MovesenseDevice) async throws -> MovesenseDevice {
+        Task {
+            do {
+                try await clock.sleep(for: .milliseconds(100))
+                Movesense.api.disconnectDevice(device)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        return try await withCheckedThrowingContinuation { cont in
+            disconnectingContinuation = cont
         }
     }
 }
@@ -56,7 +77,7 @@ public extension BluetoothManager {
 //MARK: MoverSenseAPI
 extension BluetoothManager: Observer {
     public func handleEvent(_ event: ObserverEvent) {
-        
+        print(event)
         switch event {
         case let event as MovesenseObserverEventApi:
             didReceiveApiEvent(event)
@@ -72,8 +93,14 @@ extension BluetoothManager: Observer {
         switch event {
         case .apiDeviceDiscovered(let device):
             deviceDiscovered(device)
+            
         case .apiDeviceConnected(let device):
             deviceConnected(device)
+            
+        case .apiDeviceDisconnected(let device):
+            print("disconnected 😈")
+            deviceDisconnected(device)
+            
         default: print(event)
         }
     }
@@ -84,10 +111,13 @@ extension BluetoothManager: Observer {
             print(device)
             
         case .deviceConnected(let device):
-            connectingContinuation.resume(returning: device)
+//            connectingContinuation.resume(returning: device)
+            print("REDUNDANT Connected callback, event: \(event)")
             
         case .deviceDisconnected(let device):
-            print(device)
+//            disconnectingContinuation.resume(returning: device)
+            print("REDUNDANT Disconnected callback, event: \(event)")
+
             
         case .deviceOperationInitiated(let device, operation: _):
             print(device)
@@ -133,7 +163,13 @@ extension BluetoothManager: Observer {
     }
     
     private func deviceConnected(_ device: MovesenseDevice) {
-        
+        connectingContinuation.resume(returning: device)
+    }
+    
+    private func deviceDisconnected(_ device: MovesenseDevice) {
+        guard let disconnectingContinuation = disconnectingContinuation else { return }
+        self.disconnectingContinuation = nil
+        disconnectingContinuation.resume(returning: device)
     }
 }
 

@@ -14,25 +14,32 @@ import MovesenseApi
 
 public struct BluetoothClient {
     public var getBatteryLevel: () async -> Int
+    // TODO: Modify scanDevices and stopScanningDevices to async
     public var scanDevices: () -> ()
+    public var stopScanningDevices: () -> ()
     public var discoveredDevicesStream: () -> AsyncStream<MovesenseDevice>
     public var discoveredPeripheralsStream: () -> AsyncStream<CBPeripheral>
-    public var connectToPeripheral: (MovesenseDevice) async throws -> MovesenseDevice
+    public var connectToDevice: (MovesenseDevice) async throws -> MovesenseDevice
+    public var disconnectDevice: (MovesenseDevice) async throws -> MovesenseDevice
     public var ecgPacketsStream: () -> AsyncStream<MovesenseEcg>
     
     public init(
         getBatteryLevel: @escaping () -> Int,
         scanDevices: @escaping () -> (),
+        stopScanningDevices: @escaping () -> (),
         discoveredDevicesStream: @escaping () -> AsyncStream<MovesenseDevice>,
         discoveredPeripheralsStream: @escaping () -> AsyncStream<CBPeripheral>,
-        connectToPeripheral: @escaping (MovesenseDevice) async throws -> MovesenseDevice,
+        connectToDevice: @escaping (MovesenseDevice) async throws -> MovesenseDevice,
+        disconnectDevice: @escaping (MovesenseDevice) async throws -> MovesenseDevice,
         ecgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
         self.getBatteryLevel = getBatteryLevel
         self.scanDevices = scanDevices
+        self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
         self.discoveredPeripheralsStream = discoveredPeripheralsStream
-        self.connectToPeripheral = connectToPeripheral
+        self.connectToDevice = connectToDevice
+        self.disconnectDevice = disconnectDevice
         self.ecgPacketsStream = ecgPacketsStream
     }
 }
@@ -43,10 +50,12 @@ extension BluetoothClient: DependencyKey {
         
         return .init(
             getBatteryLevel: { return 5 },
-            scanDevices: { bluetoothManager.scanAvailableDevices() },
+            scanDevices: bluetoothManager.scanAvailableDevices,
+            stopScanningDevices: bluetoothManager.stopScanningDevices,
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
             discoveredPeripheralsStream: { bluetoothManager.peripheralStream },
-            connectToPeripheral: { try await bluetoothManager.connectToPeripheral($0) },
+            connectToDevice: { try await bluetoothManager.connectToDevice($0) },
+            disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
             ecgPacketsStream: { bluetoothManager.ecgPacketsStream }
         )
     }

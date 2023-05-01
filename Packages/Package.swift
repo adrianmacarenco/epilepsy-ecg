@@ -35,6 +35,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "0.1.4"),
         .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "0.5.0"),
+        .package(url: "https://github.com/pointfreeco/swift-clocks", from: "0.3.0"),
         .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main")
     ],
     targets: [
@@ -51,7 +52,9 @@ let package = Package(
             name: "BluetoothManager",
             dependencies: [
                 "Model",
-                .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "Clocks", package: "swift-clocks"),
             ]
         ),
         .target(
