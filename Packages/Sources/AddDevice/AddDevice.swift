@@ -13,9 +13,15 @@ import MovesenseApi
 import StylePackage
 import Dependencies
 import BluetoothClient
+import Model
 
-public class ScanDevicesViewModel: ObservableObject {
+public class AddDeviceViewModel: ObservableObject, Equatable {
+    public static func == (lhs: AddDeviceViewModel, rhs: AddDeviceViewModel) -> Bool {
+        return lhs.discoveredDevices.count != rhs.discoveredDevices.count
+    }
+    
     @Published var discoveredDevices: [MovesenseDevice] = []
+    @Published var identifiedDevices: IdentifiedArrayOf<Device> = []
     @Published var selectedIndex: Int?
     
     @Dependency(\.bluetoothClient) var bluetoothClient
@@ -76,44 +82,48 @@ public class ScanDevicesViewModel: ObservableObject {
     }
 }
 
-public struct ScanDevicesView: View {
-    @ObservedObject var viewModel: ScanDevicesViewModel
+public struct AddDeviceView: View {
+    @ObservedObject var viewModel: AddDeviceViewModel
     
     public init(
-        viewModel: ScanDevicesViewModel
+        viewModel: AddDeviceViewModel
     ) {
         self.viewModel = viewModel
     }
     public var body: some View {
         VStack {
-            ForEach(0 ..< viewModel.discoveredDevices.count, id: \.self) { index in
-                DiscoveredDeviceCell(
-                    device: viewModel.discoveredDevices[index],
-                    vm: .init(isSelected: index == viewModel.selectedIndex)
-                )
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    viewModel.didTapCell(index: index)
+            Divider()
+            VStack {
+                ForEach(0 ..< viewModel.discoveredDevices.count, id: \.self) { index in
+                    DiscoveredDeviceCell(
+                        device: viewModel.discoveredDevices[index],
+                        vm: .init(isSelected: index == viewModel.selectedIndex)
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        viewModel.didTapCell(index: index)
+                    }
                 }
+                Spacer()
+                Button("Disconnnect", action: viewModel.disconnectButtonTapped)
+                    .buttonStyle(MyButtonStyle(
+                        style: .primary,
+                        isEnabled: viewModel.isDisconnectButtonEnabled
+                    ))
+                Button("Connect", action: viewModel.connectButtonTapped)
+                    .buttonStyle(MyButtonStyle(
+                        style: .primary,
+                        isEnabled: viewModel.isConnectButtonEnabled
+                    ))
             }
-            Spacer()
-            Button("Disconnnect", action: viewModel.disconnectButtonTapped)
-                .buttonStyle(MyButtonStyle(
-                    style: .primary,
-                    isEnabled: viewModel.isDisconnectButtonEnabled
-                ))
-            Button("Connect", action: viewModel.connectButtonTapped)
-                .buttonStyle(MyButtonStyle(
-                    style: .primary,
-                    isEnabled: viewModel.isConnectButtonEnabled
-                ))
+            .padding(.horizontal, 16)
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
-        .padding(.horizontal, 16)
         .background(Color.background)
         .task {
             await viewModel.task()
         }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

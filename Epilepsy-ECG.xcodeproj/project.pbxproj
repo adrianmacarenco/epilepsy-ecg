@@ -9,8 +9,9 @@
 /* Begin PBXBuildFile section */
 		2AB8EAD829E078C1004AC5D6 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB8EAD729E078C1004AC5D6 /* Dependencies */; };
 		2AB8EADB29E07A70004AC5D6 /* BluetoothClient in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB8EADA29E07A70004AC5D6 /* BluetoothClient */; };
-		2AB9D95A29FF2E0200D8E8E7 /* ScanDevices in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB9D95929FF2E0200D8E8E7 /* ScanDevices */; };
 		2AB9D95C29FF300B00D8E8E7 /* StylePackage in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB9D95B29FF300B00D8E8E7 /* StylePackage */; };
+		2ADC9D2A29FFF7ED000B412F /* HomeTabbar in Frameworks */ = {isa = PBXBuildFile; productRef = 2ADC9D2929FFF7ED000B412F /* HomeTabbar */; };
+		2ADC9D2C2A001354000B412F /* AddDevice in Frameworks */ = {isa = PBXBuildFile; productRef = 2ADC9D2B2A001354000B412F /* AddDevice */; };
 		E25B788129B4D4D500527F4A /* Epilepsy_ECGApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E25B788029B4D4D500527F4A /* Epilepsy_ECGApp.swift */; };
 		E25B788329B4D4D500527F4A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E25B788229B4D4D500527F4A /* HomeView.swift */; };
 		E25B788529B4D4D600527F4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E25B788429B4D4D600527F4A /* Assets.xcassets */; };
@@ -34,8 +35,9 @@
 			files = (
 				2AB8EADB29E07A70004AC5D6 /* BluetoothClient in Frameworks */,
 				2AB9D95C29FF300B00D8E8E7 /* StylePackage in Frameworks */,
+				2ADC9D2A29FFF7ED000B412F /* HomeTabbar in Frameworks */,
 				2AB8EAD829E078C1004AC5D6 /* Dependencies in Frameworks */,
-				2AB9D95A29FF2E0200D8E8E7 /* ScanDevices in Frameworks */,
+				2ADC9D2C2A001354000B412F /* AddDevice in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,8 +108,9 @@
 			packageProductDependencies = (
 				2AB8EAD729E078C1004AC5D6 /* Dependencies */,
 				2AB8EADA29E07A70004AC5D6 /* BluetoothClient */,
-				2AB9D95929FF2E0200D8E8E7 /* ScanDevices */,
 				2AB9D95B29FF300B00D8E8E7 /* StylePackage */,
+				2ADC9D2929FFF7ED000B412F /* HomeTabbar */,
+				2ADC9D2B2A001354000B412F /* AddDevice */,
 			);
 			productName = "Epilepsy ECG";
 			productReference = E25B787D29B4D4D500527F4A /* Epilepsy-ECG.app */;
@@ -415,13 +418,17 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = BluetoothClient;
 		};
-		2AB9D95929FF2E0200D8E8E7 /* ScanDevices */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = ScanDevices;
-		};
 		2AB9D95B29FF300B00D8E8E7 /* StylePackage */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = StylePackage;
+		};
+		2ADC9D2929FFF7ED000B412F /* HomeTabbar */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HomeTabbar;
+		};
+		2ADC9D2B2A001354000B412F /* AddDevice */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AddDevice;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

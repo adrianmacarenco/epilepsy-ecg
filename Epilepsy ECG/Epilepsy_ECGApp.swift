@@ -8,6 +8,7 @@
 import SwiftUI
 import ScanDevices
 import StylePackage
+import HomeTabbar
 
 @main
 struct Epilepsy_ECGApp: App {
@@ -17,7 +18,8 @@ struct Epilepsy_ECGApp: App {
     var body: some Scene {
         WindowGroup {
 //            HomeView(viewModel: .init())
-            ScanDevicesView(viewModel: .init())
+//            ScanDevicesView(viewModel: .init())
+            HomeTabbarView()
         }
     }
 }

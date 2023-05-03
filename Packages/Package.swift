@@ -10,22 +10,34 @@ let package = Package(
     ],
     products: [
         .library(
+            name: "AddDevice",
+            targets: ["AddDevice"]
+        ),
+        .library(
             name: "BluetoothClient",
             targets: ["BluetoothClient"]),
         .library(
             name: "BluetoothManager",
             targets: ["BluetoothManager"]),
         .library(
+            name: "Dashboard",
+            targets: ["Dashboard"]
+        ),
+        .library(
             name: "Model",
             targets: ["Model"]
+        ),
+        .library(
+            name: "HomeTabbar",
+            targets: ["HomeTabbar"]
         ),
         .library(
             name: "Packages",
             targets: ["Packages"]
         ),
         .library(
-            name: "ScanDevices",
-            targets: ["ScanDevices"]
+            name: "Profile",
+            targets: ["Profile"]
         ),
         .library(
             name: "StylePackage",
@@ -36,9 +48,20 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "0.1.4"),
         .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "0.5.0"),
         .package(url: "https://github.com/pointfreeco/swift-clocks", from: "0.3.0"),
+        .package(url: "https://github.com/pointfreeco/swiftui-navigation", from: "0.4.5"),
         .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main")
     ],
     targets: [
+        .target(
+            name: "AddDevice",
+            dependencies: [
+                "StylePackage",
+                "BluetoothClient",
+                .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
+                .product(name: "Dependencies", package: "swift-dependencies"),
+            ]
+        ),
         .target(
             name: "BluetoothClient",
             dependencies: [
@@ -58,22 +81,34 @@ let package = Package(
             ]
         ),
         .target(
+            name: "Dashboard",
+            dependencies: [
+            "StylePackage",
+            "AddDevice",
+            .product(name: "SwiftUINavigation", package: "swiftui-navigation")
+            ]
+        ),
+        .target(
             name: "Model",
-            dependencies: []
+            dependencies: [
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
+            ]
+        ),
+        .target(
+            name: "HomeTabbar",
+            dependencies: [
+                "Dashboard",
+                "Profile",
+                "StylePackage"
+            ]
         ),
         .target(
             name: "Packages",
             dependencies: []
         ),
         .target(
-            name: "ScanDevices",
-            dependencies: [
-                "StylePackage",
-                "BluetoothClient",
-                .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
-                .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
-                .product(name: "Dependencies", package: "swift-dependencies"),
-            ]
+            name: "Profile",
+            dependencies: []
         ),
         .target(
             name: "StylePackage",
