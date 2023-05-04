@@ -36,6 +36,10 @@ let package = Package(
             targets: ["Packages"]
         ),
         .library(
+            name: "PersistenceClient",
+            targets: ["PersistenceClient"]
+        ),
+        .library(
             name: "Profile",
             targets: ["Profile"]
         ),
@@ -49,6 +53,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "0.5.0"),
         .package(url: "https://github.com/pointfreeco/swift-clocks", from: "0.3.0"),
         .package(url: "https://github.com/pointfreeco/swiftui-navigation", from: "0.4.5"),
+        .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.3.1"),
         .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main")
     ],
     targets: [
@@ -57,6 +62,7 @@ let package = Package(
             dependencies: [
                 "StylePackage",
                 "BluetoothClient",
+                "PersistenceClient",
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
@@ -105,6 +111,13 @@ let package = Package(
         .target(
             name: "Packages",
             dependencies: []
+        ),
+        .target(
+            name: "PersistenceClient",
+            dependencies: [
+                "Model",
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+            ]
         ),
         .target(
             name: "Profile",

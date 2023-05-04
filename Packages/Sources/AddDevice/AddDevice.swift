@@ -20,16 +20,15 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
         return lhs.discoveredDevices.count != rhs.discoveredDevices.count
     }
     
-    @Published var discoveredDevices: [MovesenseDevice] = []
-    @Published var identifiedDevices: IdentifiedArrayOf<Device> = []
-    @Published var selectedIndex: Int?
+    @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
+    @Published var selectedDeviceId: UUID?
     
     @Dependency(\.bluetoothClient) var bluetoothClient
     
-    @Published var connectedDevice: MovesenseDevice?
+    @Published var connectedDevice: DeviceWrapper?
     
     var isConnectButtonEnabled: Bool {
-        return selectedIndex != nil && connectedDevice == nil
+        return selectedDeviceId != nil && connectedDevice == nil
     }
     
     var isDisconnectButtonEnabled: Bool {
@@ -42,22 +41,23 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
     func task() async {
         bluetoothClient.scanDevices()
         for await device in bluetoothClient.discoveredDevicesStream() {
-            print(device.isConnected)
+            print(device.movesenseDevice.isConnected)
             discoveredDevices.append(device)
         }
     }
     
     func connectButtonTapped() {
-        guard let selectedIndex = selectedIndex, selectedIndex < discoveredDevices.count else { return }
+        guard let selectedDeviceId = selectedDeviceId,
+        let selectedDevice = discoveredDevices[id: selectedDeviceId] else { return }
+        
         bluetoothClient.stopScanningDevices()
         Task { @MainActor in
             do {
-                let device = try await bluetoothClient.connectToDevice(discoveredDevices[selectedIndex])
-                print("🔌 connected to \(device.localName)")
-                connectedDevice = device
-                
+                let connectedDevice = try await bluetoothClient.connectToDevice(selectedDevice)
+                self.connectedDevice = connectedDevice
+                print("🔌 connected to \(connectedDevice.movesenseDevice)")
             } catch {
-                print("❌ Couldn't connect to \(discoveredDevices[selectedIndex]) error: \(error.localizedDescription)")
+                print("❌ Couldn't connect to \(selectedDevice.movesenseDevice) error: \(error.localizedDescription)")
             }
         }
     }
@@ -66,8 +66,8 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
         guard let connectedDevice = connectedDevice else { return }
         Task { @MainActor in
             do {
-                let device = try await bluetoothClient.disconnectDevice(connectedDevice)
-                print("🔌 disconnected \(device.localName)")
+                let disconnectedDevice = try await bluetoothClient.disconnectDevice(connectedDevice)
+                print("🔌 disconnected \(disconnectedDevice.movesenseDevice.localName)")
                 self.connectedDevice = nil
                 
             } catch {
@@ -76,9 +76,9 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
         }
     }
     
-    func didTapCell(index: Int) {
-        guard index != selectedIndex else { return }
-        selectedIndex = index
+    func didTapCell(device: DeviceWrapper) {
+        guard device.id != selectedDeviceId else { return }
+        selectedDeviceId = device.id
     }
 }
 
@@ -94,14 +94,14 @@ public struct AddDeviceView: View {
         VStack {
             Divider()
             VStack {
-                ForEach(0 ..< viewModel.discoveredDevices.count, id: \.self) { index in
+                ForEach(viewModel.discoveredDevices) { device in
                     DiscoveredDeviceCell(
-                        device: viewModel.discoveredDevices[index],
-                        vm: .init(isSelected: index == viewModel.selectedIndex)
+                        device: device.movesenseDevice,
+                        vm: .init(isSelected: device.id == viewModel.selectedDeviceId)
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        viewModel.didTapCell(index: index)
+                        viewModel.didTapCell(device: device)
                     }
                 }
                 Spacer()

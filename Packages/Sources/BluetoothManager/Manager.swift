@@ -13,10 +13,10 @@ import Dependencies
 
 public class BluetoothManager: NSObject {
     
-    private var connectingContinuation: CheckedContinuation<MovesenseDevice, Error>!
-    private var disconnectingContinuation: CheckedContinuation<MovesenseDevice, Error>?
+    private var connectingContinuation: CheckedContinuation<DeviceWrapper, Error>!
+    private var disconnectingContinuation: CheckedContinuation<DeviceWrapper, Error>?
 
-    var discoveredDeviceContinuation: AsyncStream<MovesenseDevice>.Continuation!
+    var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation!
     var peripheralContinuation: AsyncStream<CBPeripheral>.Continuation!
     var ecgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation!
     @Dependency (\.continuousClock) var clock
@@ -26,7 +26,7 @@ public class BluetoothManager: NSObject {
         peripheralContinuation = cont
         }}()
     
-    public lazy var discoveredDevicesStream: AsyncStream<MovesenseDevice> = {
+    public lazy var discoveredDevicesStream: AsyncStream<DeviceWrapper> = {
         .init { cont in
             discoveredDeviceContinuation = cont
         }}()
@@ -52,18 +52,18 @@ public extension BluetoothManager {
         Movesense.api.stopScan()
     }
     
-    func connectToDevice(_ device: MovesenseDevice) async throws -> MovesenseDevice {
-        Movesense.api.connectDevice(device)
+    func connectToDevice(_ device: DeviceWrapper) async throws -> DeviceWrapper {
+        Movesense.api.connectDevice(device.movesenseDevice)
         return try await withCheckedThrowingContinuation { cont in
             connectingContinuation = cont
         }
     }
     
-    func disconnectDevice(_ device: MovesenseDevice) async throws -> MovesenseDevice {
+    func disconnectDevice(_ device: DeviceWrapper) async throws -> DeviceWrapper {
         Task {
             do {
                 try await clock.sleep(for: .milliseconds(100))
-                Movesense.api.disconnectDevice(device)
+                Movesense.api.disconnectDevice(device.movesenseDevice)
             } catch {
                 print(error.localizedDescription)
             }
@@ -159,17 +159,17 @@ extension BluetoothManager: Observer {
     }
     
     private func deviceDiscovered(_ device: MovesenseDevice) {
-        discoveredDeviceContinuation.yield(device)
+        discoveredDeviceContinuation.yield(DeviceWrapper(movesenseDevice: device))
     }
     
     private func deviceConnected(_ device: MovesenseDevice) {
-        connectingContinuation.resume(returning: device)
+        connectingContinuation.resume(returning: DeviceWrapper(movesenseDevice: device) )
     }
     
     private func deviceDisconnected(_ device: MovesenseDevice) {
         guard let disconnectingContinuation = disconnectingContinuation else { return }
         self.disconnectingContinuation = nil
-        disconnectingContinuation.resume(returning: device)
+        disconnectingContinuation.resume(returning: DeviceWrapper(movesenseDevice: device))
     }
 }
 

@@ -15,7 +15,7 @@ class HomeViewModel: ObservableObject {
     
     func task() async {
         for await device in bluetoothClient.discoveredDevicesStream() {
-            print("🤡 \(device.isConnected)")
+            print("🤡 \(device.movesenseDevice.isConnected)")
         }
     }
     

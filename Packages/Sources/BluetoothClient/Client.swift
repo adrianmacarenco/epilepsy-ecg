@@ -11,26 +11,27 @@ import Dependencies
 import BluetoothManager
 import Model
 import MovesenseApi
+import Model
 
 public struct BluetoothClient {
     public var getBatteryLevel: () async -> Int
     // TODO: Modify scanDevices and stopScanningDevices to async
     public var scanDevices: () -> ()
     public var stopScanningDevices: () -> ()
-    public var discoveredDevicesStream: () -> AsyncStream<MovesenseDevice>
+    public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var discoveredPeripheralsStream: () -> AsyncStream<CBPeripheral>
-    public var connectToDevice: (MovesenseDevice) async throws -> MovesenseDevice
-    public var disconnectDevice: (MovesenseDevice) async throws -> MovesenseDevice
+    public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
+    public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var ecgPacketsStream: () -> AsyncStream<MovesenseEcg>
     
     public init(
         getBatteryLevel: @escaping () -> Int,
         scanDevices: @escaping () -> (),
         stopScanningDevices: @escaping () -> (),
-        discoveredDevicesStream: @escaping () -> AsyncStream<MovesenseDevice>,
+        discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         discoveredPeripheralsStream: @escaping () -> AsyncStream<CBPeripheral>,
-        connectToDevice: @escaping (MovesenseDevice) async throws -> MovesenseDevice,
-        disconnectDevice: @escaping (MovesenseDevice) async throws -> MovesenseDevice,
+        connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
+        disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         ecgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
         self.getBatteryLevel = getBatteryLevel
