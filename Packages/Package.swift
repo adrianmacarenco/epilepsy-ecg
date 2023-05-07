@@ -89,8 +89,13 @@ let package = Package(
         .target(
             name: "Dashboard",
             dependencies: [
-            "StylePackage",
             "AddDevice",
+            "BluetoothClient",
+            "Model",
+            "StylePackage",
+            "PersistenceClient",
+            .product(name: "Dependencies", package: "swift-dependencies"),
+            .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
             .product(name: "SwiftUINavigation", package: "swiftui-navigation")
             ]
         ),
@@ -117,11 +122,15 @@ let package = Package(
             dependencies: [
                 "Model",
                 .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+                .product(name: "Dependencies", package: "swift-dependencies"),
+
             ]
         ),
         .target(
             name: "Profile",
-            dependencies: []
+            dependencies: [
+                "StylePackage"
+            ]
         ),
         .target(
             name: "StylePackage",

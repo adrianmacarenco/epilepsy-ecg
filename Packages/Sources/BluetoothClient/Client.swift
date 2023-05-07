@@ -18,6 +18,7 @@ public struct BluetoothClient {
     // TODO: Modify scanDevices and stopScanningDevices to async
     public var scanDevices: () -> ()
     public var stopScanningDevices: () -> ()
+    public var getDevice:(DeviceNameSerial) -> DeviceWrapper?
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var discoveredPeripheralsStream: () -> AsyncStream<CBPeripheral>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
@@ -28,6 +29,7 @@ public struct BluetoothClient {
         getBatteryLevel: @escaping () -> Int,
         scanDevices: @escaping () -> (),
         stopScanningDevices: @escaping () -> (),
+        getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         discoveredPeripheralsStream: @escaping () -> AsyncStream<CBPeripheral>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
@@ -36,6 +38,7 @@ public struct BluetoothClient {
     ) {
         self.getBatteryLevel = getBatteryLevel
         self.scanDevices = scanDevices
+        self.getDevice = getDevice
         self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
         self.discoveredPeripheralsStream = discoveredPeripheralsStream
@@ -53,6 +56,7 @@ extension BluetoothClient: DependencyKey {
             getBatteryLevel: { return 5 },
             scanDevices: bluetoothManager.scanAvailableDevices,
             stopScanningDevices: bluetoothManager.stopScanningDevices,
+            getDevice: { bluetoothManager.getDevice(with: $0)},
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
             discoveredPeripheralsStream: { bluetoothManager.peripheralStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },

@@ -12,6 +12,9 @@
 		2AB9D95C29FF300B00D8E8E7 /* StylePackage in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB9D95B29FF300B00D8E8E7 /* StylePackage */; };
 		2ADC9D2A29FFF7ED000B412F /* HomeTabbar in Frameworks */ = {isa = PBXBuildFile; productRef = 2ADC9D2929FFF7ED000B412F /* HomeTabbar */; };
 		2ADC9D2C2A001354000B412F /* AddDevice in Frameworks */ = {isa = PBXBuildFile; productRef = 2ADC9D2B2A001354000B412F /* AddDevice */; };
+		2ADC9D2E2A03B80C000B412F /* EnvVars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADC9D2D2A03B80C000B412F /* EnvVars.swift */; };
+		2ADC9D302A03BC91000B412F /* LiveDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADC9D2F2A03BC91000B412F /* LiveDependencies.swift */; };
+		2ADC9D322A03BD1C000B412F /* PersistenceClient in Frameworks */ = {isa = PBXBuildFile; productRef = 2ADC9D312A03BD1C000B412F /* PersistenceClient */; };
 		E25B788129B4D4D500527F4A /* Epilepsy_ECGApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E25B788029B4D4D500527F4A /* Epilepsy_ECGApp.swift */; };
 		E25B788329B4D4D500527F4A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E25B788229B4D4D500527F4A /* HomeView.swift */; };
 		E25B788529B4D4D600527F4A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E25B788429B4D4D600527F4A /* Assets.xcassets */; };
@@ -19,6 +22,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2ADC9D2D2A03B80C000B412F /* EnvVars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvVars.swift; sourceTree = "<group>"; };
+		2ADC9D2F2A03BC91000B412F /* LiveDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveDependencies.swift; sourceTree = "<group>"; };
 		E23F0FB229B4DFD800A93242 /* Packages */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Packages; sourceTree = "<group>"; };
 		E25B787D29B4D4D500527F4A /* Epilepsy-ECG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Epilepsy-ECG.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E25B788029B4D4D500527F4A /* Epilepsy_ECGApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Epilepsy_ECGApp.swift; sourceTree = "<group>"; };
@@ -36,6 +41,7 @@
 				2AB8EADB29E07A70004AC5D6 /* BluetoothClient in Frameworks */,
 				2AB9D95C29FF300B00D8E8E7 /* StylePackage in Frameworks */,
 				2ADC9D2A29FFF7ED000B412F /* HomeTabbar in Frameworks */,
+				2ADC9D322A03BD1C000B412F /* PersistenceClient in Frameworks */,
 				2AB8EAD829E078C1004AC5D6 /* Dependencies in Frameworks */,
 				2ADC9D2C2A001354000B412F /* AddDevice in Frameworks */,
 			);
@@ -74,6 +80,8 @@
 			children = (
 				E25B788029B4D4D500527F4A /* Epilepsy_ECGApp.swift */,
 				E25B788229B4D4D500527F4A /* HomeView.swift */,
+				2ADC9D2F2A03BC91000B412F /* LiveDependencies.swift */,
+				2ADC9D2D2A03B80C000B412F /* EnvVars.swift */,
 				E25B788429B4D4D600527F4A /* Assets.xcassets */,
 				E25B788629B4D4D600527F4A /* Epilepsy_ECG.entitlements */,
 				E25B788729B4D4D600527F4A /* Preview Content */,
@@ -111,6 +119,7 @@
 				2AB9D95B29FF300B00D8E8E7 /* StylePackage */,
 				2ADC9D2929FFF7ED000B412F /* HomeTabbar */,
 				2ADC9D2B2A001354000B412F /* AddDevice */,
+				2ADC9D312A03BD1C000B412F /* PersistenceClient */,
 			);
 			productName = "Epilepsy ECG";
 			productReference = E25B787D29B4D4D500527F4A /* Epilepsy-ECG.app */;
@@ -169,6 +178,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2ADC9D302A03BC91000B412F /* LiveDependencies.swift in Sources */,
+				2ADC9D2E2A03B80C000B412F /* EnvVars.swift in Sources */,
 				E25B788329B4D4D500527F4A /* HomeView.swift in Sources */,
 				E25B788129B4D4D500527F4A /* Epilepsy_ECGApp.swift in Sources */,
 			);
@@ -429,6 +440,10 @@
 		2ADC9D2B2A001354000B412F /* AddDevice */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AddDevice;
+		};
+		2ADC9D312A03BD1C000B412F /* PersistenceClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PersistenceClient;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

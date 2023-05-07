@@ -11,7 +11,7 @@ import Dependencies
 
 /// Client used for storing data
 public struct PersistenceClient {
-    public var deviceSerial: FileClient<String>
+    public var deviceNameSerial: FileClient<DeviceNameSerial>
 }
 
 extension PersistenceClient: TestDependencyKey {

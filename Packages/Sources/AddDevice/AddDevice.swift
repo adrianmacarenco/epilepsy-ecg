@@ -14,6 +14,7 @@ import StylePackage
 import Dependencies
 import BluetoothClient
 import Model
+import PersistenceClient
 
 public class AddDeviceViewModel: ObservableObject, Equatable {
     public static func == (lhs: AddDeviceViewModel, rhs: AddDeviceViewModel) -> Bool {
@@ -22,10 +23,11 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
     
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var selectedDeviceId: UUID?
-    
-    @Dependency(\.bluetoothClient) var bluetoothClient
-    
     @Published var connectedDevice: DeviceWrapper?
+
+    @Dependency(\.bluetoothClient) var bluetoothClient
+    @Dependency(\.persistenceClient) var persistenceClient
+
     
     var isConnectButtonEnabled: Bool {
         return selectedDeviceId != nil && connectedDevice == nil
@@ -55,6 +57,7 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
             do {
                 let connectedDevice = try await bluetoothClient.connectToDevice(selectedDevice)
                 self.connectedDevice = connectedDevice
+                persistenceClient.deviceNameSerial.save(.init(deviceWrapper: connectedDevice))
                 print("🔌 connected to \(connectedDevice.movesenseDevice)")
             } catch {
                 print("❌ Couldn't connect to \(selectedDevice.movesenseDevice) error: \(error.localizedDescription)")

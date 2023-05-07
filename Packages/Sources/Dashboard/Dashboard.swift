@@ -10,6 +10,12 @@ import SwiftUI
 import StylePackage
 import AddDevice
 import SwiftUINavigation
+import Dependencies
+import PersistenceClient
+import BluetoothClient
+import IdentifiedCollections
+import Model
+import Charts
 
 public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
@@ -17,21 +23,45 @@ public class DashboardViewModel: ObservableObject {
     }
     
     @Published var route: Destination?
+    @Published var previousDevices: IdentifiedArrayOf<DeviceNameSerial> = []
+
+    @Dependency(\.persistenceClient) var persistenceClient
+    @Dependency(\.bluetoothClient) var bluetoothClient
+
+    public init() {}
     
-    public init() {
+    func onAppear() {
+//        if let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load(),
+//           let foundDevice = bluetoothClient.getDevice(savedDeviceNameSerial) {
+//            print("🔍 \(foundDevice)")
+//        }
+        if let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() {
+            //Display the previous device here
+            previousDevices.append(savedDeviceNameSerial)
+            bluetoothClient.scanDevices()
+        }
+        
     }
     
     func addDeviceButtonTapped() {
-        route = .addDevice(.init())
+        let addDeviceViewModel = withDependencies(from: self) {
+            AddDeviceViewModel()
+        }
+        route = .addDevice(addDeviceViewModel)
     }
     
     func cancelAddDeviceTapped() {
         route = nil
     }
+    
+    func connectButtonTapped(deviceNameSerial: DeviceNameSerial) {
+        
+    }
 }
 
 public struct DashboardView: View {
     @ObservedObject var vm: DashboardViewModel
+    
     public init(
         vm: DashboardViewModel
     ) {
@@ -40,7 +70,20 @@ public struct DashboardView: View {
     
     public var body: some View {
         VStack {
-            Text("Dashboard view")
+            ForEach(vm.previousDevices) { deviceSerialName in
+                VStack {
+                    Text(deviceSerialName.localName)
+                        .foregroundColor(.black)
+                    HStack {
+                        Button("Connect", action: {
+                            vm.connectButtonTapped(deviceNameSerial: deviceSerialName)
+                        })
+                        Button("Disconnect", action: {
+                            vm.connectButtonTapped(deviceNameSerial: deviceSerialName)
+                        })
+                    }
+                }
+            }
             Spacer()
             Button("Add my device", action: vm.addDeviceButtonTapped)
                 .buttonStyle(MyButtonStyle.init(style: .primary))
@@ -50,6 +93,7 @@ public struct DashboardView: View {
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
         .background(Color.background)
+        .onAppear(perform: vm.onAppear)
         .sheet(
             unwrapping: $vm.route,
             case: /DashboardViewModel.Destination.addDevice

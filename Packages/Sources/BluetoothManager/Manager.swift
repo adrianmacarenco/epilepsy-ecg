@@ -52,6 +52,14 @@ public extension BluetoothManager {
         Movesense.api.stopScan()
     }
     
+    func getDevice(with nameSerial: DeviceNameSerial) -> DeviceWrapper? {
+        if let savedDevice = Movesense.api.getDevices().first(where: {$0.serialNumber == nameSerial.serial}) {
+            return .init(movesenseDevice: savedDevice)
+        } else {
+            return nil
+        }
+    }
+    
     func connectToDevice(_ device: DeviceWrapper) async throws -> DeviceWrapper {
         Movesense.api.connectDevice(device.movesenseDevice)
         return try await withCheckedThrowingContinuation { cont in
