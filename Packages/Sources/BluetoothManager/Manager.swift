@@ -16,26 +16,23 @@ public class BluetoothManager: NSObject {
     private var connectingContinuation: CheckedContinuation<DeviceWrapper, Error>!
     private var disconnectingContinuation: CheckedContinuation<DeviceWrapper, Error>?
 
-    var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation!
-    var peripheralContinuation: AsyncStream<CBPeripheral>.Continuation!
-    var ecgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation!
+    var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation? 
+    var ecgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation?
     @Dependency (\.continuousClock) var clock
 
-    public lazy var peripheralStream: AsyncStream<CBPeripheral> = {
-        .init { cont in
-        peripheralContinuation = cont
-        }}()
-    
     public lazy var discoveredDevicesStream: AsyncStream<DeviceWrapper> = {
         .init { cont in
             discoveredDeviceContinuation = cont
         }}()
     
     public lazy var ecgPacketsStream: AsyncStream<MovesenseEcg> = {
-        .init { cont in
-            ecgPacketContinuation = cont
+        
+        AsyncStream { cont in
+            self.ecgPacketContinuation = cont
         }}()
     
+    private var movesenseOperation: MovesenseOperation?
+
     public override init() {
         super.init()
         Movesense.api.addObserver(self)
@@ -61,7 +58,14 @@ public extension BluetoothManager {
     }
     
     func connectToDevice(_ device: DeviceWrapper) async throws -> DeviceWrapper {
-        Movesense.api.connectDevice(device.movesenseDevice)
+        Task {
+            do {
+                try await clock.sleep(for: .milliseconds(100))
+                Movesense.api.connectDevice(device.movesenseDevice)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
         return try await withCheckedThrowingContinuation { cont in
             connectingContinuation = cont
         }
@@ -80,12 +84,22 @@ public extension BluetoothManager {
             disconnectingContinuation = cont
         }
     }
+    
+    func subscribeToEcg(_ device: DeviceWrapper) {
+        let request = MovesenseRequest(resourceType: .ecg, method: .subscribe, parameters: [MovesenseRequestParameter.sampleRate(128)])
+        movesenseOperation = device.movesenseDevice.sendRequest(request, observer: self)
+    }
+    
+    func ecgStream() -> AsyncStream<MovesenseEcg> {
+        .init { cont in
+            ecgPacketContinuation = cont
+        }
+    }
 }
 
 //MARK: MoverSenseAPI
 extension BluetoothManager: Observer {
     public func handleEvent(_ event: ObserverEvent) {
-        print(event)
         switch event {
         case let event as MovesenseObserverEventApi:
             didReceiveApiEvent(event)
@@ -106,8 +120,10 @@ extension BluetoothManager: Observer {
             deviceConnected(device)
             
         case .apiDeviceDisconnected(let device):
-            print("disconnected 😈")
             deviceDisconnected(device)
+            
+        case let .apiDeviceOperationInitiated(_, operation: operation):
+            print(operation)
             
         default: print(event)
         }
@@ -118,11 +134,11 @@ extension BluetoothManager: Observer {
         case .deviceConnecting(let device):
             print(device)
             
-        case .deviceConnected(let device):
+        case .deviceConnected:
 //            connectingContinuation.resume(returning: device)
             print("REDUNDANT Connected callback, event: \(event)")
             
-        case .deviceDisconnected(let device):
+        case .deviceDisconnected:
 //            disconnectingContinuation.resume(returning: device)
             print("REDUNDANT Disconnected callback, event: \(event)")
 
@@ -148,7 +164,8 @@ extension BluetoothManager: Observer {
                 print(acc)
                 
             case .ecg(_, let ecg):
-                ecgPacketContinuation.yield(ecg)
+                print("❤️ \(ecg)")
+                ecgPacketContinuation?.yield(ecg)
                 
             case .gyroscope(_, let gyro):
                 print(gyro)
@@ -167,7 +184,7 @@ extension BluetoothManager: Observer {
     }
     
     private func deviceDiscovered(_ device: MovesenseDevice) {
-        discoveredDeviceContinuation.yield(DeviceWrapper(movesenseDevice: device))
+        discoveredDeviceContinuation?.yield(DeviceWrapper(movesenseDevice: device))
     }
     
     private func deviceConnected(_ device: MovesenseDevice) {

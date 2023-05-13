@@ -1,8 +1,8 @@
 //
 //  File.swift
-//  
 //
-//  Created by Adrian Macarenco on 07/05/2023.
+//
+//  Created by Adrian Macarenco on 12/05/2023.
 //
 
 import Foundation
@@ -65,27 +65,60 @@ public class HeartBeatViewModel: ObservableObject {
     @Published public var lineWidth: Double
     @Published public var interpolationMethod: ChartInterpolationMethod = .cardinal
     @Published public var chartColor: Color = .pink
+    @Published public var adjustableInterval: Double
     public var isOverview: Bool
-
+    public var frequency: Int
+    public var shownInterval: Int {
+        Int(adjustableInterval)
+    }
+    private var intervalSetsNumber = 0
+    private var prevIndex = 0.0
     public init(
         data: [Double],
         lineWidth: Double = 1.0,
         interpolationMethod: ChartInterpolationMethod = .cardinal,
         chartColor: Color = .pink,
-        isOverview: Bool
+        isOverview: Bool,
+        frequency: Int,
+        shownInterval: Double = 4
     ) {
         self.data = data
         self.lineWidth = lineWidth
         self.interpolationMethod = interpolationMethod
         self.chartColor = chartColor
         self.isOverview = isOverview
+        self.frequency = frequency
+        self.adjustableInterval = shownInterval
+    }
+    
+    func calculateTime(for index: Double) -> Double {
+//        if index < prevIndex {
+//            intervalSetsNumber += 1
+//            if intervalSetsNumber > 3 {
+//                intervalSetsNumber = 0
+//            }
+//        }
+//        let freqModulus = (index) / Double(frequency * shownInterval) + Double(intervalSetsNumber)
+//        let timeValue = freqModulus.truncatingRemainder(dividingBy: Double(shownInterval))
+        
+        let elapsedTime = index / Double(frequency)
+            // Calculate the time within the current 4-second interval
+            let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(shownInterval))
+        
+//        print(" Index: \(index) value: \(timeValue)")
+        
+        return timeValue
     }
 }
 
-struct HeartBeat: View {
+public struct HeartBeat: View {
     @ObservedObject var vm: HeartBeatViewModel
     
-    var body: some View {
+    public init(vm: HeartBeatViewModel) {
+        self.vm = vm
+    }
+    
+    public var body: some View {
         if vm.isOverview {
             chartAndLabels
         } else {
@@ -116,29 +149,30 @@ struct HeartBeat: View {
                 Image(systemName: "heart.fill")
                     .foregroundColor(.pink)
                 Text("68 BPM Average")
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
             }
         }
+        .background(Color.white)
         .frame(height: Constants.detailChartHeight)
     }
     
     private var chart: some View {
         Chart {
-            ForEach(Array(vm.data.enumerated()), id: \.element) { index, element in
+            ForEach((0 ..< vm.data.count), id: \.self) { index in
                 LineMark(
-                    x: .value("Seconds", Double(index)/400),
-                    y: .value("Unit", element)
+                    x: .value("Seconds", vm.calculateTime(for: Double(index))),
+                    y: .value("Unit", vm.data[index])
                 )
                 .lineStyle(StrokeStyle(lineWidth: vm.lineWidth))
                 .foregroundStyle(vm.chartColor)
                 .interpolationMethod(vm.interpolationMethod.mode)
-                .accessibilityLabel("\(index)s")
-                .accessibilityValue("\(element) mV")
+                .accessibilityLabel("\(vm.shownInterval)s")
+                .accessibilityValue("\(vm.data[index]) mV")
                 .accessibilityHidden(vm.isOverview)
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 4)) { value in
+            AxisMarks(values: .automatic(desiredCount: vm.shownInterval)) { value in
                 if let doubleValue = value.as(Double.self),
                    let intValue = value.as(Int.self) {
                     if doubleValue - Double(intValue) == 0 {
@@ -146,6 +180,7 @@ struct HeartBeat: View {
                             .foregroundStyle(.gray)
                         AxisValueLabel() {
                             Text("\(intValue)s")
+                                .foregroundColor(.black)
                         }
                         AxisGridLine(stroke: .init(lineWidth: 1))
                             .foregroundStyle(.gray)
@@ -156,7 +191,7 @@ struct HeartBeat: View {
                 }
             }
         }
-        .chartYScale(domain: -400...800)
+        .chartYScale(domain: -3000...3000)
         .chartYAxis {
             AxisMarks(values: .automatic(desiredCount: 14)) { value in
                 AxisGridLine(stroke: .init(lineWidth: 1))
@@ -180,6 +215,14 @@ struct HeartBeat: View {
                 } maximumValueLabel: {
                     Text("10")
                 }
+                Text("Interval: \(vm.shownInterval, specifier: "%d")")
+                Slider(value: $vm.adjustableInterval, in: 4...10) {
+                    Text("Interval")
+                } minimumValueLabel: {
+                    Text("4")
+                } maximumValueLabel: {
+                    Text("10")
+                }
             }
             
 //            Picker("Interpolation Method", selection: $interpolationMethod) {
@@ -193,7 +236,7 @@ struct HeartBeat: View {
 
 // MARK: - Accessibility
 extension HeartBeat: AXChartDescriptorRepresentable {
-    func makeChartDescriptor() -> AXChartDescriptor {
+    public func makeChartDescriptor() -> AXChartDescriptor {
         let min = vm.data.min() ?? 0.0
         let max = vm.data.max() ?? 0.0
         
@@ -234,7 +277,8 @@ extension HeartBeat: AXChartDescriptorRepresentable {
 // MARK: - Preview
 struct HeartBeat_Previews: PreviewProvider {
     static var previews: some View {
-        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: true))
-        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: false))
+        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: true, frequency: 128))
+        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: false, frequency: 128))
     }
 }
+

@@ -27,7 +27,6 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
 
     @Dependency(\.bluetoothClient) var bluetoothClient
     @Dependency(\.persistenceClient) var persistenceClient
-
     
     var isConnectButtonEnabled: Bool {
         return selectedDeviceId != nil && connectedDevice == nil

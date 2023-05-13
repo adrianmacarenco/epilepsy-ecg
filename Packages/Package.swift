@@ -24,6 +24,10 @@ let package = Package(
             targets: ["Dashboard"]
         ),
         .library(
+            name: "ECG",
+            targets: ["ECG"]
+        ),
+        .library(
             name: "Model",
             targets: ["Model"]
         ),
@@ -54,6 +58,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-clocks", from: "0.3.0"),
         .package(url: "https://github.com/pointfreeco/swiftui-navigation", from: "0.4.5"),
         .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.3.1"),
+        .package(url: "https://github.com/AppPear/ChartView", from: "1.5.3"),
         .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main")
     ],
     targets: [
@@ -91,13 +96,20 @@ let package = Package(
             dependencies: [
             "AddDevice",
             "BluetoothClient",
+            "ECG",
             "Model",
             "StylePackage",
             "PersistenceClient",
+            .product(name: "Clocks", package: "swift-clocks"),
             .product(name: "Dependencies", package: "swift-dependencies"),
             .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
-            .product(name: "SwiftUINavigation", package: "swiftui-navigation")
+            .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
+            .product(name: "SwiftUICharts", package: "ChartView")
             ]
+        ),
+        .target(
+            name: "ECG",
+            dependencies: []
         ),
         .target(
             name: "Model",

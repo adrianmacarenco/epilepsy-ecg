@@ -8,5 +8,9 @@
 		<string>SF-Pro-Display-Bold.ttf</string>
 		<string>SF-Pro-Display-Regular.ttf</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+	</array>
 </dict>
 </plist>

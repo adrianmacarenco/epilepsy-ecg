@@ -20,9 +20,9 @@ public struct BluetoothClient {
     public var stopScanningDevices: () -> ()
     public var getDevice:(DeviceNameSerial) -> DeviceWrapper?
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
-    public var discoveredPeripheralsStream: () -> AsyncStream<CBPeripheral>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
+    public var subscribeToEcg: (DeviceWrapper) -> ()
     public var ecgPacketsStream: () -> AsyncStream<MovesenseEcg>
     
     public init(
@@ -31,9 +31,9 @@ public struct BluetoothClient {
         stopScanningDevices: @escaping () -> (),
         getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
-        discoveredPeripheralsStream: @escaping () -> AsyncStream<CBPeripheral>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
+        subscribeToEcg: @escaping (DeviceWrapper) -> (),
         ecgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
         self.getBatteryLevel = getBatteryLevel
@@ -41,9 +41,9 @@ public struct BluetoothClient {
         self.getDevice = getDevice
         self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
-        self.discoveredPeripheralsStream = discoveredPeripheralsStream
         self.connectToDevice = connectToDevice
         self.disconnectDevice = disconnectDevice
+        self.subscribeToEcg = subscribeToEcg
         self.ecgPacketsStream = ecgPacketsStream
     }
 }
@@ -58,9 +58,9 @@ extension BluetoothClient: DependencyKey {
             stopScanningDevices: bluetoothManager.stopScanningDevices,
             getDevice: { bluetoothManager.getDevice(with: $0)},
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
-            discoveredPeripheralsStream: { bluetoothManager.peripheralStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
+            subscribeToEcg: bluetoothManager.subscribeToEcg(_:),
             ecgPacketsStream: { bluetoothManager.ecgPacketsStream }
         )
     }
