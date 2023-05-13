@@ -10,14 +10,17 @@ import Model
 
 extension PersistenceClient {
     public static let noop = Self(
-        deviceNameSerial: .noop
+        deviceNameSerial: .noop,
+        deviceConfigurations: .noop
     )
 
     public static let failing = Self(
-        deviceNameSerial: .failing
+        deviceNameSerial: .failing,
+        deviceConfigurations: .failing
     )
 
     public static let mock = Self(
-        deviceNameSerial: .init(load: { .init(localName: "MockedName", serial: "MockedSerial") }, save: { _ in })
+        deviceNameSerial: .init(load: { .init(localName: "MockedName", serial: "MockedSerial") }, save: { _ in }),
+        deviceConfigurations: .init(load: { .init()}, save: { _ in })
     )
 }

@@ -123,7 +123,7 @@ public class DashboardViewModel: ObservableObject {
             connectedDevices.append(connectedDevice)
             bluetoothClient.stopScanningDevices()
             try await clock.sleep(for: .seconds(3))
-            bluetoothClient.subscribeToEcg(connectedDevice)
+            bluetoothClient.subscribeToEcg(connectedDevice, 128)
             // Start ECG to show the preview
         }
     }

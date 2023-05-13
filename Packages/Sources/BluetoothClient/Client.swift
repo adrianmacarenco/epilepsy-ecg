@@ -22,7 +22,7 @@ public struct BluetoothClient {
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
-    public var subscribeToEcg: (DeviceWrapper) -> ()
+    public var subscribeToEcg: (DeviceWrapper, Int) -> ()
     public var ecgPacketsStream: () -> AsyncStream<MovesenseEcg>
     
     public init(
@@ -33,7 +33,7 @@ public struct BluetoothClient {
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
-        subscribeToEcg: @escaping (DeviceWrapper) -> (),
+        subscribeToEcg: @escaping (DeviceWrapper, Int) -> (),
         ecgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
         self.getBatteryLevel = getBatteryLevel
@@ -60,7 +60,7 @@ extension BluetoothClient: DependencyKey {
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
-            subscribeToEcg: bluetoothManager.subscribeToEcg(_:),
+            subscribeToEcg: { device, freq in bluetoothManager.subscribeToEcg(device, frequency: freq) },
             ecgPacketsStream: { bluetoothManager.ecgPacketsStream }
         )
     }

@@ -16,7 +16,7 @@ public class BluetoothManager: NSObject {
     private var connectingContinuation: CheckedContinuation<DeviceWrapper, Error>!
     private var disconnectingContinuation: CheckedContinuation<DeviceWrapper, Error>?
 
-    var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation? 
+    var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation?
     var ecgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation?
     @Dependency (\.continuousClock) var clock
 
@@ -85,8 +85,8 @@ public extension BluetoothManager {
         }
     }
     
-    func subscribeToEcg(_ device: DeviceWrapper) {
-        let request = MovesenseRequest(resourceType: .ecg, method: .subscribe, parameters: [MovesenseRequestParameter.sampleRate(128)])
+    func subscribeToEcg(_ device: DeviceWrapper, frequency: Int) {
+        let request = MovesenseRequest(resourceType: .ecg, method: .subscribe, parameters: [MovesenseRequestParameter.sampleRate(UInt(frequency))])
         movesenseOperation = device.movesenseDevice.sendRequest(request, observer: self)
     }
     

@@ -10,7 +10,8 @@ import Foundation
 extension PersistenceClient {
     public static func live(keyPrefix: String) -> Self {
         .init(
-            deviceNameSerial:.live(key: keyPrefix + ".savedConnectedNameSerialDevice")
+            deviceNameSerial:.live(key: keyPrefix + ".savedConnectedNameSerialDevice"),
+            deviceConfigurations: .live(key: keyPrefix + ".savedConnectedDeviceConfigurations")
         )
     }
 }
