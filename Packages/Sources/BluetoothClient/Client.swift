@@ -14,7 +14,7 @@ import MovesenseApi
 import Model
 
 public struct BluetoothClient {
-    public var getBatteryLevel: () async -> Int
+    public var getDeviceBattery: (DeviceWrapper) async throws -> Int
     // TODO: Modify scanDevices and stopScanningDevices to async
     public var scanDevices: () -> ()
     public var stopScanningDevices: () -> ()
@@ -26,7 +26,7 @@ public struct BluetoothClient {
     public var ecgPacketsStream: () -> AsyncStream<MovesenseEcg>
     
     public init(
-        getBatteryLevel: @escaping () -> Int,
+        getDeviceBattery: @escaping (DeviceWrapper) async throws -> Int,
         scanDevices: @escaping () -> (),
         stopScanningDevices: @escaping () -> (),
         getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
@@ -36,7 +36,7 @@ public struct BluetoothClient {
         subscribeToEcg: @escaping (DeviceWrapper, Int) -> (),
         ecgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
-        self.getBatteryLevel = getBatteryLevel
+        self.getDeviceBattery = getDeviceBattery
         self.scanDevices = scanDevices
         self.getDevice = getDevice
         self.stopScanningDevices = stopScanningDevices
@@ -53,7 +53,7 @@ extension BluetoothClient: DependencyKey {
         let bluetoothManager = BluetoothManager()
         
         return .init(
-            getBatteryLevel: { return 5 },
+            getDeviceBattery: { try await bluetoothManager.getDeviceBattery($0) },
             scanDevices: bluetoothManager.scanAvailableDevices,
             stopScanningDevices: bluetoothManager.stopScanningDevices,
             getDevice: { bluetoothManager.getDevice(with: $0)},

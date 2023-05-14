@@ -28,12 +28,17 @@ public class DashboardViewModel: ObservableObject {
     @Published var previousDevices: IdentifiedArrayOf<DeviceNameSerial> = []
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var connectedDevices: IdentifiedArrayOf<DeviceWrapper> = []
+    @Published public var adjustableInterval: Double = 4
+    @Published public var chartColor: Color = .pink
+
 //    @Published var ecgData: [Int] = Array(repeating: 0.0, count: 512)
 
     @Dependency(\.persistenceClient) var persistenceClient
     @Dependency(\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
-    
+    public var shownInterval: Int {
+        Int(adjustableInterval)
+    }
     let frequency = 128
     let secondRate = 8
     @Published var samples: [Double] = Array(repeating: 0.0, count: 512)
@@ -174,6 +179,7 @@ public struct DashboardView: View {
                 HeartBeat(
                     vm: .init(
                         data: vm.samples,
+                        chartColor: vm.chartColor,
                         isOverview: false,
                         frequency: vm.frequency
                     ))
@@ -187,6 +193,16 @@ public struct DashboardView: View {
                 .background(Color.white)
                 .cornerRadius(20)
                 .padding(.horizontal, 16)
+            Text("Interval: \(vm.shownInterval, specifier: "%d")")
+            ColorPicker("Color Picker", selection: $vm.chartColor)
+
+            Slider(value: $vm.adjustableInterval, in: 4...10) {
+                Text("Interval")
+            } minimumValueLabel: {
+                Text("4")
+            } maximumValueLabel: {
+                Text("10")
+            }
             Spacer()
             Button("Add my device", action: vm.addDeviceButtonTapped)
                 .buttonStyle(MyButtonStyle.init(style: .primary))

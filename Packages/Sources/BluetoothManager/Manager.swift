@@ -26,8 +26,7 @@ public class BluetoothManager: NSObject {
         }}()
     
     public lazy var ecgPacketsStream: AsyncStream<MovesenseEcg> = {
-        
-        AsyncStream { cont in
+        .init { cont in
             self.ecgPacketContinuation = cont
         }}()
     
@@ -39,7 +38,7 @@ public class BluetoothManager: NSObject {
     }
 }
 
-//MARK: Public Interface
+//MARK: - Public Interface -
 public extension BluetoothManager {
     func scanAvailableDevices() {
         Movesense.api.startScan()
@@ -86,18 +85,38 @@ public extension BluetoothManager {
     }
     
     func subscribeToEcg(_ device: DeviceWrapper, frequency: Int) {
-        let request = MovesenseRequest(resourceType: .ecg, method: .subscribe, parameters: [MovesenseRequestParameter.sampleRate(UInt(frequency))])
+        let request = MovesenseRequest(
+            resourceType: .ecg,
+            method: .subscribe,
+            parameters: [MovesenseRequestParameter.sampleRate(UInt(frequency))]
+        )
         movesenseOperation = device.movesenseDevice.sendRequest(request, observer: self)
     }
     
-    func ecgStream() -> AsyncStream<MovesenseEcg> {
-        .init { cont in
-            ecgPacketContinuation = cont
-        }
+    func getDeviceBattery(_ device: DeviceWrapper) async throws -> Int {
+        
+        return try await withCheckedThrowingContinuation({ cont in
+            let request = MovesenseRequest(
+                resourceType: .systemEnergy,
+                method: MovesenseMethod.get,
+                parameters: nil
+            )
+            Movesense.api.sendRequestForDevice(
+                device.movesenseDevice,
+                request: request) { operationEvent in
+                    guard case let MovesenseObserverEventOperation.operationResponse(operationResponse) = operationEvent,
+                          case let MovesenseResponse.systemEnergy(_, _, systemEnergy) = operationResponse else {
+                        cont.resume(throwing: BluetoothError.failedToGetDeviceEnergy)
+                        return
+                    }
+                    print("⚡️ \(systemEnergy)")
+                    cont.resume(returning: Int(systemEnergy.percentage))
+                }
+        })
     }
 }
 
-//MARK: MoverSenseAPI
+//MARK: - MoverSenseAPI -
 extension BluetoothManager: Observer {
     public func handleEvent(_ event: ObserverEvent) {
         switch event {
@@ -200,6 +219,7 @@ extension BluetoothManager: Observer {
 
 
 enum BluetoothError: Error {
-    case  failedToConnect
+    case failedToConnect
     case failedToConnectToGivenDevice
+    case failedToGetDeviceEnergy
 }

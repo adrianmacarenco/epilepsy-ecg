@@ -64,7 +64,7 @@ public class HeartBeatViewModel: ObservableObject {
     @Published public var data: [Double]
     @Published public var lineWidth: Double
     @Published public var interpolationMethod: ChartInterpolationMethod = .cardinal
-    @Published public var chartColor: Color = .pink
+    public var chartColor: Color
     @Published public var adjustableInterval: Double
     public var isOverview: Bool
     public var frequency: Int
@@ -191,7 +191,7 @@ public struct HeartBeat: View {
                 }
             }
         }
-        .chartYScale(domain: -3000...3000)
+        .chartYScale(domain: -1500...4500)
         .chartYAxis {
             AxisMarks(values: .automatic(desiredCount: 14)) { value in
                 AxisGridLine(stroke: .init(lineWidth: 1))
@@ -229,7 +229,7 @@ public struct HeartBeat: View {
 //                ForEach(ChartInterpolationMethod.allCases) { Text($0.mode.description).tag($0) }
 //            }
             
-            ColorPicker("Color Picker", selection: $vm.chartColor)
+//            ColorPicker("Color Picker", selection: $vm.chartColor)
         }
     }
 }

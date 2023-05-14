@@ -28,6 +28,10 @@ let package = Package(
             targets: ["ECG"]
         ),
         .library(
+            name: "Localizations",
+            targets: ["Localizations"]
+        ),
+        .library(
             name: "Model",
             targets: ["Model"]
         ),
@@ -112,9 +116,13 @@ let package = Package(
             dependencies: []
         ),
         .target(
+            name: "Localizations",
+            dependencies: []
+        ),
+        .target(
             name: "Model",
             dependencies: [
-                .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
             ]
         ),
         .target(

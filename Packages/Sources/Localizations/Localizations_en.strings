@@ -1,0 +1,10 @@
+/* 
+  Localizable.strings
+  
+
+  Created by Adrian Macarenco on 13/05/2023.
+  
+*/
+// MARK: - App Language
+"appLanguage" = "en"
+
