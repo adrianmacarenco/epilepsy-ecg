@@ -10,6 +10,7 @@ import SwiftUI
 import Combine
 import Charts
 import StylePackage
+import Model
 
 public enum Constants {
     static let previewChartHeight: CGFloat = 100
@@ -32,25 +33,28 @@ public enum HealthData {
 
 public struct EcgViewModel {
     public var data: [Double]
-    public var lineWidth: Double
-    public var chartColor: Color
-    public var timeInterval: Double
+    public var configuration: EcgViewConfiguration {
+        didSet {
+            configurationDidChange(configuration)
+        }
+    }
+    
+    public var configurationDidChange: (EcgViewConfiguration) -> ()
     
     public init(
         data: [Double] = Array(repeating: 0.0, count: 512),
         lineWidth: Double = 1.0,
-        interpolationMethod: InterpolationMethod = .cardinal,
         chartColor: Color = .pink,
-        timeInterval: Double = 4
+        timeInterval: Double = 4,
+        configurationDidChange: @escaping(EcgViewConfiguration) -> () = { _ in}
     ) {
         self.data = data
-        self.lineWidth = lineWidth
-        self.chartColor = chartColor
-        self.timeInterval = timeInterval
+        self.configuration = .init(lineWidth: lineWidth, chartColor: chartColor, timeInterval: timeInterval)
+        self.configurationDidChange = configurationDidChange
     }
     
     var desiredInterval: Int {
-        Int(timeInterval)
+        Int(configuration.timeInterval)
     }
 }
 
@@ -69,7 +73,7 @@ public struct EcgView: View {
     public var body: some View {
         VStack {
             HStack(alignment: .bottom) {
-                Text("ECG Preview, desired interval: \(Int(stateModel.timeInterval).description)")
+                Text("ECG Preview, desired interval: \(Int(stateModel.configuration.timeInterval).description)")
                     .font(.headline3)
 
                 Spacer()
@@ -86,10 +90,10 @@ public struct EcgView: View {
                         x: .value("Seconds", computeTime(index)),
                         y: .value("Unit", stateModel.data[index])
                     )
-                    .lineStyle(StrokeStyle(lineWidth: stateModel.lineWidth))
-                    .foregroundStyle(stateModel.chartColor)
+                    .lineStyle(StrokeStyle(lineWidth: stateModel.configuration.lineWidth))
+                    .foregroundStyle(stateModel.configuration.chartColor)
                     .interpolationMethod(.cardinal)
-                    .accessibilityLabel("\(stateModel.timeInterval)s")
+                    .accessibilityLabel("\(stateModel.configuration.timeInterval)s")
                     .accessibilityValue("\(stateModel.data[index]) mV")
                     .accessibilityHidden(false)
                 }

@@ -19,6 +19,7 @@ import Charts
 import SwiftUICharts
 import ECG
 import ECG_Settings
+import Combine
 
 public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
@@ -35,22 +36,24 @@ public class DashboardViewModel: ObservableObject {
     @Dependency(\.persistenceClient) var persistenceClient
     @Dependency(\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
+    var cancellable: AnyCancellable?
     
     let frequency = 128
     let previewInterval = 4
     var index = 0
     var previewIntervalSamplesNr: Int {
-        frequency  * previewInterval
+        frequency * previewInterval
     }
 
     var mockedData = ecgDataValues.flatMap { $0 }
+    
     public init() {}
     
     func onAppear() {
-//        if let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load(),
-//           let foundDevice = bluetoothClient.getDevice(savedDeviceNameSerial) {
-//            print("🔍 \(foundDevice)")
-//        }
+
+        if let ecgConfig = persistenceClient.ecgViewConfiguration.load() {
+            ecgViewModel.configuration = ecgConfig
+        }
         if let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() {
             //Display the previous device here
             previousDevices.append(savedDeviceNameSerial)
@@ -145,7 +148,8 @@ public class DashboardViewModel: ObservableObject {
     func ecgViewTapped() {
         route = .ecgSettings( withDependencies(from: self) { .init(
             ecgModel: ecgViewModel,
-            computeTime: computeTime(for:))
+            computeTime: {_ in return 0.0},
+            colorSelected: { _ in })
         })
     }
     
@@ -160,9 +164,13 @@ public class DashboardViewModel: ObservableObject {
     func computeTime(for index: Int) -> Double {
         let elapsedTime = Double(index) / Double(frequency)
             // Calculate the time within the current 4-second interval
-        let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(ecgViewModel.timeInterval))
+        let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(ecgViewModel.configuration.timeInterval))
                 
         return timeValue
+    }
+    
+    func colorSelected(_ newColor: Color) {
+        self.ecgViewModel.configuration.chartColor = newColor
     }
 }
 

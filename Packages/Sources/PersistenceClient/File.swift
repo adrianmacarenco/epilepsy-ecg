@@ -11,7 +11,8 @@ extension PersistenceClient {
     public static func live(keyPrefix: String) -> Self {
         .init(
             deviceNameSerial:.live(key: keyPrefix + ".savedConnectedNameSerialDevice"),
-            deviceConfigurations: .live(key: keyPrefix + ".savedConnectedDeviceConfigurations")
+            deviceConfigurations: .live(key: keyPrefix + ".savedConnectedDeviceConfigurations"),
+            ecgViewConfiguration: .live(key: keyPrefix + ".savedEcgViewConfiguration")
         )
     }
 }

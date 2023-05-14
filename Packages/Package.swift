@@ -119,7 +119,10 @@ let package = Package(
         ),
         .target(
             name: "ECG",
-            dependencies: ["StylePackage"]
+            dependencies: [
+                "Model",
+                "StylePackage"
+            ]
         ),
         .target(
             name: "ECG Settings",

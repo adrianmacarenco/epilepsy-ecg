@@ -13,6 +13,7 @@ import Dependencies
 public struct PersistenceClient {
     public var deviceNameSerial: FileClient<DeviceNameSerial>
     public var deviceConfigurations: FileClient<[DeviceConfiguration]>
+    public var ecgViewConfiguration: FileClient<EcgViewConfiguration>
 }
 
 extension PersistenceClient: TestDependencyKey {
