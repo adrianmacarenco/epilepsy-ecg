@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import Combine
 import Charts
+import StylePackage
 
 public enum Constants {
     static let previewChartHeight: CGFloat = 100
@@ -29,222 +30,118 @@ public enum HealthData {
     ]
 }
 
-public enum ChartInterpolationMethod: Identifiable, CaseIterable {
-    case linear
-    case monotone
-    case catmullRom
-    case cardinal
-    case stepStart
-    case stepCenter
-    case stepEnd
-    
-    public var id: String { mode.description }
-    
-    var mode: InterpolationMethod {
-        switch self {
-        case .linear:
-            return .linear
-        case .monotone:
-            return .monotone
-        case .stepStart:
-            return .stepStart
-        case .stepCenter:
-            return .stepCenter
-        case .stepEnd:
-            return .stepEnd
-        case .catmullRom:
-            return .catmullRom
-        case .cardinal:
-            return .cardinal
-        }
-    }
-}
-
-public class HeartBeatViewModel: ObservableObject {
-    @Published public var data: [Double]
-    @Published public var lineWidth: Double
-    @Published public var interpolationMethod: ChartInterpolationMethod = .cardinal
+public struct EcgViewModel {
+    public var data: [Double]
+    public var lineWidth: Double
     public var chartColor: Color
-    @Published public var adjustableInterval: Double
-    public var isOverview: Bool
-    public var frequency: Int
-    public var shownInterval: Int {
-        Int(adjustableInterval)
-    }
-    private var intervalSetsNumber = 0
-    private var prevIndex = 0.0
+    public var timeInterval: Double
+    
     public init(
-        data: [Double],
+        data: [Double] = Array(repeating: 0.0, count: 512),
         lineWidth: Double = 1.0,
-        interpolationMethod: ChartInterpolationMethod = .cardinal,
+        interpolationMethod: InterpolationMethod = .cardinal,
         chartColor: Color = .pink,
-        isOverview: Bool,
-        frequency: Int,
-        shownInterval: Double = 4
+        timeInterval: Double = 4
     ) {
         self.data = data
         self.lineWidth = lineWidth
-        self.interpolationMethod = interpolationMethod
         self.chartColor = chartColor
-        self.isOverview = isOverview
-        self.frequency = frequency
-        self.adjustableInterval = shownInterval
+        self.timeInterval = timeInterval
     }
     
-    func calculateTime(for index: Double) -> Double {
-//        if index < prevIndex {
-//            intervalSetsNumber += 1
-//            if intervalSetsNumber > 3 {
-//                intervalSetsNumber = 0
-//            }
-//        }
-//        let freqModulus = (index) / Double(frequency * shownInterval) + Double(intervalSetsNumber)
-//        let timeValue = freqModulus.truncatingRemainder(dividingBy: Double(shownInterval))
-        
-        let elapsedTime = index / Double(frequency)
-            // Calculate the time within the current 4-second interval
-            let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(shownInterval))
-        
-//        print(" Index: \(index) value: \(timeValue)")
-        
-        return timeValue
+    var desiredInterval: Int {
+        Int(timeInterval)
     }
 }
 
-public struct HeartBeat: View {
-    @ObservedObject var vm: HeartBeatViewModel
+public struct EcgView: View {
+    @Binding var stateModel: EcgViewModel
+    var computeTime: (Int) -> Double
     
-    public init(vm: HeartBeatViewModel) {
-        self.vm = vm
+    public init(
+        model: Binding<EcgViewModel>,
+        computeTime: @escaping(Int) -> Double
+    ) {
+        self._stateModel = model
+        self.computeTime = computeTime
     }
     
     public var body: some View {
-        if vm.isOverview {
-            chartAndLabels
-        } else {
-            List {
-                Section {
-                    chartAndLabels
+        VStack {
+            HStack(alignment: .bottom) {
+                Text("ECG Preview, desired interval: \(Int(stateModel.timeInterval).description)")
+                    .font(.headline3)
+
+                Spacer()
+                HStack {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(Color.tint1)
+                    Text("68 Average BMP")
+                        .font(.caption1)
                 }
-                customisation
             }
-            .navigationBarTitle("ECG" , displayMode: .inline)
-        }
-    }
-    
-    private var chartAndLabels: some View {
-        VStack(alignment: .leading) {
-            Text("Sinus Rhythm")
-                .font(.system(.title2, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-            Group {
-                Text(Date(), style: .date) +
-                Text(" at ") +
-                Text(Date(), style: .time)
+            Chart {
+                ForEach((0 ..< stateModel.data.count), id: \.self) { index in
+                    LineMark(
+                        x: .value("Seconds", computeTime(index)),
+                        y: .value("Unit", stateModel.data[index])
+                    )
+                    .lineStyle(StrokeStyle(lineWidth: stateModel.lineWidth))
+                    .foregroundStyle(stateModel.chartColor)
+                    .interpolationMethod(.cardinal)
+                    .accessibilityLabel("\(stateModel.timeInterval)s")
+                    .accessibilityValue("\(stateModel.data[index]) mV")
+                    .accessibilityHidden(false)
+                }
             }
-            .foregroundColor(.black)
-            chart
-            HStack {
-                Image(systemName: "heart.fill")
-                    .foregroundColor(.pink)
-                Text("68 BPM Average")
-                    .foregroundColor(.white)
-            }
-        }
-        .background(Color.white)
-        .frame(height: Constants.detailChartHeight)
-    }
-    
-    private var chart: some View {
-        Chart {
-            ForEach((0 ..< vm.data.count), id: \.self) { index in
-                LineMark(
-                    x: .value("Seconds", vm.calculateTime(for: Double(index))),
-                    y: .value("Unit", vm.data[index])
-                )
-                .lineStyle(StrokeStyle(lineWidth: vm.lineWidth))
-                .foregroundStyle(vm.chartColor)
-                .interpolationMethod(vm.interpolationMethod.mode)
-                .accessibilityLabel("\(vm.shownInterval)s")
-                .accessibilityValue("\(vm.data[index]) mV")
-                .accessibilityHidden(vm.isOverview)
-            }
-        }
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: vm.shownInterval)) { value in
-                if let doubleValue = value.as(Double.self),
-                   let intValue = value.as(Int.self) {
-                    if doubleValue - Double(intValue) == 0 {
-                        AxisTick(stroke: .init(lineWidth: 1))
-                            .foregroundStyle(.gray)
-                        AxisValueLabel() {
-                            Text("\(intValue)s")
-                                .foregroundColor(.black)
+            .frame(height: Constants.detailChartHeight)
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: stateModel.desiredInterval)) { value in
+                    if let doubleValue = value.as(Double.self),
+                       let intValue = value.as(Int.self) {
+                        if doubleValue - Double(intValue) == 0 {
+                            AxisTick(stroke: .init(lineWidth: 1))
+                                .foregroundStyle(.gray)
+                            AxisValueLabel() {
+                                Text("\(intValue)s")
+                                    .foregroundColor(.black)
+                            }
+                            AxisGridLine(stroke: .init(lineWidth: 1))
+                                .foregroundStyle(.gray)
+                        } else {
+                            AxisGridLine(stroke: .init(lineWidth: 1))
+                                .foregroundStyle(.gray.opacity(0.25))
                         }
-                        AxisGridLine(stroke: .init(lineWidth: 1))
-                            .foregroundStyle(.gray)
-                    } else {
-                        AxisGridLine(stroke: .init(lineWidth: 1))
-                            .foregroundStyle(.gray.opacity(0.25))
                     }
                 }
             }
-        }
-        .chartYScale(domain: -1500...4500)
-        .chartYAxis {
-            AxisMarks(values: .automatic(desiredCount: 14)) { value in
-                AxisGridLine(stroke: .init(lineWidth: 1))
-                    .foregroundStyle(.gray.opacity(0.25))
-            }
-        }
-        .chartPlotStyle {
-            $0.border(Color.gray)
-        }
-        .accessibilityChartDescriptor(self)
-    }
-    
-    private var customisation: some View {
-        Section {
-            VStack(alignment: .leading) {
-                Text("Line Width: \(vm.lineWidth, specifier: "%.1f")")
-                Slider(value: $vm.lineWidth, in: 1...10) {
-                    Text("Line Width")
-                } minimumValueLabel: {
-                    Text("1")
-                } maximumValueLabel: {
-                    Text("10")
-                }
-                Text("Interval: \(vm.shownInterval, specifier: "%d")")
-                Slider(value: $vm.adjustableInterval, in: 4...10) {
-                    Text("Interval")
-                } minimumValueLabel: {
-                    Text("4")
-                } maximumValueLabel: {
-                    Text("10")
+            .chartYScale(domain: -1500...4500)
+            .chartYAxis {
+                AxisMarks(values: .automatic(desiredCount: 14)) { value in
+                    AxisGridLine(stroke: .init(lineWidth: 1))
+                        .foregroundStyle(.gray.opacity(0.25))
                 }
             }
-            
-//            Picker("Interpolation Method", selection: $interpolationMethod) {
-//                ForEach(ChartInterpolationMethod.allCases) { Text($0.mode.description).tag($0) }
-//            }
-            
-//            ColorPicker("Color Picker", selection: $vm.chartColor)
+            .chartPlotStyle {
+                $0.border(Color.gray)
+            }
+            .accessibilityChartDescriptor(self)
         }
+        
     }
 }
 
 // MARK: - Accessibility
-extension HeartBeat: AXChartDescriptorRepresentable {
+extension EcgView: AXChartDescriptorRepresentable {
     public func makeChartDescriptor() -> AXChartDescriptor {
-        let min = vm.data.min() ?? 0.0
-        let max = vm.data.max() ?? 0.0
+        let min = stateModel.data.min() ?? 0.0
+        let max = stateModel.data.max() ?? 0.0
         
         // Set the units when creating the axes
         // so users can scrub and pause to narrow on a data point
         let xAxis = AXNumericDataAxisDescriptor(
             title: "Time",
-            range: Double(0)...Double(vm.data.count),
+            range: Double(0)...Double(stateModel.data.count),
             gridlinePositions: []
         ) { value in "\(value)s" }
         
@@ -258,7 +155,7 @@ extension HeartBeat: AXChartDescriptorRepresentable {
         let series = AXDataSeriesDescriptor(
             name: "ECG data",
             isContinuous: true,
-            dataPoints: vm.data.enumerated().map {
+            dataPoints: stateModel.data.enumerated().map {
                 .init(x: Double($0), y: $1)
             }
         )
@@ -275,10 +172,10 @@ extension HeartBeat: AXChartDescriptorRepresentable {
 }
 
 // MARK: - Preview
-struct HeartBeat_Previews: PreviewProvider {
-    static var previews: some View {
-        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: true, frequency: 128))
-        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: false, frequency: 128))
-    }
-}
+//struct HeartBeat_Previews: PreviewProvider {
+//    static var previews: some View {
+//        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: true, frequency: 128))
+//        HeartBeat(vm: .init(data: HealthData.ecgSample, isOverview: false, frequency: 128))
+//    }
+//}
 

@@ -28,6 +28,11 @@ let package = Package(
             targets: ["ECG"]
         ),
         .library(
+            name: "ECG Settings",
+            targets: ["ECG Settings"]
+        ),
+
+        .library(
             name: "Localizations",
             targets: ["Localizations"]
         ),
@@ -101,6 +106,7 @@ let package = Package(
             "AddDevice",
             "BluetoothClient",
             "ECG",
+            "ECG Settings",
             "Model",
             "StylePackage",
             "PersistenceClient",
@@ -113,7 +119,19 @@ let package = Package(
         ),
         .target(
             name: "ECG",
-            dependencies: []
+            dependencies: ["StylePackage"]
+        ),
+        .target(
+            name: "ECG Settings",
+            dependencies: [
+                "BluetoothClient",
+                "ECG",
+                "Model",
+                "PersistenceClient",
+                "StylePackage",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
+            ]
         ),
         .target(
             name: "Localizations",

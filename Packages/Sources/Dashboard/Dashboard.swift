@@ -18,31 +18,30 @@ import Model
 import Charts
 import SwiftUICharts
 import ECG
+import ECG_Settings
 
 public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
         case addDevice(AddDeviceViewModel)
+        case ecgSettings(EcgSettingsViewModel)
     }
     
     @Published var route: Destination?
     @Published var previousDevices: IdentifiedArrayOf<DeviceNameSerial> = []
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var connectedDevices: IdentifiedArrayOf<DeviceWrapper> = []
-    @Published public var adjustableInterval: Double = 4
-    @Published public var chartColor: Color = .pink
-
-//    @Published var ecgData: [Int] = Array(repeating: 0.0, count: 512)
-
+    @Published var ecgViewModel: EcgViewModel = .init()
+    
     @Dependency(\.persistenceClient) var persistenceClient
     @Dependency(\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
-    public var shownInterval: Int {
-        Int(adjustableInterval)
-    }
+    
     let frequency = 128
-    let secondRate = 8
-    @Published var samples: [Double] = Array(repeating: 0.0, count: 512)
+    let previewInterval = 4
     var index = 0
+    var previewIntervalSamplesNr: Int {
+        frequency  * previewInterval
+    }
 
     var mockedData = ecgDataValues.flatMap { $0 }
     public init() {}
@@ -93,14 +92,13 @@ public class DashboardViewModel: ObservableObject {
             ecgData.samples.forEach { sample in
                 Task { @MainActor in
 //                    try await clock.sleep(for: .milliseconds(5))
-                    self.samples[index] =  Double(sample)
+                    self.ecgViewModel.data[index] =  Double(sample)
                     index += 1
-                    if index == 500 {
+                    if index ==  previewIntervalSamplesNr {
                         index = 0
-                        samples = Array(repeating: 0.0, count: 512)
+                        ecgViewModel.data = Array(repeating: 0.0, count: 512)
                         
                     }
-//                    self.samples.append(Double(sample))
                 }
 
             }
@@ -144,12 +142,27 @@ public class DashboardViewModel: ObservableObject {
         }
     }
     
+    func ecgViewTapped() {
+        route = .ecgSettings( withDependencies(from: self) { .init(
+            ecgModel: ecgViewModel,
+            computeTime: computeTime(for:))
+        })
+    }
+    
     func isConnectable(deviceSerial: String) -> Bool {
         discoveredDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial } && !connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
     }
     
     func isDisconnectable(deviceSerial: String) -> Bool {
         connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
+    }
+    
+    func computeTime(for index: Int) -> Double {
+        let elapsedTime = Double(index) / Double(frequency)
+            // Calculate the time within the current 4-second interval
+        let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(ecgViewModel.timeInterval))
+                
+        return timeValue
     }
 }
 
@@ -163,81 +176,73 @@ public struct DashboardView: View {
     }
     
     public var body: some View {
-        VStack {
-            ForEach(vm.previousDevices) { deviceSerialName in
-                DeviceCell(
-                    deviceSerialName: deviceSerialName,
-                    connectButtonTapped: { vm.connectButtonTapped(deviceNameSerial: deviceSerialName)},
-                    disconnectButtonTapped: { vm.disconnectButtonTapped(deviceNameSerial: deviceSerialName)},
-                    vm: .init(
-                        isConnectEnabled: vm.isConnectable(deviceSerial: deviceSerialName.serial),
-                        isDisconnectEnabled: vm.isDisconnectable(deviceSerial: deviceSerialName.serial
-                                                             )))
-                .padding(.horizontal, 16)
-            }
+        NavigationStack {
             VStack {
-                HeartBeat(
-                    vm: .init(
-                        data: vm.samples,
-                        chartColor: vm.chartColor,
-                        isOverview: false,
-                        frequency: vm.frequency
-                    ))
-                .background(Color.white)
+                ForEach(vm.previousDevices) { deviceSerialName in
+                    DeviceCell(
+                        deviceSerialName: deviceSerialName,
+                        connectButtonTapped: { vm.connectButtonTapped(deviceNameSerial: deviceSerialName)},
+                        disconnectButtonTapped: { vm.disconnectButtonTapped(deviceNameSerial: deviceSerialName)},
+                        vm: .init(
+                            isConnectEnabled: vm.isConnectable(deviceSerial: deviceSerialName.serial),
+                            isDisconnectEnabled: vm.isDisconnectable(deviceSerial: deviceSerialName.serial
+                                                                    )))
+                    .padding(.horizontal, 16)
+                }
+                VStack {
+                    EcgView(
+                        model: $vm.ecgViewModel,
+                        computeTime: vm.computeTime
+                    )
+                    .background(Color.white)
                     .padding(.all, 16)
-
-//                LineView(data: vm.samples)
-//                    .padding()
-                
-            }
+                    .onTapGesture(perform: vm.ecgViewTapped)
+                    
+                }
                 .background(Color.white)
                 .cornerRadius(20)
                 .padding(.horizontal, 16)
-            Text("Interval: \(vm.shownInterval, specifier: "%d")")
-            ColorPicker("Color Picker", selection: $vm.chartColor)
-
-            Slider(value: $vm.adjustableInterval, in: 4...10) {
-                Text("Interval")
-            } minimumValueLabel: {
-                Text("4")
-            } maximumValueLabel: {
-                Text("10")
+                Spacer()
+                Button("Add my device", action: vm.addDeviceButtonTapped)
+                    .buttonStyle(MyButtonStyle.init(style: .primary))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 58)
+                Divider()
             }
-            Spacer()
-            Button("Add my device", action: vm.addDeviceButtonTapped)
-                .buttonStyle(MyButtonStyle.init(style: .primary))
-                .padding(.horizontal, 16)
-                .padding(.bottom, 58)
-            Divider()
-        }
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
-        .background(Color.background)
-        .onAppear(perform: vm.onAppear)
-        .task { await vm.task() }
-        .sheet(
-            unwrapping: $vm.route,
-            case: /DashboardViewModel.Destination.addDevice
-        ) { $scanDevicesVm in
-            NavigationStack {
-                AddDeviceView(viewModel: scanDevicesVm)
-                    .toolbarBackground(.visible, for: .navigationBar)
-                    .toolbarBackground(.white, for: .navigationBar)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button(action: vm.cancelAddDeviceTapped) {
-                                Text("Cancel")
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+            .background(Color.background)
+            .onAppear(perform: vm.onAppear)
+            .task { await vm.task() }
+            .sheet(
+                unwrapping: $vm.route,
+                case: /DashboardViewModel.Destination.addDevice
+            ) { $scanDevicesVm in
+                NavigationStack {
+                    AddDeviceView(viewModel: scanDevicesVm)
+                        .toolbarBackground(.visible, for: .navigationBar)
+                        .toolbarBackground(.white, for: .navigationBar)
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button(action: vm.cancelAddDeviceTapped) {
+                                    Text("Cancel")
+                                }
                             }
                         }
-                    }
-                    .toolbar {
-                        ToolbarItem(placement: .principal) {
-                            Text("Add device")
-                                .font(.title1)
-                                .foregroundColor(.black)
+                        .toolbar {
+                            ToolbarItem(placement: .principal) {
+                                Text("Add device")
+                                    .font(.title1)
+                                    .foregroundColor(.black)
+                            }
                         }
-                    }
+                }
             }
-            
+            .navigationDestination(
+                unwrapping: self.$vm.route,
+                case: /DashboardViewModel.Destination.ecgSettings
+            ) { $ecgSettingsVm in
+              EcgSettingsView(vm: ecgSettingsVm)
+            }
         }
     }
 }

@@ -41,6 +41,5 @@ public struct HomeTabbarView: View {
                 }
         }
         .tint(.tint1)
-
     }
 }
