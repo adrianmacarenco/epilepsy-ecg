@@ -173,17 +173,6 @@ public struct EcgSettingsView: View {
         .navigationBarTitleDisplayMode(.large)
         .onAppear(perform: vm.onAppear)
         .task { await vm.task() }
-        .sheet(unwrapping: $vm.route, case: /EcgSettingsViewModel.Destination.frequencySelector) { _ in
-            NavigationStack {
-                EcgConfigPickerView(
-                    selectedValue: vm.selectedFrequency,
-                    selectableValues: vm.availableFrequencies,
-                    confirmSelectedValue: { vm.confirmSelection($0) },
-                    cancelSelection: vm.cancelSelection
-                )
-            }
-            .presentationDetents([.fraction(0.3)])
-        }
         .sheet(unwrapping: $vm.route, case: /EcgSettingsViewModel.Destination.intervalSelector) { _ in
             NavigationStack {
                 EcgConfigPickerView(
@@ -192,8 +181,21 @@ public struct EcgSettingsView: View {
                     confirmSelectedValue: { vm.confirmSelection($0) },
                     cancelSelection: vm.cancelSelection
                 )
+                .navigationTitle("Configure ECG interval")
             }
-            .presentationDetents([.fraction(0.3)])
+            .presentationDetents([.fraction(0.35)])
+        }
+        .sheet(unwrapping: $vm.route, case: /EcgSettingsViewModel.Destination.frequencySelector) { _ in
+            NavigationStack {
+                EcgConfigPickerView(
+                    selectedValue: vm.selectedFrequency,
+                    selectableValues: vm.availableFrequencies,
+                    confirmSelectedValue: { vm.confirmSelection($0) },
+                    cancelSelection: vm.cancelSelection
+                )
+                .navigationTitle("Configure ECG frequency")
+            }
+            .presentationDetents([.fraction(0.35)])
         }
     }
 }
@@ -226,6 +228,7 @@ struct EcgConfigPickerView<SelectionValue: Hashable & CustomStringConvertible>: 
                 }
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
