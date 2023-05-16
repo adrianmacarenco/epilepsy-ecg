@@ -33,28 +33,26 @@ public enum HealthData {
 
 public struct EcgViewModel {
     public var data: [Double]
-    public var configuration: EcgViewConfiguration {
+    public var configuration: EcgConfiguration {
         didSet {
             configurationDidChange(configuration)
         }
     }
     
-    public var configurationDidChange: (EcgViewConfiguration) -> ()
+    public var configurationDidChange: (EcgConfiguration) -> ()
     
     public init(
-        data: [Double] = Array(repeating: 0.0, count: 512),
-        lineWidth: Double = 1.0,
-        chartColor: Color = .pink,
-        timeInterval: Double = 4,
-        configurationDidChange: @escaping(EcgViewConfiguration) -> () = { _ in}
+        data: [Double],
+        ecgConfig: EcgConfiguration,
+        configurationDidChange: @escaping(EcgConfiguration) -> () = { _ in}
     ) {
         self.data = data
-        self.configuration = .init(lineWidth: lineWidth, chartColor: chartColor, timeInterval: timeInterval)
+        self.configuration = ecgConfig
         self.configurationDidChange = configurationDidChange
     }
     
     var desiredInterval: Int {
-        Int(configuration.timeInterval)
+        Int(configuration.viewConfiguration.timeInterval)
     }
 }
 
@@ -73,7 +71,7 @@ public struct EcgView: View {
     public var body: some View {
         VStack {
             HStack(alignment: .bottom) {
-                Text("ECG Preview, desired interval: \(Int(stateModel.configuration.timeInterval).description)")
+                Text("ECG Preview, desired interval: \(Int(stateModel.configuration.viewConfiguration.timeInterval).description)")
                     .font(.headline3)
 
                 Spacer()
@@ -90,10 +88,10 @@ public struct EcgView: View {
                         x: .value("Seconds", computeTime(index)),
                         y: .value("Unit", stateModel.data[index])
                     )
-                    .lineStyle(StrokeStyle(lineWidth: stateModel.configuration.lineWidth))
-                    .foregroundStyle(stateModel.configuration.chartColor)
+                    .lineStyle(StrokeStyle(lineWidth: stateModel.configuration.viewConfiguration.lineWidth))
+                    .foregroundStyle(stateModel.configuration.viewConfiguration.chartColor)
                     .interpolationMethod(.cardinal)
-                    .accessibilityLabel("\(stateModel.configuration.timeInterval)s")
+                    .accessibilityLabel("\(stateModel.configuration.viewConfiguration.timeInterval)s")
                     .accessibilityValue("\(stateModel.data[index]) mV")
                     .accessibilityHidden(false)
                 }
@@ -119,7 +117,7 @@ public struct EcgView: View {
                     }
                 }
             }
-            .chartYScale(domain: -1500...4500)
+            .chartYScale(domain: -5000...5000)
             .chartYAxis {
                 AxisMarks(values: .automatic(desiredCount: 14)) { value in
                     AxisGridLine(stroke: .init(lineWidth: 1))

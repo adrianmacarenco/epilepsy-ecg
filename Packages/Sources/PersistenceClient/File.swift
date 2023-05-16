@@ -12,7 +12,7 @@ extension PersistenceClient {
         .init(
             deviceNameSerial:.live(key: keyPrefix + ".savedConnectedNameSerialDevice"),
             deviceConfigurations: .live(key: keyPrefix + ".savedConnectedDeviceConfigurations"),
-            ecgViewConfiguration: .live(key: keyPrefix + ".savedEcgViewConfiguration")
+            ecgConfiguration: .live(key: keyPrefix + ".savedEcgViewConfiguration")
         )
     }
 }

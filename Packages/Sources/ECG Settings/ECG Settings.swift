@@ -25,21 +25,25 @@ public class EcgSettingsViewModel: ObservableObject {
     
     var device: DeviceWrapper?
     @Published var ecgModel: EcgViewModel
-    @Published var selectedFrequency: Int = 128
     @Published var route: Destination?
     
+#warning("Discuss this with ying")
     let availableFrequencies = [64, 128, 256]
     let availableIntervals = Array(stride(from: 4, to: 10, by: 1))
-    var computeTime: (Int) -> Double
-    var colorSelected: (Color) -> ()
     var index = 0
     var cancellable: AnyCancellable?
+    var computeTime: (Int) -> Double
+    var colorSelected: (Color) -> ()
 
     @Dependency(\.persistenceClient) var persistenceClient
     @Dependency(\.bluetoothClient) var bluetoothClient
     
     var shownInterval: Int {
-        Int(ecgModel.configuration.timeInterval)
+        Int(ecgModel.configuration.viewConfiguration.timeInterval)
+    }
+    
+    var selectedFrequency: Int {
+        ecgModel.configuration.frequency
     }
     
     public init(
@@ -53,25 +57,22 @@ public class EcgSettingsViewModel: ObservableObject {
         self.computeTime = computeTime
         self.colorSelected = colorSelected
     }
-    
-    deinit {
-        print("❌")
-    }
-    
+
     func onAppear() {
         ecgModel.configurationDidChange = {[weak self] newConfig in
-            self?.persistenceClient.ecgViewConfiguration.save(newConfig)
+            self?.persistenceClient.ecgConfiguration.save(newConfig)
         }
     }
     
     func task() async {
         
-//        for await ecgData in bluetoothClient.ecgPacketsStream() {
+        for await ecgData in bluetoothClient.settingsEcgPacketsStream() {
+            print("🤠 \(ecgData)")
 //            ecgData.samples.forEach { sample in
 //                self.ecgModel.data[index] = Double(sample)
 //                index += 1
 //            }
-//        }
+        }
     }
     
     func frequencyLabelTapped() {
@@ -89,9 +90,9 @@ public class EcgSettingsViewModel: ObservableObject {
     func confirmSelection(_ selectedValue: Int) {
         switch route {
         case .some(.frequencySelector):
-            print(selectedValue)
+            ecgModel.configuration.frequency = selectedValue
         case .some(.intervalSelector):
-            print(selectedValue)
+            ecgModel.configuration.viewConfiguration.timeInterval = Double(selectedValue)
         default: break
         }
         route = nil
@@ -143,13 +144,13 @@ public struct EcgSettingsView: View {
                     Text("Interval")
                         .font(.title1)
                     Spacer()
-                    Text("\(vm.selectedFrequency) Hz")
+                    Text("\(vm.shownInterval) seconds")
                         .font(.title1)
                         .foregroundColor(.gray)
                 }
                 .contentShape(Rectangle())
                 .onTapGesture(perform: vm.intervalLabelTapped)
-                ColorPicker(selection: $vm.ecgModel.configuration.chartColor) {
+                ColorPicker(selection: $vm.ecgModel.configuration.viewConfiguration.chartColor) {
                     Text("Color")
                         .font(.title1)
                 }
@@ -171,9 +172,7 @@ public struct EcgSettingsView: View {
         .navigationTitle("ECG Settings")
         .navigationBarTitleDisplayMode(.large)
         .onAppear(perform: vm.onAppear)
-        .task {
-            
-        }
+        .task { await vm.task() }
         .sheet(unwrapping: $vm.route, case: /EcgSettingsViewModel.Destination.frequencySelector) { _ in
             NavigationStack {
                 EcgConfigPickerView(
@@ -188,7 +187,7 @@ public struct EcgSettingsView: View {
         .sheet(unwrapping: $vm.route, case: /EcgSettingsViewModel.Destination.intervalSelector) { _ in
             NavigationStack {
                 EcgConfigPickerView(
-                    selectedValue: Int(vm.ecgModel.configuration.timeInterval),
+                    selectedValue: Int(vm.ecgModel.configuration.viewConfiguration.timeInterval),
                     selectableValues: vm.availableIntervals,
                     confirmSelectedValue: { vm.confirmSelection($0) },
                     cancelSelection: vm.cancelSelection

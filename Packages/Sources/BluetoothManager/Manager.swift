@@ -15,22 +15,27 @@ public class BluetoothManager: NSObject {
     
     private var connectingContinuation: CheckedContinuation<DeviceWrapper, Error>!
     private var disconnectingContinuation: CheckedContinuation<DeviceWrapper, Error>?
+    private var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation?
+    private var dashboardEcgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation?
+    private var settingsEcgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation?
 
-    var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation?
-    var ecgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation?
-    @Dependency (\.continuousClock) var clock
-
-    public lazy var discoveredDevicesStream: AsyncStream<DeviceWrapper> = {
+    // Streams
+    public var discoveredDevicesStream: AsyncStream<DeviceWrapper> {
         .init { cont in
             discoveredDeviceContinuation = cont
-        }}()
+        }}
     
-    public lazy var ecgPacketsStream: AsyncStream<MovesenseEcg> = {
+    public var dashboardEcgPacketsStream: AsyncStream<MovesenseEcg> {
         .init { cont in
-            self.ecgPacketContinuation = cont
-        }}()
+            self.dashboardEcgPacketContinuation = cont
+        }}
+    public var settingsEcgPacketsStream: AsyncStream<MovesenseEcg> {
+        .init { cont in
+            self.settingsEcgPacketContinuation = cont
+        }}
     
     private var movesenseOperation: MovesenseOperation?
+    @Dependency (\.continuousClock) var clock
 
     public override init() {
         super.init()
@@ -79,6 +84,7 @@ public extension BluetoothManager {
                 print(error.localizedDescription)
             }
         }
+        
         return try await withCheckedThrowingContinuation { cont in
             disconnectingContinuation = cont
         }
@@ -183,9 +189,10 @@ extension BluetoothManager: Observer {
                 print(acc)
                 
             case .ecg(_, let ecg):
-                print("❤️ \(ecg)")
-                ecgPacketContinuation?.yield(ecg)
-                
+//                print("❤️ \(ecg)")
+                dashboardEcgPacketContinuation?.yield(ecg)
+                settingsEcgPacketContinuation?.yield(ecg)
+
             case .gyroscope(_, let gyro):
                 print(gyro)
                 

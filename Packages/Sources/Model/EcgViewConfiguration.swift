@@ -9,6 +9,19 @@ import Foundation
 import SwiftUI
 import Charts
 
+public struct EcgConfiguration: Codable {
+    public var viewConfiguration: EcgViewConfiguration
+    public var frequency: Int
+    
+    public init(
+        viewConfiguration: EcgViewConfiguration,
+        frequency: Int
+    ) {
+        self.viewConfiguration = viewConfiguration
+        self.frequency = frequency
+    }
+}
+
 public struct EcgViewConfiguration: Codable {
     public var lineWidth: Double
     public var chartColor: Color
@@ -72,3 +85,13 @@ extension Color: Codable {
     }
 }
 
+public extension EcgConfiguration {
+    static var defaultValue: Self = .init(
+        viewConfiguration: .init(
+            lineWidth: 1.0,
+            chartColor: .pink,
+            timeInterval: 4.0
+        ),
+        frequency: 128
+    )
+}

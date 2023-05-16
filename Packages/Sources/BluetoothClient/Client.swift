@@ -23,8 +23,9 @@ public struct BluetoothClient {
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var subscribeToEcg: (DeviceWrapper, Int) -> ()
-    public var ecgPacketsStream: () -> AsyncStream<MovesenseEcg>
-    
+    public var dashboardEcgPacketsStream: () -> AsyncStream<MovesenseEcg>
+    public var settingsEcgPacketsStream: () -> AsyncStream<MovesenseEcg>
+
     public init(
         getDeviceBattery: @escaping (DeviceWrapper) async throws -> Int,
         scanDevices: @escaping () -> (),
@@ -34,7 +35,9 @@ public struct BluetoothClient {
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         subscribeToEcg: @escaping (DeviceWrapper, Int) -> (),
-        ecgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
+        dashboardEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>,
+        settingsEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
+
     ) {
         self.getDeviceBattery = getDeviceBattery
         self.scanDevices = scanDevices
@@ -44,7 +47,8 @@ public struct BluetoothClient {
         self.connectToDevice = connectToDevice
         self.disconnectDevice = disconnectDevice
         self.subscribeToEcg = subscribeToEcg
-        self.ecgPacketsStream = ecgPacketsStream
+        self.dashboardEcgPacketsStream = dashboardEcgPacketsStream
+        self.settingsEcgPacketsStream = settingsEcgPacketsStream
     }
 }
 
@@ -61,7 +65,8 @@ extension BluetoothClient: DependencyKey {
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
             subscribeToEcg: { device, freq in bluetoothManager.subscribeToEcg(device, frequency: freq) },
-            ecgPacketsStream: { bluetoothManager.ecgPacketsStream }
+            dashboardEcgPacketsStream: { bluetoothManager.dashboardEcgPacketsStream },
+            settingsEcgPacketsStream: { bluetoothManager.settingsEcgPacketsStream }
         )
     }
 }
