@@ -14,6 +14,6 @@ extension Image {
     public static let checked = Image(decorative: "iconChecked", bundle: .myModule)
     public static let iconProfileTab = Image(decorative: "iconProfileTab", bundle: .myModule)
     public static let iconHomeTab = Image(decorative: "iconHomeTab", bundle: .myModule)
-
-    
+    public static let pillTab = Image(systemName: "pill")
+    public static let pickerIndicator = Image(systemName: "chevron.down")
 }

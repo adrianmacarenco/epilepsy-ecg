@@ -23,16 +23,23 @@ public class EcgSettingsViewModel: ObservableObject {
         case frequencySelector
     }
     
+    public enum EcgChartType: String, CaseIterable, Equatable {
+        case live = "Live"
+        case history = "History"
+    }
+    
     var device: DeviceWrapper?
     @Published var ecgModel: EcgViewModel
     @Published var route: Destination?
+    @Published var ecgChartType: EcgChartType = .live
+    @Published var selectedHistoryOption = 60
     
-#warning("Discuss this with ying")
-    let availableFrequencies = [64, 128, 256]
-    let availableIntervals = Array(stride(from: 4, to: 10, by: 1))
+    
+    let availableFrequencies = [128, 256]
+    let availableIntervals = Array(stride(from: 4, to: 20, by: 1))
+    let availableHistoryOptions = [60, 600, 3600, 86400]
     var index = 0
-    var cancellable: AnyCancellable?
-    var computeTime: (Int) -> Double
+    var computeTime: (Int, Int) -> Double
     var colorSelected: (Color) -> ()
 
     @Dependency(\.persistenceClient) var persistenceClient
@@ -46,16 +53,27 @@ public class EcgSettingsViewModel: ObservableObject {
         ecgModel.configuration.frequency
     }
     
+    var previewIntervalSamplesNr: Int {
+        ecgModel.configuration.frequency * Int(ecgModel.configuration.viewConfiguration.timeInterval)
+    }
+    
     public init(
         device: DeviceWrapper? = nil,
         ecgModel: EcgViewModel,
-        computeTime: @escaping(Int) -> Double,
+        computeTime: @escaping(Int, Int) -> Double,
         colorSelected: @escaping(Color) -> ()
     ) {
         self.device = device
         self.ecgModel = ecgModel
         self.computeTime = computeTime
         self.colorSelected = colorSelected
+        
+        if ecgModel.data.count < self.previewIntervalSamplesNr {
+            let neededDataCount = previewIntervalSamplesNr - ecgModel.data.count
+            let appendingData = Array(repeating: 0.0, count: neededDataCount)
+            self.ecgModel.data.append(contentsOf: appendingData)
+        }
+        
     }
 
     func onAppear() {
@@ -66,12 +84,22 @@ public class EcgSettingsViewModel: ObservableObject {
     
     func task() async {
         
-        for await ecgData in bluetoothClient.settingsEcgPacketsStream() {
-            print("🤠 \(ecgData)")
-//            ecgData.samples.forEach { sample in
-//                self.ecgModel.data[index] = Double(sample)
-//                index += 1
-//            }
+        
+        Task { @MainActor in
+            for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
+//                print("🤑  \(ecgData)")
+
+                ecgData.samples.forEach { sample in
+                    self.ecgModel.data[index] =  Double(sample)
+                    index += 1
+                    if index ==  previewIntervalSamplesNr {
+                        index = 0
+                        ecgModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
+
+                    }
+
+                }
+            }
         }
     }
     
@@ -120,26 +148,43 @@ public struct EcgSettingsView: View {
     public var body: some View {
         List {
             Section {
-                EcgView(
-                    model: $vm.ecgModel,
-                    computeTime: vm.computeTime
-                )
+                VStack(spacing: 16) {
+                    Text("ECG Preview")
+                        .font(.headline3)
+                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+
+                    Picker("", selection: $vm.ecgChartType) {
+                        ForEach(EcgSettingsViewModel.EcgChartType.allCases, id: \.self) { type in
+                            VStack {
+                                Text(type.rawValue)
+                                    .font(.title1)
+                            }
+                            
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    Divider()
+                    switch vm.ecgChartType {
+                    case .live:
+
+                        EcgView(
+                            model: $vm.ecgModel,
+                            computeTime: vm.computeTime
+                        )
+                    case .history:
+                        HistorySegmentedController(
+                            selectedVale: $vm.selectedHistoryOption,
+                            values: vm.availableHistoryOptions
+                        )
+                        EcgView(
+                            model: $vm.ecgModel,
+                            computeTime: vm.computeTime
+                        )
+                    }
+                }
             }
             
             Section {
-//                VStack(alignment: .leading) {
-//                    Text("Interval: \(vm.shownInterval, specifier: "%d")")
-//                        .font(.title1)
-//                    Slider(value: $vm.ecgModel.configuration.timeInterval, in: 4...10) {
-//                        Text("Interval")
-//                    } minimumValueLabel: {
-//                        Text("4")
-//                    } maximumValueLabel: {
-//                        Text("10")
-//                    }
-//                    .font(.title1)
-//
-//                }
                 HStack {
                     Text("Interval")
                         .font(.title1)
@@ -147,9 +192,12 @@ public struct EcgSettingsView: View {
                     Text("\(vm.shownInterval) seconds")
                         .font(.title1)
                         .foregroundColor(.gray)
+                    Image.pickerIndicator
+                        .foregroundColor(.gray)
                 }
                 .contentShape(Rectangle())
                 .onTapGesture(perform: vm.intervalLabelTapped)
+                
                 ColorPicker(selection: $vm.ecgModel.configuration.viewConfiguration.chartColor) {
                     Text("Color")
                         .font(.title1)
@@ -161,6 +209,8 @@ public struct EcgSettingsView: View {
                     Spacer()
                     Text("\(vm.selectedFrequency) Hz")
                         .font(.title1)
+                        .foregroundColor(.gray)
+                    Image.pickerIndicator
                         .foregroundColor(.gray)
                 }
                 .contentShape(Rectangle())
@@ -198,6 +248,8 @@ public struct EcgSettingsView: View {
             .presentationDetents([.fraction(0.35)])
         }
     }
+    
+    
 }
 
 
@@ -250,5 +302,61 @@ public struct BlankView: View {
     
     public var body: some View {
         Text(vm.textValue)
+    }
+}
+
+
+struct HistorySegmentedController: View  {
+    @Binding var selectedValue: Int
+    @State var values: [Int]
+    
+    init(
+        selectedVale: Binding<Int>,
+        values: [Int]
+    ) {
+        self._selectedValue = selectedVale
+        self.values = values
+    }
+    
+    var body: some View {
+        HStack {
+            ForEach(0..<values.count, id: \.self) { index in
+                VStack {
+                    Text(values[index].formatTime())
+                        .font(.caption1)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(minHeight: 40)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
+                    .background( values[index] == selectedValue ? Color.tint1 : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .foregroundColor(values[index] == selectedValue ? .white : . gray)
+                    .onTapGesture {
+                        withAnimation {
+                            selectedValue = values[index]
+
+                        }
+                    }
+            }
+        }
+    }
+    
+    
+}
+
+extension Int {
+    func formatTime() -> String {
+        let minutes = self / 60
+        let hours = minutes / 60
+        let days = hours / 24
+        
+        if days > 0 {
+            return "\(days) day\(days > 1 ? "s" : "")"
+        } else if hours > 0 {
+            return "\(hours) hour\(hours > 1 ? "s" : "")"
+        } else {
+            return "\(minutes) minute\(minutes > 1 ? "s" : "")"
+        }
     }
 }

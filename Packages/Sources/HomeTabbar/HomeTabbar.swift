@@ -31,14 +31,23 @@ public struct HomeTabbarView: View {
             ProfileView()
                 .tabItem {
                     VStack {
+                        Image.pillTab
+                            .font(.largeTitle)
+                    }.foregroundColor(Color.tint1)
+
+                }
+            ProfileView()
+                .tabItem {
+                    VStack {
                         Image.iconProfileTab
                             .renderingMode(.template)
                         Text("Profile")
                             .foregroundColor(.red)
 
                     }
-
                 }
+                .toolbarBackground(.visible, for: .tabBar)
+                .toolbarBackground(Color.background, for: .tabBar)
         }
         .tint(.tint1)
     }

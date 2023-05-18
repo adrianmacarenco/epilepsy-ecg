@@ -25,14 +25,14 @@ public class BluetoothManager: NSObject {
             discoveredDeviceContinuation = cont
         }}
     
-    public var dashboardEcgPacketsStream: AsyncStream<MovesenseEcg> {
+    public lazy var dashboardEcgPacketsStream: AsyncStream<MovesenseEcg> = {
         .init { cont in
-            self.dashboardEcgPacketContinuation = cont
-        }}
-    public var settingsEcgPacketsStream: AsyncStream<MovesenseEcg> {
+            dashboardEcgPacketContinuation = cont
+        }} ()
+    public lazy var settingsEcgPacketsStream: AsyncStream<MovesenseEcg> = {
         .init { cont in
-            self.settingsEcgPacketContinuation = cont
-        }}
+            settingsEcgPacketContinuation = cont
+        }}()
     
     private var movesenseOperation: MovesenseOperation?
     @Dependency (\.continuousClock) var clock
@@ -119,6 +119,10 @@ public extension BluetoothManager {
                     cont.resume(returning: Int(systemEnergy.percentage))
                 }
         })
+    }
+    
+    func getDiscoveredDevices() -> [DeviceWrapper] {
+        Movesense.api.getDevices().map(DeviceWrapper.init(movesenseDevice:))
     }
 }
 

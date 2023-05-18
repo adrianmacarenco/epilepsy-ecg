@@ -34,11 +34,12 @@ public class DashboardViewModel: ObservableObject {
     @Published var ecgViewModel: EcgViewModel = .init(data: [], ecgConfig: .defaultValue)
     
     var index = 0
+    let previewInterval = 4
     var previewIntervalSamplesNr: Int {
-        ecgViewModel.configuration.frequency * Int(ecgViewModel.configuration.viewConfiguration.timeInterval)
+        ecgViewModel.configuration.frequency * Int(previewInterval)
     }
     var hasSubscribedToEcg = false
-    var ecgTask: Task<(), Never>?
+    //    var ecgTask: Task<(), Never>?
     
     @Dependency(\.persistenceClient) var persistenceClient
     @Dependency(\.bluetoothClient) var bluetoothClient
@@ -48,36 +49,16 @@ public class DashboardViewModel: ObservableObject {
     public init() {}
     
     func onAppear() {
-
+        
         if let ecgConfig = persistenceClient.ecgConfiguration.load() {
             ecgViewModel.configuration = ecgConfig
         }
+        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
         if let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() {
             //Display the previous device here
             previousDevices.append(savedDeviceNameSerial)
             bluetoothClient.scanDevices()
         }
-//
-//        let sampleCountPerPacket = self.frequency / self.secondRate
-//
-//        Task {
-//            for await _ in clock.timer(interval: .milliseconds(frequency))  {
-//                Task { @MainActor [weak self] in
-//                    guard let self = self else { return }
-//                    try await self.clock.sleep(for: .milliseconds(sampleCountPerPacket))
-//                    if self.index + sampleCountPerPacket >= self.samples.count {
-//                        self.index = 0
-//                    }
-//                    let subset = Array(self.mockedData[index ..< self.index + sampleCountPerPacket])
-//                    for (subsetIndex, value) in zip(subset.indices, subset) {
-//                        self.samples[index + subsetIndex] = Double(value)
-//                    }
-//
-//                    self.index += sampleCountPerPacket
-//                }
-//            }
-//        }
-        
     }
     
     @MainActor
@@ -87,26 +68,39 @@ public class DashboardViewModel: ObservableObject {
                 discoveredDevices.append(device)
             }
         }
+        Task {
+            try await clock.sleep(for: .seconds(5))
+            if discoveredDevices.isEmpty {
+                let discoveredDevices = bluetoothClient.getDiscoveredDevices()
+                print("👹 \(discoveredDevices)")
+                discoveredDevices.forEach {
+                    self.discoveredDevices.append($0)
+                }
+            }
+            
+        }
         subscribeToEcgStream()
         
     }
     
     func subscribeToEcgStream() {
-        guard ecgTask == nil else { return }
-
-        ecgTask = Task { @MainActor in
+        guard !hasSubscribedToEcg else { return }
+        hasSubscribedToEcg = false
+        Task { @MainActor in
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
                 ecgData.samples.forEach { sample in
-                    Task { @MainActor in
-                        self.ecgViewModel.data[index] =  Double(sample)
-                        index += 1
-                        if index ==  previewIntervalSamplesNr {
-                            index = 0
-                            ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
-                            
-                        }
+                    var finalSample = Double(sample)
+                    if sample < ecgViewModel.configuration.viewConfiguration.minValue {
+                        finalSample = Double(ecgViewModel.configuration.viewConfiguration.minValue)
+                    } else if sample > ecgViewModel.configuration.viewConfiguration.maxValue {
+                        finalSample = Double(ecgViewModel.configuration.viewConfiguration.maxValue)
                     }
-
+                    self.ecgViewModel.data[index] =  finalSample
+                    index += 1
+                    if index ==  previewIntervalSamplesNr {
+                        index = 0
+                        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
+                    }
                 }
             }
         }
@@ -149,9 +143,15 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func ecgViewTapped() {
+        //        var settingsEcgModel = ecgViewModel
+        //        if let savedViewConfig = persistenceClient.ecgConfiguration.load() {
+        //            settingsEcgModel.configuration.viewConfiguration.timeInterval = savedViewConfig.viewConfiguration.timeInterval
+        //        }
         route = .ecgSettings( withDependencies(from: self) { .init(
             ecgModel: ecgViewModel,
-            computeTime: computeTime(for:),
+            computeTime: { [weak self] localIndex, localInterval  in
+                self?.computeTime(for: localIndex, interval: localInterval) ?? 0.0
+            },
             colorSelected: { _ in })
         })
     }
@@ -164,11 +164,11 @@ public class DashboardViewModel: ObservableObject {
         connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
     }
     
-    func computeTime(for index: Int) -> Double {
+    func computeTime(for index: Int, interval: Int) -> Double {
         let elapsedTime = Double(index) / Double(ecgViewModel.configuration.frequency)
-            // Calculate the time within the current 4-second interval
-        let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(ecgViewModel.configuration.viewConfiguration.timeInterval))
-                
+        // Calculate the time within the current 4-second interval
+        let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(interval))
+        
         return timeValue
     }
     
@@ -201,6 +201,12 @@ public struct DashboardView: View {
                     .padding(.horizontal, 16)
                 }
                 VStack {
+                    Text("ECG Preview")
+                        .font(.headline3)
+                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 16)
+                        .padding(.horizontal, 16)
+                    
                     EcgView(
                         model: $vm.ecgViewModel,
                         computeTime: vm.computeTime
@@ -252,7 +258,7 @@ public struct DashboardView: View {
                 unwrapping: self.$vm.route,
                 case: /DashboardViewModel.Destination.ecgSettings
             ) { $ecgSettingsVm in
-              EcgSettingsView(vm: ecgSettingsVm)
+                EcgSettingsView(vm: ecgSettingsVm)
             }
         }
     }
@@ -273,7 +279,7 @@ struct DeviceCell: View {
     let connectButtonTapped: () -> ()
     let disconnectButtonTapped: () -> ()
     @ObservedObject var vm: DeviceCellViewModel
-
+    
     var body: some View {
         VStack {
             Text(deviceSerialName.localName)
@@ -282,13 +288,13 @@ struct DeviceCell: View {
                 .padding(.all, 16)
             HStack {
                 Button("Connect", action: connectButtonTapped)
-                .padding(.all, 16)
-                .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isConnectEnabled))
-
+                    .padding(.all, 16)
+                    .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isConnectEnabled))
+                
                 Spacer()
                 Button("Disconnect", action: disconnectButtonTapped)
-                .padding(.all, 16)
-                .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isDisconnectEnabled))
+                    .padding(.all, 16)
+                    .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isDisconnectEnabled))
             }
         }
         .background(Color.white)

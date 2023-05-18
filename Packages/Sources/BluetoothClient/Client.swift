@@ -19,6 +19,7 @@ public struct BluetoothClient {
     public var scanDevices: () -> ()
     public var stopScanningDevices: () -> ()
     public var getDevice:(DeviceNameSerial) -> DeviceWrapper?
+    public var getDiscoveredDevices: () -> [DeviceWrapper]
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
@@ -31,17 +32,18 @@ public struct BluetoothClient {
         scanDevices: @escaping () -> (),
         stopScanningDevices: @escaping () -> (),
         getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
+        getDiscoveredDevices: @escaping() -> [DeviceWrapper] ,
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         subscribeToEcg: @escaping (DeviceWrapper, Int) -> (),
         dashboardEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>,
         settingsEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
-
     ) {
         self.getDeviceBattery = getDeviceBattery
         self.scanDevices = scanDevices
         self.getDevice = getDevice
+        self.getDiscoveredDevices = getDiscoveredDevices
         self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
         self.connectToDevice = connectToDevice
@@ -60,7 +62,8 @@ extension BluetoothClient: DependencyKey {
             getDeviceBattery: { try await bluetoothManager.getDeviceBattery($0) },
             scanDevices: bluetoothManager.scanAvailableDevices,
             stopScanningDevices: bluetoothManager.stopScanningDevices,
-            getDevice: { bluetoothManager.getDevice(with: $0)},
+            getDevice: bluetoothManager.getDevice(with: ),
+            getDiscoveredDevices: bluetoothManager.getDiscoveredDevices,
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },

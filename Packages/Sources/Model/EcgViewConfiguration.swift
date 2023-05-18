@@ -26,6 +26,9 @@ public struct EcgViewConfiguration: Codable {
     public var lineWidth: Double
     public var chartColor: Color
     public var timeInterval: Double
+    public var maxValue = 7000
+    public var minValue = -7000
+
     
     public init(
         lineWidth: Double,
