@@ -31,7 +31,13 @@ public class EcgSettingsViewModel: ObservableObject {
     var device: DeviceWrapper?
     @Published var ecgModel: EcgViewModel
     @Published var route: Destination?
-    @Published var ecgChartType: EcgChartType = .live
+    @Published var ecgChartType: EcgChartType = .live {
+        didSet {
+            if ecgChartType == .history {
+                
+            }
+        }
+    }
     @Published var selectedHistoryOption = 60
     
     
@@ -57,6 +63,8 @@ public class EcgSettingsViewModel: ObservableObject {
         ecgModel.configuration.frequency * Int(ecgModel.configuration.viewConfiguration.timeInterval)
     }
     
+    // MARK: - Public interface
+
     public init(
         device: DeviceWrapper? = nil,
         ecgModel: EcgViewModel,
@@ -73,7 +81,6 @@ public class EcgSettingsViewModel: ObservableObject {
             let appendingData = Array(repeating: 0.0, count: neededDataCount)
             self.ecgModel.data.append(contentsOf: appendingData)
         }
-        
     }
 
     func onAppear() {
@@ -103,6 +110,8 @@ public class EcgSettingsViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Actions
+
     func frequencyLabelTapped() {
         route = .frequencySelector
     }
@@ -286,10 +295,6 @@ struct EcgConfigPickerView<SelectionValue: Hashable & CustomStringConvertible>: 
 
 public class BlankViewModel: ObservableObject {
     @Published var textValue = "My blank view"
-    
-    deinit {
-        print("❌")
-    }
 }
 
 

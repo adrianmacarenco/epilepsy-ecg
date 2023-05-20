@@ -24,6 +24,14 @@ let package = Package(
             targets: ["Dashboard"]
         ),
         .library(
+            name: "DBClient",
+            targets: ["DBClient"]
+        ),
+        .library(
+            name: "DBManager",
+            targets: ["DBManager"]
+        ),
+        .library(
             name: "ECG",
             targets: ["ECG"]
         ),
@@ -59,6 +67,10 @@ let package = Package(
         .library(
             name: "StylePackage",
             targets: ["StylePackage"]
+        ),
+        .library(
+            name: "Shared",
+            targets: ["Shared"]
         )
     ],
     dependencies: [
@@ -68,7 +80,8 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swiftui-navigation", from: "0.4.5"),
         .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.3.1"),
         .package(url: "https://github.com/AppPear/ChartView", from: "1.5.3"),
-        .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main")
+        .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main"),
+        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.14.1")
     ],
     targets: [
         .target(
@@ -105,16 +118,36 @@ let package = Package(
             dependencies: [
             "AddDevice",
             "BluetoothClient",
+            "DBClient",
             "ECG",
             "ECG Settings",
             "Model",
+            "Shared",
             "StylePackage",
             "PersistenceClient",
             .product(name: "Clocks", package: "swift-clocks"),
             .product(name: "Dependencies", package: "swift-dependencies"),
             .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
             .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
-            .product(name: "SwiftUICharts", package: "ChartView")
+            .product(name: "SwiftUICharts", package: "ChartView"),
+            .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
+
+            ]
+        ),
+        .target(
+            name: "DBClient",
+            dependencies: [
+                "DBManager",
+                "Model",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "SQLite", package: "SQLite.swift")
+            ]
+        ),
+        .target(
+            name: "DBManager",
+            dependencies: [
+                "Model",
+                .product(name: "SQLite", package: "SQLite.swift")
             ]
         ),
         .target(
@@ -180,6 +213,12 @@ let package = Package(
                 .process("Fonts"),
 //                .copy("Images.xcassets"),
                 .copy("Colors.xcassets")
+            ]
+        ),
+        .target(
+            name: "Shared",
+            dependencies: [
+                
             ]
         ),
         .testTarget(

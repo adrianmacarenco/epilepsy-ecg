@@ -19,7 +19,10 @@ import Charts
 import SwiftUICharts
 import ECG
 import ECG_Settings
+import DBClient
+import Shared
 import Combine
+import MovesenseApi
 
 public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
@@ -39,13 +42,15 @@ public class DashboardViewModel: ObservableObject {
         ecgViewModel.configuration.frequency * Int(previewInterval)
     }
     var hasSubscribedToEcg = false
-    //    var ecgTask: Task<(), Never>?
+    var ecgDataEvents: [(MovesenseEcg, Date)] = []
     
     @Dependency(\.persistenceClient) var persistenceClient
     @Dependency(\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
-    
-    
+    @Dependency (\.dbClient) var dbClient
+
+    // MARK: - Public interface
+
     public init() {}
     
     func onAppear() {
@@ -80,14 +85,16 @@ public class DashboardViewModel: ObservableObject {
             
         }
         subscribeToEcgStream()
-        
     }
     
-    func subscribeToEcgStream() {
+    // MARK: - Private interface
+
+    private func subscribeToEcgStream() {
         guard !hasSubscribedToEcg else { return }
         hasSubscribedToEcg = false
         Task { @MainActor in
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
+                ecgDataEvents.append((ecgData, Date()))
                 ecgData.samples.forEach { sample in
                     var finalSample = Double(sample)
                     if sample < ecgViewModel.configuration.viewConfiguration.minValue {
@@ -106,6 +113,33 @@ public class DashboardViewModel: ObservableObject {
         }
     }
     
+    private func deleteDb() {
+        Task {
+            do {
+                try await dbClient.deleteCurrentDb()
+                print("Db deleted 💀")
+            } catch {
+                print("db couln't be delete \(error)")
+            }
+        }
+    }
+    
+    func saveEcgData() {
+        Task {
+            try await self.clock.sleep(for: .seconds(10))
+            let localData = ecgDataEvents.map { (Date(), $0.0.samples.commaSeparatedString()) }
+            do {
+                try await dbClient.addEcg(localData)
+                print("Data saved ✅")
+                let ecgDtos = try await dbClient.fetchRecentEcgData(3600)
+                print(ecgDtos)
+            } catch {
+                print("🥴 error when saving: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    // MARK: - Actions
     func addDeviceButtonTapped() {
         let addDeviceViewModel = withDependencies(from: self) {
             AddDeviceViewModel()
@@ -128,6 +162,7 @@ public class DashboardViewModel: ObservableObject {
             bluetoothClient.stopScanningDevices()
             try await clock.sleep(for: .seconds(3))
             bluetoothClient.subscribeToEcg(connectedDevice, ecgViewModel.configuration.frequency)
+            saveEcgData()
         }
     }
     
@@ -143,10 +178,6 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func ecgViewTapped() {
-        //        var settingsEcgModel = ecgViewModel
-        //        if let savedViewConfig = persistenceClient.ecgConfiguration.load() {
-        //            settingsEcgModel.configuration.viewConfiguration.timeInterval = savedViewConfig.viewConfiguration.timeInterval
-        //        }
         route = .ecgSettings( withDependencies(from: self) { .init(
             ecgModel: ecgViewModel,
             computeTime: { [weak self] localIndex, localInterval  in

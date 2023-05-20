@@ -21,7 +21,7 @@
     {
       "identity" : "movesenseapi-ios",
       "kind" : "remoteSourceControl",
-      "location" : "git@github.com:mikkojeronen/MovesenseApi-iOS.git",
+      "location" : "https://github.com/mikkojeronen/MovesenseApi-iOS.git",
       "state" : {
         "branch" : "main",
         "revision" : "3c22d157b9dc72aacf493d71d3987d53d06b1daa"
@@ -34,6 +34,15 @@
       "state" : {
         "branch" : "main",
         "revision" : "2445d3ca995852779f1ffbe62d4b944b2ba62f6f"
+      }
+    },
+    {
+      "identity" : "sqlite.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/stephencelis/SQLite.swift.git",
+      "state" : {
+        "revision" : "7a2e3cd27de56f6d396e84f63beefd0267b55ccb",
+        "version" : "0.14.1"
       }
     },
     {
