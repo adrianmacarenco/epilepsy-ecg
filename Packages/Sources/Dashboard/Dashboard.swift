@@ -73,11 +73,11 @@ public class DashboardViewModel: ObservableObject {
                 discoveredDevices.append(device)
             }
         }
+        
         Task {
-            try await clock.sleep(for: .seconds(5))
+            try await clock.sleep(for: .seconds(1))
             if discoveredDevices.isEmpty {
                 let discoveredDevices = bluetoothClient.getDiscoveredDevices()
-                print("👹 \(discoveredDevices)")
                 discoveredDevices.forEach {
                     self.discoveredDevices.append($0)
                 }
@@ -162,7 +162,7 @@ public class DashboardViewModel: ObservableObject {
             bluetoothClient.stopScanningDevices()
             try await clock.sleep(for: .seconds(3))
             bluetoothClient.subscribeToEcg(connectedDevice, ecgViewModel.configuration.frequency)
-            saveEcgData()
+//            saveEcgData()
         }
     }
     
@@ -170,15 +170,14 @@ public class DashboardViewModel: ObservableObject {
         guard let deviceWrapper = discoveredDevices.first(where: { $0.movesenseDevice.serialNumber == deviceNameSerial.serial }) else { return }
         
         Task { @MainActor in
-            
             let disconnectedDevice = try await bluetoothClient.disconnectDevice(deviceWrapper)
             connectedDevices.remove(disconnectedDevice)
-            
         }
     }
     
     func ecgViewTapped() {
         route = .ecgSettings( withDependencies(from: self) { .init(
+            device: self.connectedDevices.first,
             ecgModel: ecgViewModel,
             computeTime: { [weak self] localIndex, localInterval  in
                 self?.computeTime(for: localIndex, interval: localInterval) ?? 0.0

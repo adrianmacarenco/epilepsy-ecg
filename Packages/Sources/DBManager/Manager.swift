@@ -31,6 +31,15 @@ public class DBManager: NSObject {
     private let ecgTimestamp = Expression<Date>("timestamp")
     private let ecgData = Expression<String>("ecg_data")
     
+    private let users = Table("users")
+    private let fullName = Expression<String>("full_name")
+    private let birthday = Expression<Date>("birthday")
+    private let gender = Expression<String>("gender")
+    private let weight = Expression<Double>("weight")
+    private let height = Expression<Double>("height")
+    private let diagnosis = Expression<String>("diagnosis")
+
+    
     public init(dbConnection: Connection) {
         self.dbConnection = dbConnection
         super.init()
@@ -70,7 +79,55 @@ public class DBManager: NSObject {
         }
     }
     
-    //MARK: Medication Entity
+    // MARK: - User Entity
+    
+    public func addUser(fullName: String, birthday: Date, gender: String, weight: Double, height: Double, diagnosis: String) async throws -> User {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                let insert = users.insert(self.fullName <- fullName, self.birthday <- birthday, self.gender <- gender, self.weight <- weight, self.height <- height, self.diagnosis <- diagnosis)
+                let rowId = try dbConnection.run(insert)
+                cont.resume(returning: .init(
+                    id: Int(rowId),
+                    fullName: fullName,
+                    birthday: birthday,
+                    gender: gender,
+                    weight: weight,
+                    height: height,
+                    diagnosis: diagnosis
+                ))
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func updateUser(_ user: User) async throws -> Void {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                let dbUser = users.filter(id == Int64(user.id))
+                let update = dbUser.update(self.fullName <- user.fullName, self.birthday <- user.birthday, self.gender <- user.gender, self.weight <- user.weight, self.height <- user.height, self.diagnosis <- user.diagnosis)
+                try dbConnection.run(update)
+                cont.resume(returning: ())
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+
+    public func deleteUser(with id: Int) async throws -> Void {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                let dbUser = users.filter(self.id == Int64(id))
+                let delete = dbUser.delete()
+                try dbConnection.run(delete)
+                cont.resume(returning: ())
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    // MARK: - Medication Entity
     public func fetchMedications() async throws -> [Medication] {
         return try await withCheckedThrowingContinuation { cont in
             do {
@@ -130,10 +187,8 @@ public class DBManager: NSObject {
             }
         }
     }
-    
-    
-    
-    //MARK: Intake Entity
+        
+    //MARK: - Intake Entity
     public func fetchIntakes() async throws -> [MedicationIntake] {
         return try await withCheckedThrowingContinuation { cont in
             do {
@@ -196,7 +251,7 @@ public class DBManager: NSObject {
         }
     }
     
-    //MARK: ECGEvent Entity
+    //MARK: - ECGEvent Entity
     public func addEcg(batch: [(timestamp: Date, ecgData: String)]) async throws -> Void {
         return try await withCheckedThrowingContinuation { cont in
             do {

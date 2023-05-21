@@ -134,6 +134,20 @@ public class EcgSettingsViewModel: ObservableObject {
         }
         route = nil
     }
+    
+    func unsubscribeEcg() {
+        guard let device else { return }
+        Task {
+            do {
+                try await bluetoothClient.unsubscribeEcg(device)
+                print("Unsubscribed ECG 🤖")
+
+            } catch {
+                print("Failed to unsubscribe 🤖")
+            }
+        }
+        
+    }
 }
 
 extension EcgSettingsViewModel: Equatable {
@@ -192,6 +206,8 @@ public struct EcgSettingsView: View {
                     }
                 }
             }
+            
+            Button("Unsubscriber", action: vm.unsubscribeEcg)
             
             Section {
                 HStack {

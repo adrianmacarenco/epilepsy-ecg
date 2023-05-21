@@ -35,6 +35,7 @@ public class BluetoothManager: NSObject {
         }}()
     
     private var movesenseOperation: MovesenseOperation?
+
     @Dependency (\.continuousClock) var clock
 
     public override init() {
@@ -97,6 +98,13 @@ public extension BluetoothManager {
             parameters: [MovesenseRequestParameter.sampleRate(UInt(frequency))]
         )
         movesenseOperation = device.movesenseDevice.sendRequest(request, observer: self)
+    }
+    
+    func unsubscribeEcg(_ device: DeviceWrapper) async -> Void {
+        return await withCheckedContinuation { cont in
+            self.movesenseOperation = nil
+            cont.resume(returning: ())
+        }
     }
     
     func getDeviceBattery(_ device: DeviceWrapper) async throws -> Int {
@@ -233,4 +241,5 @@ enum BluetoothError: Error {
     case failedToConnect
     case failedToConnectToGivenDevice
     case failedToGetDeviceEnergy
+    case failedToUnsubscribe
 }
