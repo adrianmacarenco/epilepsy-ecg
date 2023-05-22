@@ -30,11 +30,11 @@ public struct HomeTabbarView: View {
                 .toolbarBackground(Color.background, for: .tabBar)
             ProfileView()
                 .tabItem {
-                    VStack {
+                    VStack{
                         Image.pillTab
-                            .font(.largeTitle)
-                    }.foregroundColor(Color.tint1)
-
+                            .renderingMode(.template)
+                        Text("Track intake")
+                    }
                 }
             ProfileView()
                 .tabItem {
@@ -42,7 +42,6 @@ public struct HomeTabbarView: View {
                         Image.iconProfileTab
                             .renderingMode(.template)
                         Text("Profile")
-                            .foregroundColor(.red)
 
                     }
                 }

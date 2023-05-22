@@ -134,6 +134,28 @@ public extension BluetoothManager {
         })
     }
     
+    func getDeviceInfo(_ device: DeviceWrapper) async throws -> MovesenseEcgInfo {
+        return try await withCheckedThrowingContinuation({ cont in
+            
+            let request = MovesenseRequest(
+                resourceType: .ecgInfo,
+                method: .get,
+                parameters: nil
+            )
+            
+            Movesense.api.sendRequestForDevice(
+                device.movesenseDevice,
+                request: request) { operationEvent in
+                    guard case let MovesenseObserverEventOperation.operationResponse(operationResponse) = operationEvent,
+                          case let MovesenseResponse.ecgInfo(_, _, movesenseEcgInfo) = operationResponse else {
+                              cont.resume(throwing: BluetoothError.failedToGetDeviceEnergy)
+                              return
+                          }
+                    cont.resume(returning: movesenseEcgInfo)
+                }
+        })
+    }
+    
     func getDiscoveredDevices() -> [DeviceWrapper] {
         Movesense.api.getDevices().map(DeviceWrapper.init(movesenseDevice:))
     }

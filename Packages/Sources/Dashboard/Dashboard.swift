@@ -84,7 +84,7 @@ public class DashboardViewModel: ObservableObject {
         }
         
         Task {
-            try await clock.sleep(for: .seconds(3))
+            try await clock.sleep(for: .seconds(1))
             guard self.discoveredDevices.isEmpty else { return }
             let apiDiscoveredDevices = bluetoothClient.getDiscoveredDevices()
             print("👹 Api discovered devices: \(apiDiscoveredDevices)")
@@ -93,9 +93,7 @@ public class DashboardViewModel: ObservableObject {
             apiDiscoveredDevices.forEach {
                 self.discoveredDevices.append($0)
             }
-            
         }
-
     }
     
     // MARK: - Private interface

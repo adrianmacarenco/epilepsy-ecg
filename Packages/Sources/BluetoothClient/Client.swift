@@ -20,6 +20,7 @@ public struct BluetoothClient {
     public var stopScanningDevices: () -> Void
     public var getDevice:(DeviceNameSerial) -> DeviceWrapper?
     public var getDiscoveredDevices: () -> [DeviceWrapper]
+    public var getDeviceInfo: (DeviceWrapper) async throws -> MovesenseEcgInfo
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
@@ -37,6 +38,7 @@ public struct BluetoothClient {
         stopScanningDevices: @escaping () -> Void,
         getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
         getDiscoveredDevices: @escaping() -> [DeviceWrapper] ,
+        getDeviceInfo: @escaping (DeviceWrapper) async throws -> MovesenseEcgInfo,
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
@@ -52,6 +54,7 @@ public struct BluetoothClient {
         self.scanDevices = scanDevices
         self.getDevice = getDevice
         self.getDiscoveredDevices = getDiscoveredDevices
+        self.getDeviceInfo = getDeviceInfo
         self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
         self.connectToDevice = connectToDevice
@@ -76,6 +79,7 @@ extension BluetoothClient: DependencyKey {
             stopScanningDevices: bluetoothManager.stopScanningDevices,
             getDevice: bluetoothManager.getDevice(with: ),
             getDiscoveredDevices: bluetoothManager.getDiscoveredDevices,
+            getDeviceInfo: { try await bluetoothManager.getDeviceInfo($0) },
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
