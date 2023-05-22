@@ -11,6 +11,7 @@ import Combine
 import Charts
 import StylePackage
 import Model
+import Dependencies
 
 public enum Constants {
     static let previewChartHeight: CGFloat = 100
@@ -24,9 +25,11 @@ public struct EcgViewModel {
             configurationDidChange(configuration)
         }
     }
-    
+    public var scaleFactor = 1.0
+    public var avrHr: Int = 0
     public var configurationDidChange: (EcgConfiguration) -> ()
-    
+    @Dependency (\.continuousClock) var clock
+
     public init(
         data: [Double],
         ecgConfig: EcgConfiguration,
@@ -59,7 +62,7 @@ public struct EcgView: View {
             Chart {
                 ForEach((0 ..< stateModel.data.count), id: \.self) { index in
                     LineMark(
-                        x: .value("Seconds", computeTime(index, Int(stateModel.configuration.viewConfiguration.timeInterval))),
+                        x: .value("Seconds", computeTime(index, stateModel.desiredInterval)),
                         y: .value("Unit", stateModel.data[index])
                     )
                     .lineStyle(StrokeStyle(lineWidth: stateModel.configuration.viewConfiguration.lineWidth))
@@ -104,16 +107,17 @@ public struct EcgView: View {
             .accessibilityChartDescriptor(self)
             
             HStack {
-                HStack {
-                    Image(systemName: "heart.fill")
-                        .foregroundColor(Color.tint1)
-                    Text("68 Average BMP")
+                Image(systemName: "heart.fill")
+                    .foregroundColor(Color.tint1)
+                    .scaleEffect(stateModel.scaleFactor, anchor: .center)
+                if stateModel.avrHr > 0 {
+                    Text("\(stateModel.avrHr) Average BMP")
                         .font(.caption1)
                 }
-                Spacer()
+                
             }
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
         }
-        
     }
 }
 

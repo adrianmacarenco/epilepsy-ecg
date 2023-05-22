@@ -154,7 +154,8 @@ let package = Package(
             name: "ECG",
             dependencies: [
                 "Model",
-                "StylePackage"
+                "StylePackage",
+                .product(name: "Dependencies", package: "swift-dependencies"),
             ]
         ),
         .target(
@@ -218,7 +219,7 @@ let package = Package(
         .target(
             name: "Shared",
             dependencies: [
-                
+                "StylePackage"
             ]
         ),
         .testTarget(

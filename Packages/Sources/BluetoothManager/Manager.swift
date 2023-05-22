@@ -18,6 +18,7 @@ public class BluetoothManager: NSObject {
     private var discoveredDeviceContinuation: AsyncStream<DeviceWrapper>.Continuation?
     private var dashboardEcgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation?
     private var settingsEcgPacketContinuation: AsyncStream<MovesenseEcg>.Continuation?
+    private var hrContinuation: AsyncStream<MovesenseHeartRate>.Continuation?
 
     // Streams
     public var discoveredDevicesStream: AsyncStream<DeviceWrapper> {
@@ -33,8 +34,13 @@ public class BluetoothManager: NSObject {
         .init { cont in
             settingsEcgPacketContinuation = cont
         }}()
+    public lazy var hrStream: AsyncStream<MovesenseHeartRate> = {
+        .init { cont in
+            hrContinuation = cont
+        }}()
     
     private var movesenseOperation: MovesenseOperation?
+    private var hrOperation: MovesenseOperation?
 
     @Dependency (\.continuousClock) var clock
 
@@ -112,7 +118,7 @@ public extension BluetoothManager {
         return try await withCheckedThrowingContinuation({ cont in
             let request = MovesenseRequest(
                 resourceType: .systemEnergy,
-                method: MovesenseMethod.get,
+                method: .get,
                 parameters: nil
             )
             Movesense.api.sendRequestForDevice(
@@ -131,6 +137,19 @@ public extension BluetoothManager {
     
     func getDiscoveredDevices() -> [DeviceWrapper] {
         Movesense.api.getDevices().map(DeviceWrapper.init(movesenseDevice:))
+    }
+    
+    func subscribeToHeartRate(_ device: DeviceWrapper) -> Void {
+        let request = MovesenseRequest(
+            resourceType: .heartRate,
+            method: .subscribe,
+            parameters: []
+        )
+        hrOperation = device.movesenseDevice.sendRequest(request, observer: self)
+    }
+    
+    func unsubscribeHr(_ device: DeviceWrapper) -> Void {
+        self.hrOperation = nil
     }
 }
 
@@ -209,8 +228,7 @@ extension BluetoothManager: Observer {
                 print(gyro)
                 
             case .heartRate(_, let heartRate):
-                print(heartRate)
-                
+                hrContinuation?.yield(heartRate)
             }
         case .operationFinished:
             print(event)

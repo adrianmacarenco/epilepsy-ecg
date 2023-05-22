@@ -44,7 +44,7 @@ public class EcgSettingsViewModel: ObservableObject {
     let availableFrequencies = [128, 256]
     let availableIntervals = Array(stride(from: 4, to: 20, by: 1))
     let availableHistoryOptions = [60, 600, 3600, 86400]
-    var index = 0
+    var index: Int
     var computeTime: (Int, Int) -> Double
     var colorSelected: (Color) -> ()
 
@@ -68,11 +68,13 @@ public class EcgSettingsViewModel: ObservableObject {
     public init(
         device: DeviceWrapper? = nil,
         ecgModel: EcgViewModel,
+        index: Int,
         computeTime: @escaping(Int, Int) -> Double,
         colorSelected: @escaping(Color) -> ()
     ) {
         self.device = device
         self.ecgModel = ecgModel
+        self.index = index
         self.computeTime = computeTime
         self.colorSelected = colorSelected
         
@@ -95,9 +97,16 @@ public class EcgSettingsViewModel: ObservableObject {
         Task { @MainActor in
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
 //                print("🤑  \(ecgData)")
+                guard self.route == nil else { continue }
 
                 ecgData.samples.forEach { sample in
-                    self.ecgModel.data[index] =  Double(sample)
+                    var finalSample = Double(sample)
+                    if sample < ecgModel.configuration.viewConfiguration.minValue {
+                        finalSample = Double(ecgModel.configuration.viewConfiguration.minValue)
+                    } else if sample >   ecgModel.configuration.viewConfiguration.maxValue {
+                        finalSample = Double(ecgModel.configuration.viewConfiguration.maxValue)
+                    }
+                    ecgModel.data[index] =  finalSample
                     index += 1
                     if index ==  previewIntervalSamplesNr {
                         index = 0
@@ -206,9 +215,7 @@ public struct EcgSettingsView: View {
                     }
                 }
             }
-            
-            Button("Unsubscriber", action: vm.unsubscribeEcg)
-            
+                        
             Section {
                 HStack {
                     Text("Interval")

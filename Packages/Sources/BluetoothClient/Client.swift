@@ -16,29 +16,35 @@ import Model
 public struct BluetoothClient {
     public var getDeviceBattery: (DeviceWrapper) async throws -> Int
     // TODO: Modify scanDevices and stopScanningDevices to async
-    public var scanDevices: () -> ()
-    public var stopScanningDevices: () -> ()
+    public var scanDevices: () -> Void
+    public var stopScanningDevices: () -> Void
     public var getDevice:(DeviceNameSerial) -> DeviceWrapper?
     public var getDiscoveredDevices: () -> [DeviceWrapper]
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
-    public var subscribeToEcg: (DeviceWrapper, Int) -> ()
+    public var subscribeToEcg: (DeviceWrapper, Int) -> Void
     public var unsubscribeEcg: (DeviceWrapper) async -> Void
+    public var subscribeToHr: (DeviceWrapper) -> Void
+    public var unsubscribeHr: (DeviceWrapper) -> Void
+    public var hrStream: () -> AsyncStream<MovesenseHeartRate>
     public var dashboardEcgPacketsStream: () -> AsyncStream<MovesenseEcg>
     public var settingsEcgPacketsStream: () -> AsyncStream<MovesenseEcg>
 
     public init(
         getDeviceBattery: @escaping (DeviceWrapper) async throws -> Int,
-        scanDevices: @escaping () -> (),
-        stopScanningDevices: @escaping () -> (),
+        scanDevices: @escaping () -> Void,
+        stopScanningDevices: @escaping () -> Void,
         getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
         getDiscoveredDevices: @escaping() -> [DeviceWrapper] ,
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
-        subscribeToEcg: @escaping (DeviceWrapper, Int) -> (),
+        subscribeToEcg: @escaping (DeviceWrapper, Int) -> Void,
         unsubscribeEcg: @escaping (DeviceWrapper) async -> Void,
+        subscribeToHr: @escaping (DeviceWrapper) -> Void,
+        unsubscribeHr: @escaping (DeviceWrapper) -> Void,
+        hrStream: @escaping () -> AsyncStream<MovesenseHeartRate>,
         dashboardEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>,
         settingsEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
@@ -52,6 +58,9 @@ public struct BluetoothClient {
         self.disconnectDevice = disconnectDevice
         self.subscribeToEcg = subscribeToEcg
         self.unsubscribeEcg = unsubscribeEcg
+        self.subscribeToHr = subscribeToHr
+        self.unsubscribeHr = unsubscribeHr
+        self.hrStream = hrStream
         self.dashboardEcgPacketsStream = dashboardEcgPacketsStream
         self.settingsEcgPacketsStream = settingsEcgPacketsStream
     }
@@ -72,6 +81,9 @@ extension BluetoothClient: DependencyKey {
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
             subscribeToEcg: { device, freq in bluetoothManager.subscribeToEcg(device, frequency: freq) },
             unsubscribeEcg: { await bluetoothManager.unsubscribeEcg($0)},
+            subscribeToHr: bluetoothManager.subscribeToHeartRate(_:),
+            unsubscribeHr: bluetoothManager.unsubscribeHr(_:),
+            hrStream: { bluetoothManager.hrStream },
             dashboardEcgPacketsStream: { bluetoothManager.dashboardEcgPacketsStream },
             settingsEcgPacketsStream: { bluetoothManager.settingsEcgPacketsStream }
         )

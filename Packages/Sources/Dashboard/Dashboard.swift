@@ -30,7 +30,11 @@ public class DashboardViewModel: ObservableObject {
         case ecgSettings(EcgSettingsViewModel)
     }
     
-    @Published var route: Destination?
+    @Published var route: Destination? {
+        didSet {
+            print("🏖️ Route has changed: \(route)")
+        }
+    }
     @Published var previousDevices: IdentifiedArrayOf<DeviceNameSerial> = []
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var connectedDevices: IdentifiedArrayOf<DeviceWrapper> = []
@@ -43,27 +47,32 @@ public class DashboardViewModel: ObservableObject {
     }
     var hasSubscribedToEcg = false
     var ecgDataEvents: [(MovesenseEcg, Date)] = []
+    var localEcgBuffer: [Movesense] = []
     
-    @Dependency(\.persistenceClient) var persistenceClient
-    @Dependency(\.bluetoothClient) var bluetoothClient
+    @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
     @Dependency (\.dbClient) var dbClient
 
     // MARK: - Public interface
 
-    public init() {}
-    
-    func onAppear() {
-        
+    public init() {
         if let ecgConfig = persistenceClient.ecgConfiguration.load() {
             ecgViewModel.configuration = ecgConfig
         }
-        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
+        
         if let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() {
             //Display the previous device here
             previousDevices.append(savedDeviceNameSerial)
             bluetoothClient.scanDevices()
         }
+        subscribeToEcgStream()
+        subscribeToHrStream()
+    }
+    
+    func onAppear() {
+        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
+        index = 0
     }
     
     @MainActor
@@ -75,16 +84,18 @@ public class DashboardViewModel: ObservableObject {
         }
         
         Task {
-            try await clock.sleep(for: .seconds(1))
-            if discoveredDevices.isEmpty {
-                let discoveredDevices = bluetoothClient.getDiscoveredDevices()
-                discoveredDevices.forEach {
-                    self.discoveredDevices.append($0)
-                }
+            try await clock.sleep(for: .seconds(3))
+            guard self.discoveredDevices.isEmpty else { return }
+            let apiDiscoveredDevices = bluetoothClient.getDiscoveredDevices()
+            print("👹 Api discovered devices: \(apiDiscoveredDevices)")
+            guard !apiDiscoveredDevices.isEmpty else { return }
+
+            apiDiscoveredDevices.forEach {
+                self.discoveredDevices.append($0)
             }
             
         }
-        subscribeToEcgStream()
+
     }
     
     // MARK: - Private interface
@@ -95,19 +106,56 @@ public class DashboardViewModel: ObservableObject {
         Task { @MainActor in
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
                 ecgDataEvents.append((ecgData, Date()))
+                guard self.route == nil else { continue }
                 ecgData.samples.forEach { sample in
                     var finalSample = Double(sample)
                     if sample < ecgViewModel.configuration.viewConfiguration.minValue {
                         finalSample = Double(ecgViewModel.configuration.viewConfiguration.minValue)
-                    } else if sample > ecgViewModel.configuration.viewConfiguration.maxValue {
+                    } else if sample >   ecgViewModel.configuration.viewConfiguration.maxValue {
                         finalSample = Double(ecgViewModel.configuration.viewConfiguration.maxValue)
                     }
-                    self.ecgViewModel.data[index] =  finalSample
+                    ecgViewModel.data[index] =  finalSample
                     index += 1
                     if index ==  previewIntervalSamplesNr {
                         index = 0
                         ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
                     }
+                    
+                }
+            }
+        }
+    }
+    
+    // Subscribes to 5 HR, calculates the average HR and then unsubscribes
+    private func subscribeToHrStream() {
+
+        Task {
+            var count: Float = 0.0
+            var isFirstDiscarded = false
+            var totalHr: Float = 0.0
+            for await hrRate in bluetoothClient.hrStream() {
+                if isFirstDiscarded {
+                    totalHr += hrRate.average
+                    count += 1
+                    Task {@MainActor in
+                        withAnimation(Animation.easeInOut) {
+                            self.ecgViewModel.scaleFactor = self.ecgViewModel.scaleFactor == 1.0 ? 1.5 : 1.0
+                        }
+                    }
+                } else {
+                    isFirstDiscarded = true
+                }
+                if count == 3, let connectedDevice = connectedDevices.first {
+                    bluetoothClient.unsubscribeHr(connectedDevice)
+                    bluetoothClient.subscribeToEcg(connectedDevice, ecgViewModel.configuration.frequency)
+                    let avrHr = Int(totalHr / count)
+                    Task { @MainActor in
+                        self.ecgViewModel.avrHr = avrHr
+                        withAnimation(Animation.easeInOut) {
+                            self.ecgViewModel.scaleFactor = 1.0
+                        }
+                    }
+                    
                 }
             }
         }
@@ -124,20 +172,36 @@ public class DashboardViewModel: ObservableObject {
         }
     }
     
-    func saveEcgData() {
-        Task {
-            try await self.clock.sleep(for: .seconds(10))
-            let localData = ecgDataEvents.map { (Date(), $0.0.samples.commaSeparatedString()) }
-            do {
-                try await dbClient.addEcg(localData)
-                print("Data saved ✅")
-                let ecgDtos = try await dbClient.fetchRecentEcgData(3600)
-                print(ecgDtos)
-            } catch {
-                print("🥴 error when saving: \(error.localizedDescription)")
+    // Saves ecg data to the local db every 5 seconds
+    // Empty the local array every time after a successful saving
+    private func saveEcgData() {
+        Task(priority: .background) {
+            for await _ in clock.timer(interval: .seconds(5)) {
+                let localData = ecgDataEvents.map { (Date(), $0.0.samples.commaSeparatedString()) }
+                do {
+                    try await dbClient.addEcg(localData)
+                    ecgDataEvents = []
+                    print("Data saved ✅")
+//                    let ecgDtos = try await dbClient.fetchRecentEcgData(3600)
+//                    print(ecgDtos)
+                } catch {
+                    print("🥴 error when saving: \(error.localizedDescription)")
+                }
             }
         }
     }
+    
+    // Saves ecg data to the local db every 5 seconds
+    // Empty the local array every time after a successful saving
+    private func uploadEcgToServer() {
+        Task(priority: .background) {
+            for await _ in clock.timer(interval: .seconds(300)) {
+                print("Upload db file to server")
+            }
+        }
+    }
+    
+
 
     // MARK: - Actions
     func addDeviceButtonTapped() {
@@ -160,8 +224,7 @@ public class DashboardViewModel: ObservableObject {
             let connectedDevice = try await bluetoothClient.connectToDevice(deviceWrapper)
             connectedDevices.append(connectedDevice)
             bluetoothClient.stopScanningDevices()
-            try await clock.sleep(for: .seconds(3))
-            bluetoothClient.subscribeToEcg(connectedDevice, ecgViewModel.configuration.frequency)
+            bluetoothClient.subscribeToHr(connectedDevice)
 //            saveEcgData()
         }
     }
@@ -176,9 +239,11 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func ecgViewTapped() {
+        let shouldGetCurrentIndex = Int(ecgViewModel.configuration.viewConfiguration.timeInterval) == self.previewInterval
         route = .ecgSettings( withDependencies(from: self) { .init(
             device: self.connectedDevices.first,
             ecgModel: ecgViewModel,
+            index: shouldGetCurrentIndex ? self.index : 0,
             computeTime: { [weak self] localIndex, localInterval  in
                 self?.computeTime(for: localIndex, interval: localInterval) ?? 0.0
             },
