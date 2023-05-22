@@ -20,14 +20,9 @@ public enum Constants {
 
 public struct EcgViewModel {
     public var data: [Double]
-    public var configuration: EcgConfiguration {
-        didSet {
-            configurationDidChange(configuration)
-        }
-    }
+    public var configuration: EcgConfiguration
     public var scaleFactor = 1.0
     public var avrHr: Int = 0
-    public var configurationDidChange: (EcgConfiguration) -> ()
     @Dependency (\.continuousClock) var clock
 
     public init(
@@ -37,7 +32,6 @@ public struct EcgViewModel {
     ) {
         self.data = data
         self.configuration = ecgConfig
-        self.configurationDidChange = configurationDidChange
     }
     
     var desiredInterval: Int {

@@ -15,6 +15,7 @@ import Dependencies
 import PersistenceClient
 import ECG
 import SwiftUINavigation
+import MovesenseApi
 
 
 public class EcgSettingsViewModel: ObservableObject {
@@ -46,8 +47,9 @@ public class EcgSettingsViewModel: ObservableObject {
     let availableHistoryOptions = [60, 600, 3600, 86400]
     var index: Int
     var computeTime: (Int, Int) -> Double
-    var colorSelected: (Color) -> ()
-
+    var colorChanged: () -> Void
+    var frequencyChanged: () -> Void
+    public var ecgDataStream: ((MovesenseEcg) -> Void)?
     @Dependency(\.persistenceClient) var persistenceClient
     @Dependency(\.bluetoothClient) var bluetoothClient
     
@@ -70,53 +72,80 @@ public class EcgSettingsViewModel: ObservableObject {
         ecgModel: EcgViewModel,
         index: Int,
         computeTime: @escaping(Int, Int) -> Double,
-        colorSelected: @escaping(Color) -> ()
+        colorChanged: @escaping() -> Void,
+        frequencyChanged: @escaping() -> Void
     ) {
         self.device = device
         self.ecgModel = ecgModel
         self.index = index
         self.computeTime = computeTime
-        self.colorSelected = colorSelected
+        self.colorChanged = colorChanged
+        self.frequencyChanged = frequencyChanged
         
         if ecgModel.data.count < self.previewIntervalSamplesNr {
             let neededDataCount = previewIntervalSamplesNr - ecgModel.data.count
             let appendingData = Array(repeating: 0.0, count: neededDataCount)
             self.ecgModel.data.append(contentsOf: appendingData)
         }
+        self.ecgDataStream = { ecgData in
+            guard self.route == nil else { return }
+
+            ecgData.samples.forEach { sample in
+                var finalSample = Double(sample)
+                if sample < self.ecgModel.configuration.viewConfiguration.minValue {
+                    finalSample = Double(self.ecgModel.configuration.viewConfiguration.minValue)
+                } else if sample >   self.ecgModel.configuration.viewConfiguration.maxValue {
+                    finalSample = Double(self.ecgModel.configuration.viewConfiguration.maxValue)
+                }
+                Task { @MainActor [finalSample] in
+                    self.ecgModel.data[self.index] =  finalSample
+                    self.index += 1
+                    if self.index ==  self.previewIntervalSamplesNr {
+                        self.resetEcgData()
+                    }
+                }
+
+            }
+        }
     }
 
     func onAppear() {
-        ecgModel.configurationDidChange = {[weak self] newConfig in
-            self?.persistenceClient.ecgConfiguration.save(newConfig)
-        }
+//        ecgModel.configurationDidChange = {[weak self] newConfig in
+//            self?.persistenceClient.ecgConfiguration.save(newConfig)
+//        }
     }
     
     func task() async {
         
         
-        Task { @MainActor in
-            for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
-//                print("🤑  \(ecgData)")
-                guard self.route == nil else { continue }
+//        Task { @MainActor in
+//            for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
+//                print("🤑  \(ecgData) correctTimestamp: \(Date())")
+//                guard self.route == nil else { continue }
+//
+//                ecgData.samples.forEach { sample in
+//                    var finalSample = Double(sample)
+//                    if sample < ecgModel.configuration.viewConfiguration.minValue {
+//                        finalSample = Double(ecgModel.configuration.viewConfiguration.minValue)
+//                    } else if sample >   ecgModel.configuration.viewConfiguration.maxValue {
+//                        finalSample = Double(ecgModel.configuration.viewConfiguration.maxValue)
+//                    }
+//                    ecgModel.data[index] =  finalSample
+//                    index += 1
+//                    if index ==  previewIntervalSamplesNr {
+//                        resetEcgData()
+//                    }
+//
+//                }
+//            }
+//        }
+    }
+    
+    // MARK: - Private interface
 
-                ecgData.samples.forEach { sample in
-                    var finalSample = Double(sample)
-                    if sample < ecgModel.configuration.viewConfiguration.minValue {
-                        finalSample = Double(ecgModel.configuration.viewConfiguration.minValue)
-                    } else if sample >   ecgModel.configuration.viewConfiguration.maxValue {
-                        finalSample = Double(ecgModel.configuration.viewConfiguration.maxValue)
-                    }
-                    ecgModel.data[index] =  finalSample
-                    index += 1
-                    if index ==  previewIntervalSamplesNr {
-                        index = 0
-                        ecgModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
-
-                    }
-
-                }
-            }
-        }
+    private func resetEcgData() {
+        index = 0
+        ecgModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
     }
     
     // MARK: - Actions
@@ -130,18 +159,35 @@ public class EcgSettingsViewModel: ObservableObject {
     }
     
     func cancelSelection() {
+        resetEcgData()
         route = nil
+        
     }
     
     func confirmSelection(_ selectedValue: Int) {
         switch route {
         case .some(.frequencySelector):
+            guard selectedValue != ecgModel.configuration.frequency else { break }
             ecgModel.configuration.frequency = selectedValue
+            resetEcgData()
+            persistenceClient.ecgConfiguration.save(ecgModel.configuration)
+            frequencyChanged()
+            
         case .some(.intervalSelector):
+            guard selectedValue != shownInterval else { break }
             ecgModel.configuration.viewConfiguration.timeInterval = Double(selectedValue)
+            resetEcgData()
+            
         default: break
         }
         route = nil
+    }
+    
+    
+    func colorChanged(_ newColor: Color) {
+        ecgModel.configuration.viewConfiguration.chartColor = newColor
+        persistenceClient.ecgConfiguration.save(ecgModel.configuration)
+        colorChanged()
     }
     
     func unsubscribeEcg() {
@@ -163,8 +209,6 @@ extension EcgSettingsViewModel: Equatable {
     public static func == (lhs: EcgSettingsViewModel, rhs: EcgSettingsViewModel) -> Bool {
         return lhs.device?.id == lhs.device?.id
     }
-    
-    
 }
 
 
@@ -230,7 +274,9 @@ public struct EcgSettingsView: View {
                 .contentShape(Rectangle())
                 .onTapGesture(perform: vm.intervalLabelTapped)
                 
-                ColorPicker(selection: $vm.ecgModel.configuration.viewConfiguration.chartColor) {
+                ColorPicker(selection: Binding(
+                    get: { vm.ecgModel.configuration.viewConfiguration.chartColor },
+                    set: vm.colorChanged(_:)) ) {
                     Text("Color")
                         .font(.title1)
                 }

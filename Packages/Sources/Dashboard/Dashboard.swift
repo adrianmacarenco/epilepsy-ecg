@@ -48,6 +48,7 @@ public class DashboardViewModel: ObservableObject {
     var hasSubscribedToEcg = false
     var ecgDataEvents: [(MovesenseEcg, Date)] = []
     var localEcgBuffer: [Movesense] = []
+    var ecgDataStream: ((MovesenseEcg) -> Void)?
     
     @Dependency (\.persistenceClient) var persistenceClient
     @Dependency (\.bluetoothClient) var bluetoothClient
@@ -71,8 +72,7 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func onAppear() {
-        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
-        index = 0
+        resetEcgData()
     }
     
     @MainActor
@@ -99,12 +99,17 @@ public class DashboardViewModel: ObservableObject {
     }
     
     // MARK: - Private interface
-
+    private func resetEcgData() {
+        index = 0
+        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
+    }
+    
     private func subscribeToEcgStream() {
         guard !hasSubscribedToEcg else { return }
         hasSubscribedToEcg = false
         Task { @MainActor in
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
+                ecgDataStream?(ecgData)
                 ecgDataEvents.append((ecgData, Date()))
                 guard self.route == nil else { continue }
                 ecgData.samples.forEach { sample in
@@ -201,7 +206,19 @@ public class DashboardViewModel: ObservableObject {
         }
     }
     
-
+    private func colorChanged() {
+        guard let newColor = persistenceClient.ecgConfiguration.load()?.viewConfiguration.chartColor else { return }
+        ecgViewModel.configuration.viewConfiguration.chartColor = newColor
+    }
+    
+    private func frequencyChanged() {
+        guard let connectedDevice = connectedDevices.first,
+        let ecgConfiguration = persistenceClient.ecgConfiguration.load() else { return }
+        ecgViewModel.configuration.frequency = ecgConfiguration.frequency
+        bluetoothClient.unsubscribeEcg(connectedDevice)
+        bluetoothClient.subscribeToEcg(connectedDevice, ecgViewModel.configuration.frequency)
+        resetEcgData()
+    }
 
     // MARK: - Actions
     func addDeviceButtonTapped() {
@@ -239,16 +256,19 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func ecgViewTapped() {
-        let shouldGetCurrentIndex = Int(ecgViewModel.configuration.viewConfiguration.timeInterval) == self.previewInterval
-        route = .ecgSettings( withDependencies(from: self) { .init(
+        let ecgSettingVm: EcgSettingsViewModel = withDependencies(from: self) { .init(
             device: self.connectedDevices.first,
             ecgModel: ecgViewModel,
-            index: shouldGetCurrentIndex ? self.index : 0,
+            index: self.index ,
             computeTime: { [weak self] localIndex, localInterval  in
                 self?.computeTime(for: localIndex, interval: localInterval) ?? 0.0
             },
-            colorSelected: { _ in })
-        })
+            colorChanged: { [weak self] in self?.colorChanged()},
+            frequencyChanged: { [weak self] in self?.frequencyChanged()}
+        )
+        }
+        self.ecgDataStream = ecgSettingVm.ecgDataStream
+        route = .ecgSettings(ecgSettingVm)
     }
     
     func isConnectable(deviceSerial: String) -> Bool {

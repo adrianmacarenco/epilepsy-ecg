@@ -24,7 +24,7 @@ public struct BluetoothClient {
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var subscribeToEcg: (DeviceWrapper, Int) -> Void
-    public var unsubscribeEcg: (DeviceWrapper) async -> Void
+    public var unsubscribeEcg: (DeviceWrapper) -> Void
     public var subscribeToHr: (DeviceWrapper) -> Void
     public var unsubscribeHr: (DeviceWrapper) -> Void
     public var hrStream: () -> AsyncStream<MovesenseHeartRate>
@@ -41,7 +41,7 @@ public struct BluetoothClient {
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         subscribeToEcg: @escaping (DeviceWrapper, Int) -> Void,
-        unsubscribeEcg: @escaping (DeviceWrapper) async -> Void,
+        unsubscribeEcg: @escaping (DeviceWrapper) -> Void,
         subscribeToHr: @escaping (DeviceWrapper) -> Void,
         unsubscribeHr: @escaping (DeviceWrapper) -> Void,
         hrStream: @escaping () -> AsyncStream<MovesenseHeartRate>,
@@ -80,7 +80,7 @@ extension BluetoothClient: DependencyKey {
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
             subscribeToEcg: { device, freq in bluetoothManager.subscribeToEcg(device, frequency: freq) },
-            unsubscribeEcg: { await bluetoothManager.unsubscribeEcg($0)},
+            unsubscribeEcg: { bluetoothManager.unsubscribeEcg($0)},
             subscribeToHr: bluetoothManager.subscribeToHeartRate(_:),
             unsubscribeHr: bluetoothManager.unsubscribeHr(_:),
             hrStream: { bluetoothManager.hrStream },

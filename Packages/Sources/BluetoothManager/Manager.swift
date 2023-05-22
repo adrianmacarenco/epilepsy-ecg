@@ -98,6 +98,7 @@ public extension BluetoothManager {
     }
     
     func subscribeToEcg(_ device: DeviceWrapper, frequency: Int) {
+        print("🔌 Ecg subscription request \(frequency) Hz")
         let request = MovesenseRequest(
             resourceType: .ecg,
             method: .subscribe,
@@ -106,11 +107,9 @@ public extension BluetoothManager {
         movesenseOperation = device.movesenseDevice.sendRequest(request, observer: self)
     }
     
-    func unsubscribeEcg(_ device: DeviceWrapper) async -> Void {
-        return await withCheckedContinuation { cont in
-            self.movesenseOperation = nil
-            cont.resume(returning: ())
-        }
+    func unsubscribeEcg(_ device: DeviceWrapper) -> Void {
+        print("🔌 Ecg subscription cancelled")
+        self.movesenseOperation = nil
     }
     
     func getDeviceBattery(_ device: DeviceWrapper) async throws -> Int {
@@ -220,7 +219,6 @@ extension BluetoothManager: Observer {
                 print(acc)
                 
             case .ecg(_, let ecg):
-//                print("❤️ \(ecg)")
                 dashboardEcgPacketContinuation?.yield(ecg)
                 settingsEcgPacketContinuation?.yield(ecg)
 
