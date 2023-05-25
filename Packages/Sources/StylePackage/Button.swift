@@ -69,24 +69,12 @@ public struct MyButtonStyle: ButtonStyle {
     
     public func makeBody(configuration: Configuration) -> some View {
         ZStack {
-            configuration.label
+            configuration
+                .label
                 .padding(12)
                 .frame(maxWidth: .infinity)
                 .font(style.titleFont)
                 .foregroundColor(textColor)
-               
-               
-            
-//            DOTSpinner(isAnimating: isLoading, color: style.titleColor)
-//                .frame(width: 24, height: 24)
-//                .padding(6)
-//
-//                .opacity(!isEnabled && style.disabledBackgroundColor == nil ? 0.4 : 1)
-//                .disabled(!isEnabled || isLoading)
-//                .padding(EdgeInsets(top: 0,
-//                                    leading: leadingPadding,
-//                                    bottom: 0,
-//                                    trailing: leadingPadding))
         }
         .frame(height: 61)
         .background(isEnabled ? style.backgroundColor : style.disabledBackgroundColor)

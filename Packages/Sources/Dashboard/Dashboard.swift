@@ -18,6 +18,7 @@ import Model
 import Charts
 import SwiftUICharts
 import ECG
+import Onboarding
 import ECG_Settings
 import DBClient
 import Shared
@@ -28,6 +29,7 @@ public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
         case addDevice(AddDeviceViewModel)
         case ecgSettings(EcgSettingsViewModel)
+        case onboarding(OnboardingViewModel)
     }
     
     @Published var route: Destination? {
@@ -93,6 +95,10 @@ public class DashboardViewModel: ObservableObject {
             apiDiscoveredDevices.forEach {
                 self.discoveredDevices.append($0)
             }
+        }
+        Task { @MainActor in
+            try await clock.sleep(for: .seconds(5))
+            route = .onboarding(.init())
         }
     }
     
@@ -227,6 +233,10 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func cancelAddDeviceTapped() {
+        route = nil
+    }
+    
+    func closeOnboarding() {
         route = nil
     }
     
@@ -366,6 +376,24 @@ public struct DashboardView: View {
                             }
                         }
                 }
+            }
+            .sheet(
+                unwrapping: self.$vm.route,
+                case: /DashboardViewModel.Destination.onboarding
+            ) { $onboardingVm in
+                NavigationStack {
+                    OnboardingView(vm: onboardingVm)
+                        .toolbarBackground(.visible, for: .navigationBar)
+                        .toolbarBackground(.white, for: .navigationBar)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Close") {
+                                vm.closeOnboarding()
+                            }
+                          }
+                        }
+                }
+
             }
             .navigationDestination(
                 unwrapping: self.$vm.route,

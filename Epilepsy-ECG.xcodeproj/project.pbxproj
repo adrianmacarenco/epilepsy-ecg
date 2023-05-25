@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A809CBF2A1BDD37009A2620 /* UserCreation in Frameworks */ = {isa = PBXBuildFile; productRef = 2A809CBE2A1BDD37009A2620 /* UserCreation */; };
 		2AB8EAD829E078C1004AC5D6 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB8EAD729E078C1004AC5D6 /* Dependencies */; };
 		2AB8EADB29E07A70004AC5D6 /* BluetoothClient in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB8EADA29E07A70004AC5D6 /* BluetoothClient */; };
 		2AB9D95C29FF300B00D8E8E7 /* StylePackage in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB9D95B29FF300B00D8E8E7 /* StylePackage */; };
@@ -40,6 +41,7 @@
 			files = (
 				2AB8EADB29E07A70004AC5D6 /* BluetoothClient in Frameworks */,
 				2AB9D95C29FF300B00D8E8E7 /* StylePackage in Frameworks */,
+				2A809CBF2A1BDD37009A2620 /* UserCreation in Frameworks */,
 				2ADC9D2A29FFF7ED000B412F /* HomeTabbar in Frameworks */,
 				2ADC9D322A03BD1C000B412F /* PersistenceClient in Frameworks */,
 				2AB8EAD829E078C1004AC5D6 /* Dependencies in Frameworks */,
@@ -120,6 +122,7 @@
 				2ADC9D2929FFF7ED000B412F /* HomeTabbar */,
 				2ADC9D2B2A001354000B412F /* AddDevice */,
 				2ADC9D312A03BD1C000B412F /* PersistenceClient */,
+				2A809CBE2A1BDD37009A2620 /* UserCreation */,
 			);
 			productName = "Epilepsy ECG";
 			productReference = E25B787D29B4D4D500527F4A /* Epilepsy-ECG.app */;
@@ -432,6 +435,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2A809CBE2A1BDD37009A2620 /* UserCreation */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = UserCreation;
+		};
 		2AB8EAD729E078C1004AC5D6 /* Dependencies */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2AB8EAD629E078C1004AC5D6 /* XCRemoteSwiftPackageReference "swift-dependencies" */;

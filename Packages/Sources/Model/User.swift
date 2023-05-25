@@ -8,22 +8,22 @@
 import Foundation
 
 public struct User {
-    public let id: Int
+    public let id: String
     public let fullName: String
     public let birthday: Date
     public let gender: String
     public let weight: Double
     public let height: Double
-    public let diagnosis: String
+    public let diagnosis: String?
     
     public init(
-        id: Int,
+        id: String,
         fullName: String,
         birthday: Date,
         gender: String,
         weight: Double,
         height: Double,
-        diagnosis: String
+        diagnosis: String?
     ) {
         self.id = id
         self.fullName = fullName

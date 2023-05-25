@@ -53,6 +53,10 @@ let package = Package(
             targets: ["HomeTabbar"]
         ),
         .library(
+            name: "Onboarding",
+            targets: ["Onboarding"]
+        ),
+        .library(
             name: "Packages",
             targets: ["Packages"]
         ),
@@ -71,6 +75,10 @@ let package = Package(
         .library(
             name: "Shared",
             targets: ["Shared"]
+        ),
+        .library(
+            name: "UserCreation",
+            targets: ["UserCreation"]
         )
     ],
     dependencies: [
@@ -122,6 +130,7 @@ let package = Package(
             "ECG",
             "ECG Settings",
             "Model",
+            "Onboarding",
             "Shared",
             "StylePackage",
             "PersistenceClient",
@@ -189,6 +198,12 @@ let package = Package(
             ]
         ),
         .target(
+            name: "Onboarding",
+            dependencies: [
+                "StylePackage"
+            ]
+        ),
+        .target(
             name: "Packages",
             dependencies: []
         ),
@@ -220,6 +235,13 @@ let package = Package(
             name: "Shared",
             dependencies: [
                 "StylePackage"
+            ]
+        ),
+        .target(
+            name: "UserCreation",
+            dependencies: [
+                "StylePackage",
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
             ]
         ),
         .testTarget(
