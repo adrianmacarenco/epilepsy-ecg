@@ -10,6 +10,7 @@ import SwiftUI
 import Dashboard
 import Profile
 import StylePackage
+import TrackIntake
 
 public struct HomeTabbarView: View {
     public init() {
@@ -28,7 +29,7 @@ public struct HomeTabbarView: View {
                 }
                 .toolbarBackground(.visible, for: .tabBar)
                 .toolbarBackground(Color.background, for: .tabBar)
-            ProfileView()
+            TrackIntakeView(vm: .init())
                 .tabItem {
                     VStack{
                         Image.pillTab

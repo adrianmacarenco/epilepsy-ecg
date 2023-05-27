@@ -8,9 +8,9 @@
 import Foundation
 
 public struct Medication {
-    public let id: Int
-    public let name: String
-    public let activeIngredients: [ActiveIngredient]
+    public var id: Int
+    public var name: String
+    public var activeIngredients: [ActiveIngredient]
     
     public init(
         id: Int,
@@ -24,10 +24,10 @@ public struct Medication {
 }
 
 public struct ActiveIngredient {
-    public let id: Int
-    public let name: String
-    public let quantity: Double
-    public let unit: Unit
+    public var id: Int
+    public var name: String
+    public var quantity: Double
+    public var unit: Unit
     
     public init(
         id: Int,

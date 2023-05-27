@@ -278,12 +278,17 @@ public class DBManager: NSObject {
         return try await withCheckedThrowingContinuation { cont in
             do {
                 var intakesResult: [MedicationIntake] = []
-                for intakeRow in try dbConnection.prepare(intakes) {
+                for intakeRow in try dbConnection.prepare(intakes.join(medications, on: medications[id] == intakes[medicationId])) {
+                    let medication = Medication(
+                        id: Int(intakeRow[medications[id]]),
+                        name: intakeRow[medications[name]],
+                        activeIngredients: []
+                    )
                     intakesResult.append(MedicationIntake(
-                        id: Int(intakeRow[id]),
-                        timestamp: intakeRow[timestamp],
-                        pillQuantity: intakeRow[pillQuantity],
-                        medicationId: Int(intakeRow[medicationId])
+                        id: Int(intakeRow[intakes[id]]),
+                        timestamp: intakeRow[intakes[timestamp]],
+                        pillQuantity: intakeRow[intakes[pillQuantity]],
+                        medication: medication
                     ))
                 }
                 cont.resume(returning: intakesResult)
@@ -292,29 +297,33 @@ public class DBManager: NSObject {
             }
         }
     }
-    
-    public func addIntake(timestamp: Date, pillQuantity: Double, medicationId: Int) async throws -> MedicationIntake {
+
+    public func addIntake(timestamp: Date, pillQuantity: Double, medication: Medication) async throws -> MedicationIntake {
         return try await withCheckedThrowingContinuation { cont in
             do {
-                let insert = intakes.insert(self.timestamp <- timestamp, self.pillQuantity <- pillQuantity, self.id <- Int64(medicationId))
+                let insert = intakes.insert(self.timestamp <- timestamp, self.pillQuantity <- pillQuantity, self.medicationId <- Int64(medication.id))
                 let rowId = try dbConnection.run(insert)
-                cont.resume(returning: .init(
+                let intake = MedicationIntake(
                     id: Int(rowId),
                     timestamp: timestamp,
                     pillQuantity: pillQuantity,
-                    medicationId: medicationId
-                ))
+                    medication: medication
+                )
+                cont.resume(returning: intake)
             } catch {
                 cont.resume(throwing: error)
             }
         }
     }
-    
+
     public func updateIntake(_ intake: MedicationIntake) async throws -> Void {
         return try await withCheckedThrowingContinuation { cont in
             do {
-                let dbMedication = medications.filter(id == Int64(intake.id))
-                let update = dbMedication.update(self.timestamp <- intake.timestamp, self.pillQuantity <- intake.pillQuantity, self.medicationId <- Int64(intake.medicationId))
+                let update = intakes.filter(id == Int64(intake.id)).update(
+                    timestamp <- intake.timestamp,
+                    pillQuantity <- intake.pillQuantity,
+                    medicationId <- Int64(intake.medication.id)
+                )
                 try dbConnection.run(update)
                 cont.resume(returning: ())
             } catch {

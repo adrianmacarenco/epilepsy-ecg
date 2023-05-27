@@ -13,19 +13,18 @@ import SwiftUINavigation
 
 public class MedicationListViewModel: ObservableObject {
     enum Destination {
-        case diagnosis
+        case addMedication(AddMedicationViewModel)
     }
     @Published var route: Destination?
-    @Published var diagnosis = ""
     
     public init() {}
     
-    var isNextButtonEnabled: Bool {
-        diagnosis.count > 2
+    func addMedicationTapped() {
+        route = .addMedication(.init())
     }
     
-    func nextButtonTapped() {
-//        route = .height
+    func closeAddMedicationTapped() {
+        route = nil
     }
 }
 
@@ -46,27 +45,31 @@ public struct MedicationListView: View {
                 .font(.body1)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.gray)
-            TextField(
-                "Diagnosis",
-                text: $vm.diagnosis,
-                prompt: Text("Type").foregroundColor(.gray)
-            )
-            .textFieldStyle(EcgTextFieldStyle())
             Spacer()
-            Button("Next", action: vm.nextButtonTapped)
-                .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isNextButtonEnabled))
-                .disabled(!vm.isNextButtonEnabled)
+            Button("Add medication", action: vm.addMedicationTapped)
+                .buttonStyle(MyButtonStyle.init(style: .primary))
                 .padding(.bottom, 58)
         }
         .padding(.horizontal, 16)
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
         .background(Color.background)
         .navigationBarTitleDisplayMode(.inline)
-//        .navigationDestination(
-//            unwrapping: self.$vm.route,
-//            case: /WeightSelectionViewModel.Destination.height
-//        ) { $personalIdentityVm in
-//            PersonalIdentityView(vm: personalIdentityVm)
-//        }
+        .sheet(
+            unwrapping: self.$vm.route,
+            case: /MedicationListViewModel.Destination.addMedication
+        ) { $addMedicationVm in
+            NavigationStack {
+                AddMedicationView(vm: addMedicationVm)
+                    .toolbarBackground(.visible, for: .navigationBar)
+                    .toolbarBackground(.white, for: .navigationBar)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Close") {
+                                vm.closeAddMedicationTapped()
+                            }
+                        }
+                    }
+            }
+        }
     }
 }

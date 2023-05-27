@@ -10,12 +10,12 @@ public class WeightSelectionViewModel: ObservableObject {
     }
 
     @Published var route: Destination?
-    @Published var weight = 0.0
+    @Published var weight: Double?
     @FocusState var focusedField: WeightSelectionView.Field?
     public init() {}
     
     var isNextButtonEnabled: Bool {
-        weight > 20.0
+        weight ?? 0.0 > 20.0
     }
     
     func onAppear() {
@@ -56,6 +56,7 @@ public struct WeightSelectionView: View {
             )
             .textFieldStyle(EcgTextFieldStyle())
             .focused($focus, equals: .weight)
+            .keyboardType(.numbersAndPunctuation)
             Spacer()
             Button("Next", action: vm.nextButtonTapped)
                 .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isNextButtonEnabled))

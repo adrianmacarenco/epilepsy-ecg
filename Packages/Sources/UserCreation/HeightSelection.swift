@@ -16,12 +16,12 @@ public class HeightSelectionViewModel: ObservableObject {
         case diagnosis(DiagnosisViewModel)
     }
     @Published var route: Destination?
-    @Published var height = 0.0
+    @Published var height: Double?
     
     public init() {}
     
     var isNextButtonEnabled: Bool {
-        height > 20.0
+        height ?? 0.0 > 20.0
     }
     
     func nextButtonTapped() {
@@ -53,6 +53,8 @@ public struct HeightSelectionView: View {
                 prompt: Text("Type your height in cm").foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle())
+            .keyboardType(.numbersAndPunctuation)
+
             Spacer()
             Button("Next", action: vm.nextButtonTapped)
                 .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isNextButtonEnabled))

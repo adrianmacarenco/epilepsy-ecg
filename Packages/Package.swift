@@ -77,6 +77,10 @@ let package = Package(
             targets: ["Shared"]
         ),
         .library(
+            name: "TrackIntake",
+            targets: ["TrackIntake"]
+        ),
+        .library(
             name: "UserCreation",
             targets: ["UserCreation"]
         )
@@ -194,7 +198,8 @@ let package = Package(
             dependencies: [
                 "Dashboard",
                 "Profile",
-                "StylePackage"
+                "StylePackage",
+                "TrackIntake"
             ]
         ),
         .target(
@@ -238,9 +243,21 @@ let package = Package(
             ]
         ),
         .target(
+            name: "TrackIntake",
+            dependencies: [
+                "Model",
+                "Shared",
+                "StylePackage",
+                "UserCreation",
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation")
+            ]
+        ),
+        .target(
             name: "UserCreation",
             dependencies: [
                 "StylePackage",
+                "Model",
+                "Shared",
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
             ]
         ),

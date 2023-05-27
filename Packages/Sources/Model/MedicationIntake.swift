@@ -11,17 +11,17 @@ public struct MedicationIntake {
     public let id: Int
     public let timestamp: Date
     public let pillQuantity: Double
-    public let medicationId: Int
+    public let medication: Medication
     
     public init(
         id: Int,
         timestamp: Date,
         pillQuantity: Double,
-        medicationId: Int
+        medication: Medication
     ) {
         self.id = id
         self.timestamp = timestamp
         self.pillQuantity = pillQuantity
-        self.medicationId = medicationId
+        self.medication = medication
     }
 }

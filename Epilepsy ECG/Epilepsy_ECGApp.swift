@@ -18,8 +18,9 @@ struct Epilepsy_ECGApp: App {
     var body: some Scene {
         WindowGroup {
 //            HomeView(viewModel: .init())
-//            HomeTabbarView()
-            GettingStartedView(vm: .init())
+            HomeTabbarView()
+//            AddMedicationView(vm: .init())
+//            GettingStartedView(vm: .init())
         }
     }
 }

@@ -96,10 +96,10 @@ public class DashboardViewModel: ObservableObject {
                 self.discoveredDevices.append($0)
             }
         }
-        Task { @MainActor in
-            try await clock.sleep(for: .seconds(5))
-            route = .onboarding(.init())
-        }
+//        Task { @MainActor in
+//            try await clock.sleep(for: .seconds(5))
+//            route = .onboarding(.init())
+//        }
     }
     
     // MARK: - Private interface
