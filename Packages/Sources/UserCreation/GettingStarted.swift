@@ -9,20 +9,39 @@ import Foundation
 import SwiftUI
 import StylePackage
 import Combine
+import Model
 import SwiftUINavigation
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class GettingStartedViewModel: ObservableObject {
     enum Destination {
         case personalIdentity(PersonalIdentityViewModel)
     }
     @Published var route: Destination?
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
     
     public init() {}
     
     func startButtonTapped() {
-        route = .personalIdentity(.init())
+        let localUser = User(
+            id: UUID().uuidString,
+            fullName: "",
+            birthday: Date(),
+            gender: "",
+            weight: 0.0,
+            height: 0.0,
+            diagnosis: nil
+        )
+        
+        route = .personalIdentity(
+            withDependencies(from: self) {
+                .init(user: localUser)
+            }
+        )
     }
-
 }
 
 public struct GettingStartedView: View {
@@ -60,7 +79,7 @@ public struct GettingStartedView: View {
                 PersonalIdentityView(vm: personalIdentityVm)
             }
         }
-
+        .tint(.tint1)
     }
 }
 

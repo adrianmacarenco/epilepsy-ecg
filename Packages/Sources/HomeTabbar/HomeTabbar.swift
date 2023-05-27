@@ -11,15 +11,44 @@ import Dashboard
 import Profile
 import StylePackage
 import TrackIntake
+import Dependencies
+
+public class HomeTabbarViewModel: ObservableObject {
+    lazy var dashboardVm: DashboardViewModel =  { [weak self] in
+        guard let self else { return .init() }
+        return withDependencies(from: self) {
+            DashboardViewModel()
+        }
+    }()
+    
+    lazy var trackIntakeVm: TrackIntakeViewModel =  { [weak self] in
+        guard let self else { return .init() }
+        return withDependencies(from: self) {
+            TrackIntakeViewModel()
+        }
+    }()
+    
+//    lazy var profileVm: DashboardViewModel =  { [weak self] in
+//        guard let self else { return .init() }
+//        return withDependencies(from: self) {
+//            DashboardViewModel()
+//        }
+//    }()
+    
+    public init() {}
+}
 
 public struct HomeTabbarView: View {
-    public init() {
+    @ObservedObject var vm: HomeTabbarViewModel
+    
+    public init(vm: HomeTabbarViewModel) {
+        self.vm = vm
 //        UITabBar.appearance().isTranslucent = false
 //        UITabBar.appearance().barTintColor = UIColor.blue
     }
     public var body: some View {
         TabView {
-            DashboardView(vm: .init())
+            DashboardView(vm: vm.dashboardVm)
                 .tabItem {
                     VStack{
                         Image.iconHomeTab
@@ -29,7 +58,7 @@ public struct HomeTabbarView: View {
                 }
                 .toolbarBackground(.visible, for: .tabBar)
                 .toolbarBackground(Color.background, for: .tabBar)
-            TrackIntakeView(vm: .init())
+            TrackIntakeView(vm: vm.trackIntakeVm)
                 .tabItem {
                     VStack{
                         Image.pillTab

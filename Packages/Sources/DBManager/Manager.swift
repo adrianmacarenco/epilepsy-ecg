@@ -11,6 +11,7 @@ import Model
 
 enum DatabaseError: Error {
     case generalError(message: String)
+    case dataNotFound(message: String)
 }
 
 public class DBManager: NSObject {
@@ -135,6 +136,30 @@ public class DBManager: NSObject {
         }
     }
     
+    public func getUser(with userId: String) async throws -> User {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                let query = users.filter(self.userId == userId)
+                guard let userRow = try dbConnection.pluck(query) else {
+                    cont.resume(throwing: DatabaseError.dataNotFound(message: "User could not be found"))
+                    return
+                }
+                let user = User(
+                    id: userRow[self.userId],
+                    fullName: userRow[self.fullName],
+                    birthday: userRow[self.birthday],
+                    gender: userRow[self.gender],
+                    weight: userRow[self.weight],
+                    height: userRow[self.height],
+                    diagnosis: userRow[self.diagnosis]
+                )
+                cont.resume(returning: user)
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
     public func updateUser(_ user: User) async throws -> Void {
         return try await withCheckedThrowingContinuation { cont in
             do {
@@ -204,17 +229,22 @@ public class DBManager: NSObject {
                 let insert = medications.insert(self.name <- name)
                 let rowId = try dbConnection.run(insert)
                 let medicationId = Int(rowId)
+                var localIngredients: [ActiveIngredient] = []
                 
                 for ingredient in activeIngredients {
-                    try addActiveIngredient(for: medicationId, ingredient: ingredient)
+                    let addedIngredient = try addActiveIngredient(for: medicationId, ingredient: ingredient)
+                    localIngredients.append(addedIngredient)
                 }
                 
                 let medication = Medication(
                     id: medicationId,
                     name: name,
-                    activeIngredients: activeIngredients
+                    activeIngredients: localIngredients
                 )
                 
+                try printAllMedications()
+                try printAllActiveIngredients()
+
                 cont.resume(returning: medication)
             } catch {
                 cont.resume(throwing: error)
@@ -222,14 +252,15 @@ public class DBManager: NSObject {
         }
     }
 
-    private func addActiveIngredient(for medicationId: Int, ingredient: ActiveIngredient) throws {
+    private func addActiveIngredient(for medicationId: Int, ingredient: ActiveIngredient) throws -> ActiveIngredient {
         let insert = activeIngredients.insert(
             self.name <- ingredient.name,
             self.activeIngredientQuantity <- ingredient.quantity,
             self.unit <- ingredient.unit.rawValue,
             self.medicationId <- Int64(medicationId)
         )
-        try dbConnection.run(insert)
+        let rowId  = try dbConnection.run(insert)
+        return .init(id: Int(rowId), name: ingredient.name, quantity: ingredient.quantity, unit: ingredient.unit)
     }
 
     public func updateMedication(_ medication: Medication) async throws -> Void {
@@ -242,8 +273,11 @@ public class DBManager: NSObject {
                 try deleteActiveIngredients(for: medication.id)
                 
                 for ingredient in medication.activeIngredients {
-                    try addActiveIngredient(for: medication.id, ingredient: ingredient)
+                   _ = try addActiveIngredient(for: medication.id, ingredient: ingredient)
                 }
+                
+                try printAllMedications()
+                try printAllActiveIngredients()
                 
                 cont.resume(returning: ())
             } catch {
@@ -430,4 +464,46 @@ public class DBManager: NSObject {
             }
         }
     }
+    
+    // Print all rows from the medications table
+    func printAllMedications() throws {
+        let query = medications.select(*)
+        
+        for row in try dbConnection.prepare(query) {
+            let id = row[id]
+            let name = row[name]
+            
+            print("Medication ID: \(id), Name: \(name)")
+        }
+    }
+
+    // Print all rows from the activeIngredients table
+    func printAllActiveIngredients() throws {
+        let query = activeIngredients.select(*)
+        
+        for row in try dbConnection.prepare(query) {
+            let id = row[id]
+            let name = row[name]
+            let quantity = row[activeIngredientQuantity]
+            let unit = row[unit]
+            let medicationId = row[medicationId]
+            
+            print("Active Ingredient ID: \(id), Name: \(name), Quantity: \(quantity), Unit: \(unit), Medication ID: \(medicationId)")
+        }
+    }
+
+    // Print all rows from the intakes table
+    func printAllIntakes() throws {
+        let query = intakes.select(*)
+        
+        for row in try dbConnection.prepare(query) {
+            let id = row[id]
+            let timestamp = row[timestamp]
+            let pillQuantity = row[pillQuantity]
+            let medicationId = row[medicationId]
+            
+            print("Intake ID: \(id), Timestamp: \(timestamp), Pill Quantity: \(pillQuantity), Medication ID: \(medicationId)")
+        }
+    }
+
 }

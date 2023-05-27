@@ -46,7 +46,7 @@ public class SelectMedicationViewModel: ObservableObject {
     }
     
     func addMedicationTapped() {
-        route = .addMedication(.init())
+        route = .addMedication(.init(type: .add, medicationAdded: { _ in}))
     }
 }
 

@@ -1,8 +1,12 @@
 import Foundation
 import SwiftUI
 import Combine
+import Model
 import StylePackage
 import SwiftUINavigation
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class WeightSelectionViewModel: ObservableObject {
     enum Destination {
@@ -11,28 +15,33 @@ public class WeightSelectionViewModel: ObservableObject {
 
     @Published var route: Destination?
     @Published var weight: Double?
-    @FocusState var focusedField: WeightSelectionView.Field?
-    public init() {}
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
+    var localUser: User
+    
+    public init(user: User) {
+        self.localUser = user
+    }
     
     var isNextButtonEnabled: Bool {
         weight ?? 0.0 > 20.0
     }
     
-    func onAppear() {
-        focusedField = .weight
-    }
+    func onAppear() {    }
     
     func nextButtonTapped() {
-        route = .height(.init())
+        guard let weight, weight > 20.0 else { return }
+        localUser.weight = weight
+        route = .height(
+            withDependencies(from: self) {
+                .init(user: localUser)
+            }
+        )
     }
 }
 
 public struct WeightSelectionView: View {
-    enum Field: Hashable {
-        case weight
-    }
     @ObservedObject var vm: WeightSelectionViewModel
-    @FocusState var focus: Field?
 
     public init (
         vm: WeightSelectionViewModel
@@ -55,7 +64,6 @@ public struct WeightSelectionView: View {
                 prompt: Text("Type your weight in kg").foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle())
-            .focused($focus, equals: .weight)
             .keyboardType(.numbersAndPunctuation)
             Spacer()
             Button("Next", action: vm.nextButtonTapped)
@@ -74,6 +82,5 @@ public struct WeightSelectionView: View {
             HeightSelectionView(vm: heightVm)
         }
         .onAppear(perform: vm.onAppear)
-        .bind(self.$vm.focusedField, to: self.$focus)
     }
 }

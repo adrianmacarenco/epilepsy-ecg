@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Medication {
+public struct Medication: Codable {
     public var id: Int
     public var name: String
     public var activeIngredients: [ActiveIngredient]
@@ -23,7 +23,7 @@ public struct Medication {
     }
 }
 
-public struct ActiveIngredient {
+public struct ActiveIngredient: Codable {
     public var id: Int
     public var name: String
     public var quantity: Double
@@ -41,7 +41,7 @@ public struct ActiveIngredient {
         self.unit = unit
     }
     
-    public enum Unit: String, CaseIterable {
+    public enum Unit: String, CaseIterable, Codable {
         case mg = "mg"
         case g = "g"
     }

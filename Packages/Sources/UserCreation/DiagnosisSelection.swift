@@ -8,8 +8,12 @@
 import Foundation
 import SwiftUI
 import Combine
+import Model
 import StylePackage
 import SwiftUINavigation
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class DiagnosisViewModel: ObservableObject {
     enum Destination {
@@ -17,19 +21,55 @@ public class DiagnosisViewModel: ObservableObject {
     }
     @Published var route: Destination?
     @Published var diagnosis = ""
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
     
-    public init() {}
+    var localUser: User
+ // MARK: - Public interface
+    
+    public init(user: User) {
+        self.localUser = user
+    }
     
     var isNextButtonEnabled: Bool {
         diagnosis.count > 2
     }
     
+    // MARK: - Private interface
+
+    @MainActor
+    private func createUser() async throws {
+        let savedUser = try await dbClient.createUser(localUser.id, localUser.fullName, localUser.birthday, localUser.gender, localUser.weight, localUser.height, localUser.diagnosis)
+        persistenceClient.user.save(savedUser)
+        route = .medicationList(
+            withDependencies(from: self) {
+                .init(user: savedUser)
+            }
+        )
+    }
+    
+    // MARK: - Actions
     func nextButtonTapped() {
-        route = .medicationList(.init())
+        guard diagnosis.count > 2 else { return }
+        localUser.diagnosis = diagnosis
+
+        Task {
+            do {
+                try await createUser()
+            } catch {
+                print("🫥 ERROR \(error) ")
+            }
+        }
     }
     
     func skipTapped() {
-        route = .medicationList(.init())
+        Task {
+            do {
+                try await createUser()
+            } catch {
+                print("🫥 ERROR \(error) ")
+            }
+        }
     }
 }
 

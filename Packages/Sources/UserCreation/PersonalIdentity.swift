@@ -10,6 +10,10 @@ import SwiftUI
 import Combine
 import StylePackage
 import SwiftUINavigation
+import Model
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class PersonalIdentityViewModel: ObservableObject {
     enum Destination {
@@ -17,15 +21,26 @@ public class PersonalIdentityViewModel: ObservableObject {
     }
     @Published var route: Destination?
     @Published var name = ""
+    var localUser: User
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
     
-    public init() {}
+    public init(user: User) {
+        self.localUser = user
+    }
     
     var isNextButtonEnabled: Bool {
         !name.isEmpty && name.count > 2
     }
     
     func nextButtonTapped() {
-        route = .birthday(.init())
+        guard !name.isEmpty && name.count > 2 else { return }
+        localUser.fullName = name
+        route = .birthday(
+            withDependencies(from: self) {
+                .init(user: localUser)
+            }
+        )
     }
 }
 

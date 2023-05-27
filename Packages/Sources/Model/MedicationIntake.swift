@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct MedicationIntake {
+public struct MedicationIntake: Codable {
     public let id: Int
     public let timestamp: Date
     public let pillQuantity: Double

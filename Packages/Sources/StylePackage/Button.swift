@@ -10,6 +10,7 @@ import SwiftUI
 
 public enum ButtonConfig {
     case primary
+    case delete
 }
 
 public extension ButtonConfig {
@@ -21,6 +22,8 @@ public extension ButtonConfig {
         switch self {
         case .primary:
             return .tint1
+        case .delete:
+            return .red
         }
     }
     
@@ -31,6 +34,8 @@ public extension ButtonConfig {
     var titleColor: Color {
         switch self {
         case .primary:
+            return Color.white
+        case .delete:
             return Color.white
         }
     }
@@ -85,6 +90,10 @@ public struct MyButtonStyle: ButtonStyle {
 
 public extension ButtonStyle where Self == MyButtonStyle {
     static var primary: MyButtonStyle {
+        .init(style: .primary, isLoading: false, isEnabled: true)
+    }
+    
+    static var delete: MyButtonStyle {
         .init(style: .primary, isLoading: false, isEnabled: true)
     }
 }

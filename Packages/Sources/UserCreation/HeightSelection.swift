@@ -8,8 +8,12 @@
 import Foundation
 import SwiftUI
 import Combine
+import Model
 import StylePackage
 import SwiftUINavigation
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class HeightSelectionViewModel: ObservableObject {
     enum Destination {
@@ -17,15 +21,26 @@ public class HeightSelectionViewModel: ObservableObject {
     }
     @Published var route: Destination?
     @Published var height: Double?
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
     
-    public init() {}
+    var localUser: User
     
+    public init(user: User) {
+        self.localUser = user
+    }
     var isNextButtonEnabled: Bool {
         height ?? 0.0 > 20.0
     }
     
     func nextButtonTapped() {
-        route = .diagnosis(.init())
+        guard let height, height > 20.0 else { return }
+        localUser.height = height
+        route = .diagnosis(
+            withDependencies(from: self) {
+                .init(user: localUser)
+            }
+        )
     }
 }
 

@@ -9,6 +9,7 @@ import SwiftUI
 import StylePackage
 import HomeTabbar
 import UserCreation
+import AppFeature
 
 @main
 struct Epilepsy_ECGApp: App {
@@ -17,8 +18,9 @@ struct Epilepsy_ECGApp: App {
     }
     var body: some Scene {
         WindowGroup {
+            AppView(vm: .init())
 //            HomeView(viewModel: .init())
-            HomeTabbarView()
+//            HomeTabbarView(vm: .init())
 //            AddMedicationView(vm: .init())
 //            GettingStartedView(vm: .init())
         }

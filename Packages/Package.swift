@@ -14,6 +14,10 @@ let package = Package(
             targets: ["AddDevice"]
         ),
         .library(
+            name: "AppFeature",
+            targets: ["AppFeature"]
+        ),
+        .library(
             name: "BluetoothClient",
             targets: ["BluetoothClient"]),
         .library(
@@ -105,6 +109,20 @@ let package = Package(
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
+            ]
+        ),
+        .target(
+            name: "AppFeature",
+            dependencies: [
+                "DBClient",
+                "BluetoothClient",
+                "HomeTabbar",
+                "StylePackage",
+                "PersistenceClient",
+                "UserCreation",
+                .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation")
             ]
         ),
         .target(
@@ -255,9 +273,12 @@ let package = Package(
         .target(
             name: "UserCreation",
             dependencies: [
+                "DBClient",
                 "StylePackage",
                 "Model",
                 "Shared",
+                "PersistenceClient",
+                .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
             ]
         ),

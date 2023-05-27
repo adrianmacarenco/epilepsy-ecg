@@ -9,22 +9,89 @@ import Foundation
 import SwiftUI
 import Combine
 import StylePackage
+import Model
 import SwiftUINavigation
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class MedicationListViewModel: ObservableObject {
     enum Destination {
         case addMedication(AddMedicationViewModel)
     }
     @Published var route: Destination?
+    @Published var medications: [Medication] = []
+
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
+    let user: User
     
-    public init() {}
+    // MARK: - Public Interface
+    
+    public init(
+        user: User
+    ) {
+        self.user = user
+    }
+    
+    func getMedicationSubtitle(index: Int) -> String? {
+        guard index < medications.count else { return nil}
+        let medication = medications[index]
+        if medication.activeIngredients.count == 1, let firstMedication = medication.activeIngredients.first {
+            return "\(firstMedication.quantity) \(firstMedication.unit.rawValue)"
+        } else {
+            return nil
+        }
+    }
+    
+    // MARK: - Actions
     
     func addMedicationTapped() {
-        route = .addMedication(.init())
+        route = .addMedication(
+            withDependencies(from: self) {
+                .init(type: .add, medicationAdded: { [weak self] in self?.medicationAdded($0) })
+            }
+        )
+    }
+    
+    func editMedicationTapped(index: Int) {
+        guard index < medications.count else { return }
+        
+        route = .addMedication(
+            withDependencies(from: self) {
+                .init(
+                    type: .edit(medications[index]),
+                    medicationAdded: { [weak self] in self?.medicationAdded($0) },
+                    medicationDeleted: { [weak self] in self?.medicationDeleted($0)})
+            }
+        )
+    }
+    
+    func medicationAdded(_ medication: Medication) {
+        Task { @MainActor in
+            route = nil
+            if let updatedMedicationIndex = medications.firstIndex(where: { $0.id == medication.id }) {
+                medications[updatedMedicationIndex] = medication
+            } else {
+                medications.append(medication)
+            }
+        }
+    }
+    
+    func medicationDeleted(_ medication: Medication) {
+        Task { @MainActor in
+            route = nil
+            medications.removeAll(where: { $0.id == medication.id })
+        }
     }
     
     func closeAddMedicationTapped() {
         route = nil
+    }
+    
+    func medicationCellTapped(index: Int) {
+        guard index < medications.count else { return }
+        
     }
 }
 
@@ -40,11 +107,42 @@ public struct MedicationListView: View {
         VStack(spacing: 16) {
             Text("Current medications")
                 .font(.largeInput)
-            Text("Provide details about your medical history, particularly any heart conditions or seizure events. This helps us develop a comprehensive understanding of your health and tailor your monitoring plan.")
+            Text("Set up your Medication List! This list will contain all your prescribed medications, which you can select from when tracking your daily pill intake. By maintaining an accurate Medication List, you can easily record and monitor your pill intake, ensuring you stay on track with your prescribed regimen. This information is invaluable to us as it enables us to provide you with personalized support and optimize your overall health management.")
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.gray)
+            
+            ForEach(0 ..< vm.medications.count, id: \.self) { index in
+                HStack {
+                    Image.pillIcon
+                        .padding(.leading, 16)
+                        .padding(.vertical, 16)
+                    VStack(alignment: .leading) {
+                        Text(vm.medications[index].name)
+                            .font(.title1)
+                            .foregroundColor(.black)
+                        if let subtitle = vm.getMedicationSubtitle(index: index) {
+                            Text(subtitle)
+                                .font(.body1)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    Spacer()
+                    
+                        Image.openIndicator
+                            .padding(.trailing, 16)
+                }
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 48, alignment: .center)
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8).stroke(Color.separator, lineWidth: 1)
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    vm.editMedicationTapped(index: index)
+                }
+            }
             Spacer()
             Button("Add medication", action: vm.addMedicationTapped)
                 .buttonStyle(MyButtonStyle.init(style: .primary))
@@ -63,7 +161,7 @@ public struct MedicationListView: View {
                     .toolbarBackground(.visible, for: .navigationBar)
                     .toolbarBackground(.white, for: .navigationBar)
                     .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
+                        ToolbarItem(placement: .cancellationAction) {
                             Button("Close") {
                                 vm.closeAddMedicationTapped()
                             }

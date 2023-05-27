@@ -9,7 +9,12 @@ import Foundation
 import SwiftUI
 import Combine
 import StylePackage
+import Model
 import SwiftUINavigation
+import Dependencies
+import DBClient
+import PersistenceClient
+
 
 public class UserBirthdayViewModel: ObservableObject {
     enum Destination {
@@ -17,6 +22,9 @@ public class UserBirthdayViewModel: ObservableObject {
     }
     @Published var route: Destination?
     @Published var birthdayDate: Date?
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
+    
     let now = Date()
     
     var oldestPersonAlive: Date {
@@ -26,7 +34,11 @@ public class UserBirthdayViewModel: ObservableObject {
             return calendar.date(from: oldestDateComponents)!
         }
     
-    public init() {}
+    var localUser: User
+    
+    public init(user: User) {
+        self.localUser = user
+    }
     
     
     var isNextButtonEnabled: Bool {
@@ -35,7 +47,13 @@ public class UserBirthdayViewModel: ObservableObject {
     }
     
     func nextButtonTapped() {
-        route = .genderSelection(.init())
+        guard let birthdayDate else { return }
+        localUser.birthday = birthdayDate
+        route = .genderSelection(
+            withDependencies(from: self) {
+                .init(user: localUser)
+            }
+        )
     }
     
     func setBirthday(_ date: Date) {

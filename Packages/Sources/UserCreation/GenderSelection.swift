@@ -8,8 +8,12 @@
 import Foundation
 import SwiftUI
 import Combine
+import Model
 import StylePackage
 import SwiftUINavigation
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class GenderSelectionViewModel: ObservableObject {
     enum Destination {
@@ -17,6 +21,9 @@ public class GenderSelectionViewModel: ObservableObject {
     }
     @Published var route: Destination?
     @Published var selectedGender: String = ""
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
+    
     var genders = ["Male", "Female"]
     let now = Date()
     
@@ -27,15 +34,24 @@ public class GenderSelectionViewModel: ObservableObject {
             return calendar.date(from: oldestDateComponents)!
         }
     
-    public init() {}
+    var localUser: User
     
+    public init(user: User) {
+        self.localUser = user
+    }
     
     var isNextButtonEnabled: Bool {
         !selectedGender.isEmpty
     }
     
     func nextButtonTapped() {
-        route = .weightSelection(.init())
+        guard genders.contains(selectedGender) else { return }
+        localUser.gender = selectedGender
+        route = .weightSelection(
+            withDependencies(from: self) {
+                .init(user: localUser)
+            }
+        )
     }
     
     func didTapGenderCell(_ index: Int) {
