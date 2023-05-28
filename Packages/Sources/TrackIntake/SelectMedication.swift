@@ -12,29 +12,43 @@ import Model
 import Shared
 import SwiftUINavigation
 import UserCreation
+import Dependencies
+import DBClient
+import PersistenceClient
 
 public class SelectMedicationViewModel: ObservableObject {
     enum Destination {
         case addMedication(AddMedicationViewModel)
     }
-    @Published var medications: [Medication] = [
-        .init(id: 1, name: "Panodil", activeIngredients: [.init(id: 1, name: "Paracetamol", quantity: 400, unit: .mg)]),
-        .init(id: 2, name: "Ketanol", activeIngredients: [
-            .init(id: 1, name: "Paracetamol", quantity: 400, unit: .mg),
-            .init(id: 1, name: "Paracetamol", quantity: 400, unit: .mg)
-        ])
-    ]
+    @Published var medications: [Medication]
     @Published var selectedMedicationId: Int?
     @Published var route: Destination?
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
     
     var medicationSelected: (Medication) -> Void
     
+    // MARK: - Public Interface
+    
     public init(
+        medications: [Medication],
         medicationSelected: @escaping (Medication) -> Void
     ) {
+        self.medications = medications
         self.medicationSelected = medicationSelected
     }
     
+    // MARK: - Private Interface
+    
+    private func medicationAdded() {
+        Task { @MainActor in
+            self.route = nil
+            let updatedMedications = try await dbClient.fetchMedications()
+            self.medications = updatedMedications
+        }
+    }
+    
+    // MARK: - Actions
     func didTapCell(with index: Int) {
         selectedMedicationId = index
     }
@@ -46,7 +60,7 @@ public class SelectMedicationViewModel: ObservableObject {
     }
     
     func addMedicationTapped() {
-        route = .addMedication(.init(type: .add, medicationAdded: { _ in}))
+        route = .addMedication(.init(type: .add, medicationAdded: { [weak self] _ in self?.medicationAdded()}))
     }
 }
 
@@ -60,48 +74,51 @@ public struct SelectMedicationView: View {
     }
     
     public var body: some View {
-        VStack {
-            ForEach(0 ..< vm.medications.count, id: \.self) { index in
-                DiscoveredDeviceCell(vm: .init(
-                    medication: vm.medications[index],
-                    isSelected: vm.selectedMedicationId == index
-                ))
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    vm.didTapCell(with: index)
-                }
-            }
-            
-            DashedFrameView(title: "Add medication", tapAction: vm.addMedicationTapped)
-                .padding(.top, 8)
-        }
-        .padding(16)
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
-        .navigationTitle("Select medication")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if vm.selectedMedicationId != nil {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Select") {
-                        vm.selectButtonTapped()
+        ScrollView {
+            VStack {
+                ForEach(0 ..< vm.medications.count, id: \.self) { index in
+                    DiscoveredDeviceCell(vm: .init(
+                        medication: vm.medications[index],
+                        isSelected: vm.selectedMedicationId == index
+                    ))
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        vm.didTapCell(with: index)
                     }
                 }
+                
+                DashedFrameView(title: "Add medication", tapAction: vm.addMedicationTapped)
+                    .padding(.top, 8)
             }
+            .padding(16)
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+            .navigationTitle("Select medication")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if vm.selectedMedicationId != nil {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Select") {
+                            vm.selectButtonTapped()
+                        }
+                    }
+                }
 
+            }
+            .navigationDestination(
+                unwrapping: self.$vm.route,
+                case: /SelectMedicationViewModel.Destination.addMedication
+            ) { $addMedicationVm in
+                AddMedicationView(vm: addMedicationVm)
+                //                .toolbar {
+                //                    ToolbarItem(placement: .navigationBarTrailing) {
+                //                    Button("Close") {
+                //                        vm.closeAddMedicationTapped()
+                //                    }
+                //                  }
+                //                }
+            }
         }
-        .navigationDestination(
-            unwrapping: self.$vm.route,
-            case: /SelectMedicationViewModel.Destination.addMedication
-        ) { $addMedicationVm in
-            AddMedicationView(vm: addMedicationVm)
-            //                .toolbar {
-            //                    ToolbarItem(placement: .navigationBarTrailing) {
-            //                    Button("Close") {
-            //                        vm.closeAddMedicationTapped()
-            //                    }
-            //                  }
-            //                }
-        }
+        
     }
 }
 

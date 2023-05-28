@@ -10,9 +10,56 @@ import Combine
 import SwiftUI
 import StylePackage
 import Model
+import Dependencies
+import DBClient
+import PersistenceClient
+import SwiftUINavigation
 
 public class IntakeHistoryViewModel: ObservableObject {
+    enum Destination {
+        case editIntake(TrackIntakeViewModel)
+    }
     @Published var intakes: [MedicationIntake] = []
+    @Published var route: Destination?
+    
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
+    // MARK: - Public Interface
+    
+    public init() {}
+    
+    func task() async {
+        do {
+            let intakeHistory = try await dbClient.fetchIntakes()
+            await MainActor.run {
+                intakes = intakeHistory
+            }
+        } catch {
+            print("🫥 ERROR \(error.localizedDescription)")
+        }
+    }
+    // MARK: - Private Interface
+    
+    
+    // MARK: - Actions
+    
+    func dailyIntakeCellTapped(index: Int) {
+        guard index < intakes.count else { return }
+        
+        route = .editIntake(
+            withDependencies(from: self, operation: {
+                .init(
+                    type: .edit(intakes[index]),
+                    intakeEditted: { [weak self] in
+                        Task { @MainActor [weak self] in
+                            self?.route = nil
+                            
+                        }
+                    }
+                )
+            })
+        )
+    }
 }
 
 public struct IntakeHistoryView: View {
@@ -25,31 +72,27 @@ public struct IntakeHistoryView: View {
     }
     
     public var body: some View {
-        VStack {
-            ForEach(0 ..< vm.intakes.count) { index in
-                HStack {
-                    Image.pillIcon
-                        .padding(.leading, 16)
-                        .padding(.vertical, 16)
-                    VStack(alignment: .leading) {
-                        Text(vm.intakes[index].medication.name)
-                            .font(.title1)
-                            .foregroundColor(.black)
-//                        if let subtitle = vm.subtitle {
-//                            Text(subtitle)
-//                                .font(.body1)
-//                                .foregroundColor(.gray)
-//                        }
-                        
-                    }
-                    Spacer()
-                    
-                    Image.openIndicator
-                        .padding(.trailing, 16)
+        ScrollView {
+            VStack {
+                ForEach(0 ..< vm.intakes.count, id: \.self) { index in
+                    IntakeCellView(intake: vm.intakes[index], isDailyPreview: false)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            vm.dailyIntakeCellTapped(index: index)
+                        }
                 }
             }
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.horizontal, 16)
+            .task { await vm.task() }
         }
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
         .background(Color.background)
+        .navigationTitle("Intake history")
+        .navigationDestination(
+            unwrapping: self.$vm.route,
+            case: /IntakeHistoryViewModel.Destination.editIntake
+        ) { $editIntakeVm in
+            TrackIntakeView(vm: editIntakeVm)
+        }
     }
 }

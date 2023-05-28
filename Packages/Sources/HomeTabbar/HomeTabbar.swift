@@ -12,8 +12,11 @@ import Profile
 import StylePackage
 import TrackIntake
 import Dependencies
+import DBClient
+import PersistenceClient
 
 public class HomeTabbarViewModel: ObservableObject {
+    
     lazy var dashboardVm: DashboardViewModel =  { [weak self] in
         guard let self else { return .init() }
         return withDependencies(from: self) {
@@ -22,11 +25,13 @@ public class HomeTabbarViewModel: ObservableObject {
     }()
     
     lazy var trackIntakeVm: TrackIntakeViewModel =  { [weak self] in
-        guard let self else { return .init() }
+        guard let self else { return .init(type: .add) }
         return withDependencies(from: self) {
-            TrackIntakeViewModel()
+            TrackIntakeViewModel(type: .add)
         }
     }()
+    @Dependency (\.dbClient) var dbClient
+    @Dependency (\.persistenceClient) var persistenceClient
     
 //    lazy var profileVm: DashboardViewModel =  { [weak self] in
 //        guard let self else { return .init() }

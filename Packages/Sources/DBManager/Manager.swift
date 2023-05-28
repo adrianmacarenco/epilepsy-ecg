@@ -190,6 +190,7 @@ public class DBManager: NSObject {
     public func fetchMedications() async throws -> [Medication] {
         return try await withCheckedThrowingContinuation { cont in
             do {
+                try printAllMedications()
                 var medicationsResult: [Medication] = []
                 for medicationRow in try dbConnection.prepare(medications) {
                     let medicationId = Int(medicationRow[id])
@@ -331,6 +332,42 @@ public class DBManager: NSObject {
             }
         }
     }
+    
+    public func fetchDailyIntakes() async throws -> [MedicationIntake] {
+        let currentDate = Date()
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: currentDate)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                var intakesResult: [MedicationIntake] = []
+                
+                let query = intakes
+                    .join(medications, on: medications[id] == intakes[medicationId])
+                    .filter(timestamp >= startOfDay && timestamp < endOfDay)
+                
+                for intakeRow in try dbConnection.prepare(query) {
+                    let medication = Medication(
+                        id: Int(intakeRow[medications[id]]),
+                        name: intakeRow[medications[name]],
+                        activeIngredients: []
+                    )
+                    intakesResult.append(MedicationIntake(
+                        id: Int(intakeRow[intakes[id]]),
+                        timestamp: intakeRow[intakes[timestamp]],
+                        pillQuantity: intakeRow[intakes[pillQuantity]],
+                        medication: medication
+                    ))
+                }
+                
+                cont.resume(returning: intakesResult)
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+
 
     public func addIntake(timestamp: Date, pillQuantity: Double, medication: Medication) async throws -> MedicationIntake {
         return try await withCheckedThrowingContinuation { cont in

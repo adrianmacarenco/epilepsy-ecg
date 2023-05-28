@@ -263,11 +263,14 @@ let package = Package(
         .target(
             name: "TrackIntake",
             dependencies: [
+                "DBClient",
                 "Model",
                 "Shared",
                 "StylePackage",
+                "PersistenceClient",
                 "UserCreation",
-                .product(name: "SwiftUINavigation", package: "swiftui-navigation")
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
+                .product(name: "Dependencies", package: "swift-dependencies")
             ]
         ),
         .target(

@@ -23,6 +23,7 @@ extension Image {
     public static let pickerIndicator = Image(systemName: "chevron.down")
     public static let pillsIcon = Image(systemName: "pills.fill")
     public static let openIndicator = Image(systemName: "chevron.right")
+    public static let clockIcon = Image(systemName: "clock")
 
 
     //UserCreation

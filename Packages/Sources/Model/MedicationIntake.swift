@@ -9,9 +9,9 @@ import Foundation
 
 public struct MedicationIntake: Codable {
     public let id: Int
-    public let timestamp: Date
-    public let pillQuantity: Double
-    public let medication: Medication
+    public var timestamp: Date
+    public var pillQuantity: Double
+    public var medication: Medication
     
     public init(
         id: Int,
