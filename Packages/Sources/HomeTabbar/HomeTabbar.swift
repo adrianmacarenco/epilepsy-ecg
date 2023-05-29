@@ -30,6 +30,13 @@ public class HomeTabbarViewModel: ObservableObject {
             TrackIntakeViewModel(type: .add)
         }
     }()
+    
+    lazy var profileVm: ProfileViewModel =  { [weak self] in
+        guard let self else { return .init() }
+        return withDependencies(from: self) {
+            ProfileViewModel()
+        }
+    }()
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
     
@@ -71,7 +78,7 @@ public struct HomeTabbarView: View {
                         Text("Track intake")
                     }
                 }
-            ProfileView()
+            ProfileView(vm: vm.profileVm)
                 .tabItem {
                     VStack {
                         Image.iconProfileTab

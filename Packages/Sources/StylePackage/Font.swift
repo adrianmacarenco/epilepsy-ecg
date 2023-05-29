@@ -23,4 +23,5 @@ public extension Font {
     static let caption1 = Font(UIFont.caption1)
     static let caption2 = Font(UIFont.caption2)
     static let caption3 = Font(UIFont.caption3)
+    static let caption4 = Font(UIFont.caption4)
 }

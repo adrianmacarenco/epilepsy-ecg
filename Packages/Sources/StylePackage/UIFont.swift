@@ -102,5 +102,6 @@ public extension UIFont {
     static let caption1 = UIFont.sfProRegular(withSize: 15)
     static let caption2 = UIFont.sfProRegular(withSize: 13)
     static let caption3 = UIFont.sfProMedium(withSize: 13)
+    static let caption4 = UIFont.sfProMedium(withSize: 14)
     static let largeInput = UIFont.sfProRegular(withSize: 22)
 }

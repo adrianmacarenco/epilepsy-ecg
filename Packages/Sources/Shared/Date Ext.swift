@@ -15,6 +15,12 @@ public extension Date {
         return formatter
     }()
     
+    static var dayMonthYear: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd MMM YYYY"
+        return formatter
+    }()
+    
     static var hourMinuteFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"

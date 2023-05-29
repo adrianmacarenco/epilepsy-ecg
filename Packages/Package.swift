@@ -87,6 +87,10 @@ let package = Package(
         .library(
             name: "UserCreation",
             targets: ["UserCreation"]
+        ),
+        .library(
+            name: "UserInformation",
+            targets: ["UserInformation"]
         )
     ],
     dependencies: [
@@ -242,7 +246,13 @@ let package = Package(
         .target(
             name: "Profile",
             dependencies: [
-                "StylePackage"
+                "DBClient",
+                "Model",
+                "StylePackage",
+                "PersistenceClient",
+                "UserInformation",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
             ]
         ),
         .target(
@@ -275,6 +285,18 @@ let package = Package(
         ),
         .target(
             name: "UserCreation",
+            dependencies: [
+                "DBClient",
+                "StylePackage",
+                "Model",
+                "Shared",
+                "PersistenceClient",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
+            ]
+        ),
+        .target(
+            name: "UserInformation",
             dependencies: [
                 "DBClient",
                 "StylePackage",
