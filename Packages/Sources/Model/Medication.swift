@@ -9,7 +9,7 @@ import Foundation
 
 public struct Medication: Codable, Equatable {
     public static func == (lhs: Medication, rhs: Medication) -> Bool {
-        rhs.id == lhs.id && rhs.name == lhs.name
+        rhs.id == lhs.id && rhs.name == lhs.name && rhs.activeIngredients == lhs.activeIngredients
     }
     
     public var id: Int
@@ -27,7 +27,7 @@ public struct Medication: Codable, Equatable {
     }
 }
 
-public struct ActiveIngredient: Codable {
+public struct ActiveIngredient: Codable, Equatable {
     public var id: Int
     public var name: String
     public var quantity: Double

@@ -152,7 +152,7 @@ public struct OnboardingView: View {
                 .buttonStyle(MyButtonStyle.init(style: .primary))
             
             HStack {
-                ForEach(0 ..< vm.onboardingSteps.count) { index in
+                ForEach(0 ..< vm.onboardingSteps.count, id: \.self) { index in
                     Circle()
                         .fill(index == vm.currentIndex ? Color.tint1 : Color.gray)
                         .frame(width: 10, height: 10)

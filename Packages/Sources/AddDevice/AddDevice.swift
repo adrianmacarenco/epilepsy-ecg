@@ -155,7 +155,7 @@ struct DiscoveredDeviceCell: View {
                     .font(.title1)
                     .foregroundColor(.black)
                 if vm.isSelected {
-                    Image.checked
+                    Image.checkedIcon
                 } else {
                     Circle()
                         .stroke(Color.separator, lineWidth: 1)

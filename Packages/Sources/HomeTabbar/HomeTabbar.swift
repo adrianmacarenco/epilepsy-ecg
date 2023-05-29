@@ -37,15 +37,9 @@ public class HomeTabbarViewModel: ObservableObject {
             ProfileViewModel()
         }
     }()
+    
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
-    
-//    lazy var profileVm: DashboardViewModel =  { [weak self] in
-//        guard let self else { return .init() }
-//        return withDependencies(from: self) {
-//            DashboardViewModel()
-//        }
-//    }()
     
     public init() {}
 }
@@ -53,23 +47,24 @@ public class HomeTabbarViewModel: ObservableObject {
 public struct HomeTabbarView: View {
     @ObservedObject var vm: HomeTabbarViewModel
     
-    public init(vm: HomeTabbarViewModel) {
+    public init(
+        vm: HomeTabbarViewModel
+    ) {
         self.vm = vm
-//        UITabBar.appearance().isTranslucent = false
-//        UITabBar.appearance().barTintColor = UIColor.blue
     }
     public var body: some View {
         TabView {
             DashboardView(vm: vm.dashboardVm)
                 .tabItem {
                     VStack{
-                        Image.iconHomeTab
+                        Image.homeTabIcon
                             .renderingMode(.template)
                         Text("Dashboard")
                     }
                 }
                 .toolbarBackground(.visible, for: .tabBar)
                 .toolbarBackground(Color.background, for: .tabBar)
+            
             TrackIntakeView(vm: vm.trackIntakeVm)
                 .tabItem {
                     VStack{
@@ -78,10 +73,13 @@ public struct HomeTabbarView: View {
                         Text("Track intake")
                     }
                 }
+                .toolbarBackground(.visible, for: .tabBar)
+                .toolbarBackground(Color.background, for: .tabBar)
+            
             ProfileView(vm: vm.profileVm)
                 .tabItem {
                     VStack {
-                        Image.iconProfileTab
+                        Image.profileTabIcon
                             .renderingMode(.template)
                         Text("Profile")
 

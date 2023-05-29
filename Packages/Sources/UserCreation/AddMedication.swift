@@ -192,7 +192,10 @@ public struct AddMedicationView: View {
                 ForEach(0 ..< vm.activeIngredients.count, id: \.self) { index in
                     ActiveIngredientCell(
                         name: $vm.activeIngredients[index].name,
-                        quantity: $vm.activeIngredients[index].quantity,
+                        quantity: .init(
+                            get: { vm.activeIngredients[index].quantity > 0 ? vm.activeIngredients[index].quantity : nil },
+                            set: { vm.activeIngredients[index].quantity = $0 ?? 0 }
+                        ),
                         unit: $vm.activeIngredients[index].unit
                     )
                 }
@@ -230,7 +233,7 @@ public struct AddMedicationView: View {
 
 struct ActiveIngredientCell: View {
     @Binding var name: String
-    @Binding var quantity: Double
+    @Binding var quantity: Double?
     @Binding var unit: ActiveIngredient.Unit
     let units = ActiveIngredient.Unit.allCases
     
@@ -261,7 +264,6 @@ struct ActiveIngredientCell: View {
                 .cornerRadius(12)
                 .pickerStyle(.menu)
                 .tint(.black)
-                
             }
         }
     }

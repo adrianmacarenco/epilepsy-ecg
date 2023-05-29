@@ -14,24 +14,48 @@ import SwiftUINavigation
 import Dependencies
 import DBClient
 import PersistenceClient
+import Shared
 
 public class MedicationListViewModel: ObservableObject {
     enum Destination {
         case addMedication(AddMedicationViewModel)
     }
+    
+    public enum ActionType {
+        case add
+        case edit([Medication])
+    }
     @Published var route: Destination?
     @Published var medications: [Medication] = []
-
+    
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
-    let user: User
+    let type: ActionType
+    var localUser: User
     
     // MARK: - Public Interface
     
     public init(
-        user: User
+        user: User,
+        type: ActionType = .add
     ) {
-        self.user = user
+        self.localUser = user
+        self.type = type
+        if case let ActionType.edit(medications) = type {
+            self.medications = medications
+        }
+    }
+    var isActionButtonEnabled: Bool {
+        return true
+    }
+    
+    var actionButtonTitle: String {
+        switch type {
+        case .add:
+            return "Finish"
+        case .edit:
+            return "Save"
+        }
     }
     
     func getMedicationSubtitle(index: Int) -> String? {
@@ -45,6 +69,15 @@ public class MedicationListViewModel: ObservableObject {
     }
     
     // MARK: - Actions
+    func actionButtonTapped() {
+        switch type {
+        case .add:
+            // Dismiss flow
+            break
+        case .edit:
+            break
+        }
+    }
     
     func addMedicationTapped() {
         route = .addMedication(
@@ -105,8 +138,11 @@ public struct MedicationListView: View {
     }
     public var body: some View {
         VStack(spacing: 16) {
-            Text("Current medications")
-                .font(.largeInput)
+            if case MedicationListViewModel.ActionType.add = vm.type {
+                Text("Current medications")
+                    .font(.largeInput)
+            }
+
             Text("Set up your Medication List! This list will contain all your prescribed medications, which you can select from when tracking your daily pill intake. By maintaining an accurate Medication List, you can easily record and monitor your pill intake, ensuring you stay on track with your prescribed regimen. This information is invaluable to us as it enables us to provide you with personalized support and optimize your overall health management.")
                 .padding(.horizontal, 16)
                 .font(.body1)
@@ -116,42 +152,44 @@ public struct MedicationListView: View {
             ForEach(0 ..< vm.medications.count, id: \.self) { index in
                 HStack {
                     Image.pillIcon
-                        .padding(.leading, 16)
-                        .padding(.vertical, 16)
+                        .padding(16)
                     VStack(alignment: .leading) {
                         Text(vm.medications[index].name)
                             .font(.title1)
                             .foregroundColor(.black)
                         if let subtitle = vm.getMedicationSubtitle(index: index) {
                             Text(subtitle)
-                                .font(.body1)
+                                .font(.body2)
                                 .foregroundColor(.gray)
                         }
                     }
                     Spacer()
                     
-                        Image.openIndicator
-                            .padding(.trailing, 16)
+                    Image.openIndicator
+                        .padding(.trailing, 16)
                 }
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 48, alignment: .center)
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 32, alignment: .center)
+                .background(Color.white)
                 .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8).stroke(Color.separator, lineWidth: 1)
-                )
                 .contentShape(Rectangle())
                 .onTapGesture {
                     vm.editMedicationTapped(index: index)
                 }
             }
+            DashedFrameView(title: "Add medication", tapAction: vm.addMedicationTapped)
+                .padding(.top, 8)
             Spacer()
-            Button("Add medication", action: vm.addMedicationTapped)
-                .buttonStyle(MyButtonStyle.init(style: .primary))
-                .padding(.bottom, 58)
+            if case MedicationListViewModel.ActionType.add = vm.type {
+                Button(vm.actionButtonTitle, action: vm.actionButtonTapped)
+                    .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isActionButtonEnabled))
+                    .disabled(!vm.isActionButtonEnabled)
+                    .padding(.bottom, 58)
+            }
+
         }
         .padding(.horizontal, 16)
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
         .background(Color.background)
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(
             unwrapping: self.$vm.route,
             case: /MedicationListViewModel.Destination.addMedication

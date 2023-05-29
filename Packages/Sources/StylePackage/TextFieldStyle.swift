@@ -46,7 +46,7 @@ public struct EcgTextFieldStyle: TextFieldStyle {
         .padding(.horizontal, 10)
         .padding(.vertical, self.padding ?? 10)
         .background(Color.white)
-        .cornerRadius(12)
+        .cornerRadius(8)
         .foregroundColor(.black)        
     }
 }

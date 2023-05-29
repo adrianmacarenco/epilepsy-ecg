@@ -77,6 +77,8 @@ public struct GettingStartedView: View {
                 case: /GettingStartedViewModel.Destination.personalIdentity
             ) { $personalIdentityVm in
                 PersonalIdentityView(vm: personalIdentityVm)
+                    .navigationBarTitleDisplayMode(.inline)
+
             }
         }
         .tint(.tint1)

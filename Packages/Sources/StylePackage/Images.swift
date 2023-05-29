@@ -10,10 +10,10 @@ import SwiftUI
 
 class ImageBundle {}
 extension Image {
-    public static let movesenseDevice = Image(decorative: "iconDevice", bundle: .myModule)
-    public static let checked = Image(decorative: "iconChecked", bundle: .myModule)
-    public static let iconProfileTab = Image(decorative: "iconProfileTab", bundle: .myModule)
-    public static let iconHomeTab = Image(decorative: "iconHomeTab", bundle: .myModule)
+    public static let movesenseDevice = Image(decorative: "deviceIcon", bundle: .myModule)
+    public static let checkedIcon = Image(decorative: "checkedIcon", bundle: .myModule)
+    public static let profileTabIcon = Image(decorative: "profileTabIcon", bundle: .myModule)
+    public static let homeTabIcon = Image(decorative: "homeTabIcon", bundle: .myModule)
     
     // Default
     public static let plusIcon = Image(systemName: "plus")

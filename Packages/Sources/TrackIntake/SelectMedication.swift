@@ -164,7 +164,7 @@ struct DiscoveredDeviceCell: View {
             Spacer()
             
             if vm.isSelected {
-                Image.checked
+                Image.checkedIcon
                     .padding(.trailing, 16)
             } else {
                 Circle()

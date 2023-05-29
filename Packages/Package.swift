@@ -303,6 +303,7 @@ let package = Package(
                 "Model",
                 "Shared",
                 "PersistenceClient",
+                "UserCreation",
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
             ]

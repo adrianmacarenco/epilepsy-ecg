@@ -250,7 +250,7 @@ public struct TrackIntakeView: View {
                 .frame(minWidth: 0, maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(Color.white)
-                .cornerRadius(12)
+                .cornerRadius(8)
                 .foregroundColor(.black)
                 .contentShape(Rectangle())
                 .onTapGesture {

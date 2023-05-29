@@ -19,13 +19,17 @@ public class GenderSelectionViewModel: ObservableObject {
     enum Destination {
         case weightSelection(WeightSelectionViewModel)
     }
+    
+    public enum ActionType {
+        case add
+        case edit(User)
+    }
     @Published var route: Destination?
     @Published var selectedGender: String = ""
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
-    
+    let type: ActionType
     var genders = ["Male", "Female"]
-    let now = Date()
     
     var oldestPersonAlive: Date {
             let calendar = Calendar.current
@@ -35,23 +39,68 @@ public class GenderSelectionViewModel: ObservableObject {
         }
     
     var localUser: User
+    let userUpdated: ((User) -> Void)?
+
+    // MARK: - Public Interface
     
-    public init(user: User) {
+    public init(
+        user: User,
+        type: ActionType = .add,
+        userUpdated: ((User) -> Void)? = nil
+    ) {
         self.localUser = user
+        self.type = type
+        self.userUpdated = userUpdated
+        if case let ActionType.edit(initialUser) = type {
+            selectedGender = initialUser.gender
+        }
     }
     
-    var isNextButtonEnabled: Bool {
-        !selectedGender.isEmpty
+    var isActionButtonEnabled: Bool {
+        guard !selectedGender.isEmpty else { return false }
+        switch type {
+        case .add:
+            return true
+        case .edit(let initialUser):
+            return selectedGender != initialUser.gender
+        }
     }
     
-    func nextButtonTapped() {
+    var actionButtonTitle: String {
+        switch type {
+        case .add:
+            return "Next"
+        case .edit:
+            return "Save"
+        }
+    }
+    
+    // MARK: - Private interface
+    private func updateUser(_ updatedUser: User) {
+        Task {
+            try await dbClient.updateUser(updatedUser)
+            persistenceClient.user.save(updatedUser)
+            userUpdated?(updatedUser)
+        }
+    }
+    
+    // MARK: - Actions
+    func actionButtonTapped() {
         guard genders.contains(selectedGender) else { return }
-        localUser.gender = selectedGender
-        route = .weightSelection(
-            withDependencies(from: self) {
-                .init(user: localUser)
-            }
-        )
+
+        switch type {
+        case .add:
+            localUser.gender = selectedGender
+            route = .weightSelection(
+                withDependencies(from: self) {
+                    .init(user: localUser)
+                }
+            )
+        case .edit(let initialUser):
+            var updatedUser = initialUser
+            updatedUser.gender = selectedGender
+            updateUser(updatedUser)
+        }
     }
     
     func didTapGenderCell(_ index: Int) {
@@ -71,9 +120,11 @@ public struct GenderSelectionView: View {
     }
     public var body: some View {
         VStack(spacing: 16) {
-            Image.genderIcon
-            Text("Gender-specific Factors")
-                .font(.largeInput)
+            if case GenderSelectionViewModel.ActionType.add = vm.type {
+                Image.genderIcon
+                Text("Gender-specific Factors")
+                    .font(.largeInput)
+            }
             Text("Please select your gender. This information helps us consider any gender-specific factors that may impact your heart health and epilepsy management.")
                 .padding(.horizontal, 16)
                 .font(.body1)
@@ -90,15 +141,14 @@ public struct GenderSelectionView: View {
                 }
             }
             Spacer()
-            Button("Next", action: vm.nextButtonTapped)
-                .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isNextButtonEnabled))
+            Button(vm.actionButtonTitle, action: vm.actionButtonTapped)
+                .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isActionButtonEnabled))
                 .padding(.bottom, 58)
-                .disabled(!vm.isNextButtonEnabled)
+                .disabled(!vm.isActionButtonEnabled)
         }
         .padding(.horizontal, 16)
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
         .background(Color.background)
-        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(
             unwrapping: self.$vm.route,
             case: /GenderSelectionViewModel.Destination.weightSelection
@@ -128,7 +178,7 @@ struct GenderCell: View {
                     .foregroundColor(.black)
                 Spacer()
                 if vm.isSelected {
-                    Image.checked
+                    Image.checkedIcon
                 } else {
                     Circle()
                         .stroke(Color.separator, lineWidth: 1)

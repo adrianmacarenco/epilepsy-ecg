@@ -26,4 +26,19 @@ public extension Date {
         formatter.dateFormat = "HH:mm"
         return formatter
     }()
+    
+    static var oldestPersonAlive: Date = {
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let oldestDateComponents = DateComponents(year: calendar.component(.year, from: currentDate) - 100)
+        return calendar.date(from: oldestDateComponents)!
+    }()
+    
+    func isSameDay(as otherDate: Date) -> Bool {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day], from: self)
+        let otherComponents = calendar.dateComponents([.year, .month, .day], from: otherDate)
+        
+        return components.year == otherComponents.year && components.month == otherComponents.month && components.day == otherComponents.day
+    }
 }

@@ -286,6 +286,60 @@ public class DBManager: NSObject {
             }
         }
     }
+    
+    public func updateMedications(_ medications: [Medication]) async throws {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                try dbConnection.transaction {
+                    for medication in medications {
+                        let query = self.medications.filter(self.id == Int64(medication.id))
+                        if try dbConnection.scalar(query.exists) {
+                            let dbMedication = self.medications.filter(self.id == Int64(medication.id))
+                            let update = dbMedication.update(self.name <- medication.name)
+                            try dbConnection.run(update)
+                            
+                            try deleteActiveIngredients(for: medication.id)
+                            
+                            for ingredient in medication.activeIngredients {
+                                _ = try addActiveIngredient(for: medication.id, ingredient: ingredient)
+                            }
+                        } else {
+                            _ = try addMedicationNonAsync(name: medication.name, activeIngredients: medication.activeIngredients)
+                        }
+                    }
+                }
+                
+                cont.resume(returning: ())
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    private func addMedicationNonAsync(name: String, activeIngredients: [ActiveIngredient]) throws -> Medication {
+        let insert = medications.insert(self.name <- name)
+        let rowId = try dbConnection.run(insert)
+        let medicationId = Int(rowId)
+        var localIngredients: [ActiveIngredient] = []
+        
+        for ingredient in activeIngredients {
+            let addedIngredient = try addActiveIngredient(for: medicationId, ingredient: ingredient)
+            localIngredients.append(addedIngredient)
+        }
+        
+        let medication = Medication(
+            id: medicationId,
+            name: name,
+            activeIngredients: localIngredients
+        )
+        
+        try printAllMedications()
+        try printAllActiveIngredients()
+
+        return medication
+    }
+
+
+
 
     private func deleteActiveIngredients(for medicationId: Int) throws {
         let query = activeIngredients.filter(self.medicationId == Int64(medicationId))
