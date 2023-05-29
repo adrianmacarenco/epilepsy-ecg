@@ -68,7 +68,7 @@ public struct HomeTabbarView: View {
             TrackIntakeView(vm: vm.trackIntakeVm)
                 .tabItem {
                     VStack{
-                        Image.pillTab
+                        Image.tackIntakeTabIcon
                             .renderingMode(.template)
                         Text("Track intake")
                     }

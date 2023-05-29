@@ -14,6 +14,7 @@ extension Image {
     public static let checkedIcon = Image(decorative: "checkedIcon", bundle: .myModule)
     public static let profileTabIcon = Image(decorative: "profileTabIcon", bundle: .myModule)
     public static let homeTabIcon = Image(decorative: "homeTabIcon", bundle: .myModule)
+    public static let tackIntakeTabIcon = Image(decorative: "tackIntakeTabIcon", bundle: .myModule)
     
     // Default
     public static let plusIcon = Image(systemName: "plus")
