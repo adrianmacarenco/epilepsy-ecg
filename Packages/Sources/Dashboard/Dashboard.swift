@@ -39,9 +39,9 @@ public class DashboardViewModel: ObservableObject {
             print("🏖️ Route has changed: \(route)")
         }
     }
-    @Published var previousDevices: IdentifiedArrayOf<DeviceNameSerial> = []
+    @Published var previousDevice: DeviceNameSerial?
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
-    @Published var connectedDevices: IdentifiedArrayOf<DeviceWrapper> = []
+    @Published var connectedDevice: DeviceWrapper?
     @Published var ecgViewModel: EcgViewModel = .init(data: [], ecgConfig: .defaultValue)
     @Published var deviceBatteryPercentage: Int?
     
@@ -67,9 +67,7 @@ public class DashboardViewModel: ObservableObject {
             ecgViewModel.configuration = ecgConfig
         }
         
-        guard let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() else { return }
-        //Display the previous device here
-        previousDevices.append(savedDeviceNameSerial)
+        fetchCachedDevice()
         bluetoothClient.scanDevices()
         
         // Subscribe to streams
@@ -102,11 +100,15 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func isConnectable(deviceSerial: String) -> Bool {
-        discoveredDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial } && !connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
+        discoveredDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial } && connectedDevice == nil
     }
     
     func isDisconnectable(deviceSerial: String) -> Bool {
-        connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
+        if let connectedDevice, connectedDevice.movesenseDevice.serialNumber == deviceSerial {
+            return true
+        } else {
+            return false
+        }
     }
     
     func computeTime(for index: Int, interval: Int) -> Double {
@@ -118,6 +120,13 @@ public class DashboardViewModel: ObservableObject {
     }
     
     // MARK: - Private interface
+    
+    private func fetchCachedDevice() {
+        guard let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() else { return }
+        //Display the previous device here
+        previousDevice = savedDeviceNameSerial
+    }
+    
     private func resetEcgData() {
         index = 0
         ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
@@ -169,7 +178,7 @@ public class DashboardViewModel: ObservableObject {
                 } else {
                     isFirstDiscarded = true
                 }
-                if count == 3, let connectedDevice = connectedDevices.first {
+                if count == 3, let connectedDevice {
                     bluetoothClient.unsubscribeHr(connectedDevice)
                     bluetoothClient.subscribeToEcg(connectedDevice, ecgViewModel.configuration.frequency)
                     let avrHr = Int(totalHr / count)
@@ -231,7 +240,7 @@ public class DashboardViewModel: ObservableObject {
     }
     
     private func frequencyChanged() {
-        guard let connectedDevice = connectedDevices.first,
+        guard let connectedDevice,
               let ecgConfiguration = persistenceClient.ecgConfiguration.load() else { return }
         ecgViewModel.configuration.frequency = ecgConfiguration.frequency
         bluetoothClient.unsubscribeEcg(connectedDevice)
@@ -239,13 +248,13 @@ public class DashboardViewModel: ObservableObject {
         resetEcgData()
     }
     
-    private func getConnectedDeviceBatter(device: DeviceWrapper) {
+    private func getConnectedDeviceBattery(device: DeviceWrapper) {
         Task { [weak self] in
             let batteryPercentage = try await self?.bluetoothClient.getDeviceBattery(device)
             await MainActor.run { [weak self] in
                 withAnimation {
                     self?.deviceBatteryPercentage = batteryPercentage
-
+                    
                 }
             }
         }
@@ -254,7 +263,19 @@ public class DashboardViewModel: ObservableObject {
     // MARK: - Actions
     func addDeviceButtonTapped() {
         let addDeviceViewModel = withDependencies(from: self) {
-            AddDeviceViewModel()
+            AddDeviceViewModel(connectedAction: { [weak self] device in
+                Task { [weak self] in
+                    await MainActor.run { [weak self] in
+                        self?.route = nil
+                        self?.connectedDevice = device
+                        self?.previousDevice = .init(deviceWrapper: device)
+                    }
+                    
+                    self?.bluetoothClient.stopScanningDevices()
+                    self?.bluetoothClient.subscribeToHr(device)
+                    self?.getConnectedDeviceBattery(device: device)
+                }
+            })
         }
         route = .addDevice(addDeviceViewModel)
     }
@@ -273,11 +294,11 @@ public class DashboardViewModel: ObservableObject {
         }
         
         Task { @MainActor in
-            let connectedDevice = try await bluetoothClient.connectToDevice(deviceWrapper)
-            connectedDevices.append(connectedDevice)
+            let connectedDevice = try await self.bluetoothClient.connectToDevice(deviceWrapper)
+            self.connectedDevice = connectedDevice
             bluetoothClient.stopScanningDevices()
             bluetoothClient.subscribeToHr(connectedDevice)
-            getConnectedDeviceBatter(device: connectedDevice)
+            getConnectedDeviceBattery(device: connectedDevice)
             //            saveEcgData()
         }
     }
@@ -286,14 +307,14 @@ public class DashboardViewModel: ObservableObject {
         guard let deviceWrapper = discoveredDevices.first(where: { $0.movesenseDevice.serialNumber == deviceNameSerial.serial }) else { return }
         
         Task { @MainActor in
-            let disconnectedDevice = try await bluetoothClient.disconnectDevice(deviceWrapper)
-            connectedDevices.remove(disconnectedDevice)
+            _ = try await bluetoothClient.disconnectDevice(deviceWrapper)
+            connectedDevice = nil
         }
     }
     
     func ecgViewTapped() {
         let ecgSettingVm: EcgSettingsViewModel = withDependencies(from: self) { .init(
-            device: self.connectedDevices.first,
+            device: connectedDevice,
             ecgModel: ecgViewModel,
             index: self.index ,
             computeTime: { [weak self] localIndex, localInterval  in
@@ -312,7 +333,8 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func deviceCellTapped(_ cachedDevice: DeviceNameSerial) {
-        guard let connectedDevice = connectedDevices.first(where: { $0.movesenseDevice.serialNumber == cachedDevice.serial }) else { return }
+        guard let connectedDevice,
+              cachedDevice.serial == connectedDevice.movesenseDevice.serialNumber else { return }
         route = .deviceInfo(
             withDependencies(from: self, operation: {
                 DeviceInfoViewModel(connectedDevice: connectedDevice)
@@ -332,114 +354,118 @@ public struct DashboardView: View {
     
     public var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack {
-                    if vm.previousDevices.isEmpty {
-                        GetStartedView()
-                    } else {
-                        ForEach(vm.previousDevices) { deviceSerialName in
+            GeometryReader { proxy in
+                
+                ScrollView {
+                    VStack {
+                        if let prevDevice = vm.previousDevice {
                             DeviceCell(
-                                deviceSerialName: deviceSerialName,
-                                connectButtonTapped: { vm.connectButtonTapped(deviceNameSerial: deviceSerialName)},
-                                disconnectButtonTapped: { vm.disconnectButtonTapped(deviceNameSerial: deviceSerialName)},
+                                deviceSerialName: prevDevice,
+                                connectButtonTapped: { vm.connectButtonTapped(deviceNameSerial: prevDevice)},
+                                disconnectButtonTapped: { vm.disconnectButtonTapped(deviceNameSerial: prevDevice)},
                                 vm: .init(
-                                    isConnectEnabled: vm.isConnectable(deviceSerial: deviceSerialName.serial),
-                                    isDisconnectEnabled: vm.isDisconnectable(deviceSerial: deviceSerialName.serial),
+                                    isConnectEnabled: vm.isConnectable(deviceSerial: prevDevice.serial),
+                                    isDisconnectEnabled: vm.isDisconnectable(deviceSerial: prevDevice.serial),
                                     batteryPercentage: vm.deviceBatteryPercentage
                                 )
                             )
                             .padding(.horizontal, 16)
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                vm.deviceCellTapped(deviceSerialName)
+                                vm.deviceCellTapped(prevDevice)
                             }
-                        }
-                        VStack {
-                            Text("ECG Preview")
-                                .font(.headline3)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                                .padding(.top, 16)
-                                .padding(.horizontal, 16)
-                            
-                            EcgView(
-                                model: $vm.ecgViewModel,
-                                computeTime: vm.computeTime
-                            )
+                            VStack {
+                                Text("ECG Preview")
+                                    .font(.headline3)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                    .padding(.top, 16)
+                                    .padding(.horizontal, 16)
+                                
+                                EcgView(
+                                    model: $vm.ecgViewModel,
+                                    computeTime: vm.computeTime
+                                )
+                                .background(Color.white)
+                                .padding(.all, 16)
+                                .onTapGesture(perform: vm.ecgViewTapped)
+                                
+                            }
                             .background(Color.white)
-                            .padding(.all, 16)
-                            .onTapGesture(perform: vm.ecgViewTapped)
+                            .cornerRadius(20)
+                            .padding(.horizontal, 16)
+                            Spacer()
                             
+                        } else {
+                            GetStartedView()
+                            Spacer()
+                            Button("Add my device", action: vm.addDeviceButtonTapped)
+                                .buttonStyle(MyButtonStyle.init(style: .primary))
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 24)
                         }
-                        .background(Color.white)
-                        .cornerRadius(20)
-                        .padding(.horizontal, 16)
+                        
                     }
-                    Spacer()
-                    Button("Add my device", action: vm.addDeviceButtonTapped)
-                        .buttonStyle(MyButtonStyle.init(style: .primary))
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 24)
-                    Divider()
+                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+                    .frame(height: proxy.size.height)
+                    .navigationTitle("Dashboard")
+                    .onAppear(perform: vm.onAppear)
                 }
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
-                .navigationTitle("Dashboard")
-                .onAppear(perform: vm.onAppear)
-            }
-            .background(Color.background)
-            
-            .sheet(
-                unwrapping: $vm.route,
-                case: /DashboardViewModel.Destination.addDevice
-            ) { $scanDevicesVm in
-                NavigationStack {
-                    AddDeviceView(viewModel: scanDevicesVm)
-                        .toolbarBackground(.visible, for: .navigationBar)
-                        .toolbarBackground(.white, for: .navigationBar)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button(action: vm.cancelAddDeviceTapped) {
-                                    Text("Cancel")
-                                }
-                            }
-                        }
-                        .toolbar {
-                            ToolbarItem(placement: .principal) {
-                                Text("Add device")
-                                    .font(.title1)
-                                    .foregroundColor(.black)
-                            }
-                        }
-                }
-            }
-            .sheet(
-                unwrapping: self.$vm.route,
-                case: /DashboardViewModel.Destination.onboarding
-            ) { $onboardingVm in
-                NavigationStack {
-                    OnboardingView(vm: onboardingVm)
-                        .toolbarBackground(.visible, for: .navigationBar)
-                        .toolbarBackground(.white, for: .navigationBar)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Close") {
-                                    vm.closeOnboarding()
-                                }
-                            }
-                        }
-                }
+                .background(Color.background)
                 
-            }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /DashboardViewModel.Destination.deviceInfo
-            ) { $deviceInfoVm in
-                DeviceInfoView(vm: deviceInfoVm)
-            }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /DashboardViewModel.Destination.ecgSettings
-            ) { $ecgSettingsVm in
-                EcgSettingsView(vm: ecgSettingsVm)
+                .sheet(
+                    unwrapping: $vm.route,
+                    case: /DashboardViewModel.Destination.addDevice
+                ) { $scanDevicesVm in
+                    NavigationStack {
+                        AddDeviceView(viewModel: scanDevicesVm)
+                            .toolbarBackground(.visible, for: .navigationBar)
+                            .toolbarBackground(.white, for: .navigationBar)
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button(action: vm.cancelAddDeviceTapped) {
+                                        Text("Cancel")
+                                    }
+                                }
+                            }
+                            .toolbar {
+                                ToolbarItem(placement: .principal) {
+                                    Text("Add device")
+                                        .font(.title1)
+                                        .foregroundColor(.black)
+                                }
+                            }
+                    }
+                }
+                .sheet(
+                    unwrapping: self.$vm.route,
+                    case: /DashboardViewModel.Destination.onboarding
+                ) { $onboardingVm in
+                    NavigationStack {
+                        OnboardingView(vm: onboardingVm)
+                            .toolbarBackground(.visible, for: .navigationBar)
+                            .toolbarBackground(.white, for: .navigationBar)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    Button("Close") {
+                                        vm.closeOnboarding()
+                                    }
+                                }
+                            }
+                    }
+                    
+                }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /DashboardViewModel.Destination.deviceInfo
+                ) { $deviceInfoVm in
+                    DeviceInfoView(vm: deviceInfoVm)
+                }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /DashboardViewModel.Destination.ecgSettings
+                ) { $ecgSettingsVm in
+                    EcgSettingsView(vm: ecgSettingsVm)
+                }
             }
         }
     }
@@ -462,19 +488,19 @@ class DeviceCellViewModel: ObservableObject {
     var batteryIcon: Image {
         guard let batteryPercentage else { return Image.batteryLowIcon }
         switch batteryPercentage {
-            case 76...100:
-                return Image.batteryFullIcon
-            case 51...75:
-                return Image.batterySecondFullIcon
-            case 26...50:
-                return Image.batteryHalfIcon
-            case 11...25:
-                return Image.batteryQuarterIcon
-            case 0...10:
-                return Image.batteryLowIcon
-            default:
-                return Image.batteryLowIcon
-            }
+        case 76...100:
+            return Image.batteryFullIcon
+        case 51...75:
+            return Image.batterySecondFullIcon
+        case 26...50:
+            return Image.batteryHalfIcon
+        case 11...25:
+            return Image.batteryQuarterIcon
+        case 0...10:
+            return Image.batteryLowIcon
+        default:
+            return Image.batteryLowIcon
+        }
     }
 }
 

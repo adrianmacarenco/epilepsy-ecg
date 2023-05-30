@@ -34,14 +34,15 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
     var isConnectButtonEnabled: Bool {
         return selectedDeviceId != nil && connectedDevice == nil
     }
-    
-    var isDisconnectButtonEnabled: Bool {
-        return connectedDevice != nil
-    }
+    let connectedAction: (DeviceWrapper) -> Void
 
     // MARK: - Public Interface
     
-    public init(){}
+    public init(
+        connectedAction: @escaping (DeviceWrapper) -> Void
+    ) {
+        self.connectedAction = connectedAction
+    }
     
     func task() async {
         bluetoothClient.scanDevices()
@@ -87,6 +88,7 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
                 let connectedDevice = try await bluetoothClient.connectToDevice(selectedDevice)
                 self.connectedDevice = connectedDevice
                 persistenceClient.deviceNameSerial.save(.init(deviceWrapper: connectedDevice))
+                connectedAction(connectedDevice)
                 print("🔌 connected to \(connectedDevice.movesenseDevice)")
             } catch {
                 print("❌ Couldn't connect to \(selectedDevice.movesenseDevice) error: \(error.localizedDescription)")
@@ -94,19 +96,6 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
         }
     }
     
-    func disconnectButtonTapped() {
-        guard let connectedDevice = connectedDevice else { return }
-        Task { @MainActor in
-            do {
-                let disconnectedDevice = try await bluetoothClient.disconnectDevice(connectedDevice)
-                print("🔌 disconnected \(disconnectedDevice.movesenseDevice.localName)")
-                self.connectedDevice = nil
-                
-            } catch {
-                print("❌ Couldn't disconnect \(connectedDevice) error: \(error.localizedDescription)")
-            }
-        }
-    }
     
     func didTapCell(device: DeviceWrapper) {
         guard device.id != selectedDeviceId else { return }
@@ -137,11 +126,6 @@ public struct AddDeviceView: View {
                     }
                 }
                 Spacer()
-                Button("Disconnnect", action: viewModel.disconnectButtonTapped)
-                    .buttonStyle(MyButtonStyle(
-                        style: .primary,
-                        isEnabled: viewModel.isDisconnectButtonEnabled
-                    ))
                 Button("Connect", action: viewModel.connectButtonTapped)
                     .buttonStyle(MyButtonStyle(
                         style: .primary,
