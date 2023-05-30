@@ -134,7 +134,7 @@ public extension BluetoothManager {
         })
     }
     
-    func getDeviceInfo(_ device: DeviceWrapper) async throws -> MovesenseEcgInfo {
+    func getDeviceEcgInfo(_ device: DeviceWrapper) async throws -> MovesenseEcgInfo {
         return try await withCheckedThrowingContinuation({ cont in
             
             let request = MovesenseRequest(
@@ -279,5 +279,6 @@ enum BluetoothError: Error {
     case failedToConnect
     case failedToConnectToGivenDevice
     case failedToGetDeviceEnergy
+    case failedToGetDeviceInfo
     case failedToUnsubscribe
 }

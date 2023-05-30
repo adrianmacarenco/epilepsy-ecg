@@ -195,7 +195,9 @@ let package = Package(
             name: "DeviceInfo",
             dependencies: [
                 "Model",
-                .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
             ]
         ),
         .target(
@@ -279,7 +281,8 @@ let package = Package(
         .target(
             name: "Shared",
             dependencies: [
-                "StylePackage"
+                "StylePackage",
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation")
             ]
         ),
         .target(

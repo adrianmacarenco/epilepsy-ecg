@@ -21,7 +21,7 @@ public struct BluetoothClient {
     public var getDevice:(DeviceNameSerial) -> DeviceWrapper?
     public var getDiscoveredDevices: () -> [DeviceWrapper]
     public var getDeviceBatteryPercentage: (DeviceWrapper) async throws -> Int
-    public var getDeviceInfo: (DeviceWrapper) async throws -> MovesenseEcgInfo
+    public var getDeviceEcgInfo: (DeviceWrapper) async throws -> MovesenseEcgInfo
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
@@ -40,7 +40,7 @@ public struct BluetoothClient {
         getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
         getDiscoveredDevices: @escaping() -> [DeviceWrapper] ,
         getDeviceBatteryPercentage: @escaping(DeviceWrapper) async throws -> Int,
-        getDeviceInfo: @escaping (DeviceWrapper) async throws -> MovesenseEcgInfo,
+        getDeviceEcgInfo: @escaping (DeviceWrapper) async throws -> MovesenseEcgInfo,
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
@@ -57,7 +57,7 @@ public struct BluetoothClient {
         self.getDevice = getDevice
         self.getDiscoveredDevices = getDiscoveredDevices
         self.getDeviceBatteryPercentage = getDeviceBatteryPercentage
-        self.getDeviceInfo = getDeviceInfo
+        self.getDeviceEcgInfo = getDeviceEcgInfo
         self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
         self.connectToDevice = connectToDevice
@@ -83,7 +83,7 @@ extension BluetoothClient: DependencyKey {
             getDevice: bluetoothManager.getDevice(with: ),
             getDiscoveredDevices: bluetoothManager.getDiscoveredDevices,
             getDeviceBatteryPercentage: bluetoothManager.getDeviceBattery(_:),
-            getDeviceInfo: { try await bluetoothManager.getDeviceInfo($0) },
+            getDeviceEcgInfo: { try await bluetoothManager.getDeviceEcgInfo($0) },
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },

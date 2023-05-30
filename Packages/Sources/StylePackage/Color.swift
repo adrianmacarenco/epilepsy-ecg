@@ -16,5 +16,6 @@ public extension SwiftUI.Color {
     static let background2 = Color("background2", bundle: .myModule)
     static let separator = Color("separator", bundle: .myModule)
     static let sectionTitle = Color("sectionTitle", bundle: .myModule)
+    static let delete = Color("delete", bundle: .myModule)
 
 }

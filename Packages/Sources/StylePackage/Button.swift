@@ -23,7 +23,7 @@ public extension ButtonConfig {
         case .primary:
             return .tint1
         case .delete:
-            return .red
+            return .delete
         }
     }
     

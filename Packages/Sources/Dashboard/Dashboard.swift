@@ -337,7 +337,25 @@ public class DashboardViewModel: ObservableObject {
               cachedDevice.serial == connectedDevice.movesenseDevice.serialNumber else { return }
         route = .deviceInfo(
             withDependencies(from: self, operation: {
-                DeviceInfoViewModel(connectedDevice: connectedDevice)
+                DeviceInfoViewModel(
+                    connectedDevice: connectedDevice,
+                    onConfirmDeletion: { [weak self] in
+                        guard let connectedDevice = self?.connectedDevice else { return }
+                        self?.bluetoothClient.unsubscribeEcg(connectedDevice)
+                        self?.bluetoothClient.unsubscribeHr(connectedDevice)
+                        Task { [weak self] in
+                            _ = try await self?.bluetoothClient.disconnectDevice(connectedDevice)
+                            await MainActor.run { [weak self] in
+                                self?.route = nil
+                                self?.resetEcgData()
+                                self?.connectedDevice = nil
+                                self?.discoveredDevices = []
+                                self?.persistenceClient.deviceNameSerial.save(nil)
+                                self?.previousDevice = nil
+                            }
+                        }
+                    }
+                )
             })
         )
     }
@@ -366,7 +384,7 @@ public struct DashboardView: View {
                                 vm: .init(
                                     isConnectEnabled: vm.isConnectable(deviceSerial: prevDevice.serial),
                                     isDisconnectEnabled: vm.isDisconnectable(deviceSerial: prevDevice.serial),
-                                    batteryPercentage: vm.deviceBatteryPercentage
+                                    batteryPercentage: vm.connectedDevice != nil ? vm.deviceBatteryPercentage : nil
                                 )
                             )
                             .padding(.horizontal, 16)
@@ -380,13 +398,22 @@ public struct DashboardView: View {
                                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                     .padding(.top, 16)
                                     .padding(.horizontal, 16)
-                                
+                                HStack {
+                                    Text("See more")
+                                        .font(.body1)
+                                        .foregroundColor(.gray)
+                                    Image.openIndicator
+                                        .foregroundColor(.gray)
+                                    Spacer()
+                                    
+                                }
+                                .padding(.horizontal, 16)
                                 EcgView(
                                     model: $vm.ecgViewModel,
                                     computeTime: vm.computeTime
                                 )
                                 .background(Color.white)
-                                .padding(.all, 16)
+                                .padding([.horizontal, .bottom], 16)
                                 .onTapGesture(perform: vm.ecgViewTapped)
                                 
                             }

@@ -172,8 +172,6 @@ extension UserInformationViewModel {
             }
         }
     }
-    
-    
 }
 
 public struct UserInformationView: View {
