@@ -17,6 +17,10 @@ public struct DeviceWrapper {
     }
 }
 
-extension DeviceWrapper: Identifiable {
+extension DeviceWrapper: Identifiable, Equatable {
+    public static func == (lhs: DeviceWrapper, rhs: DeviceWrapper) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
     public var id: UUID { movesenseDevice.uuid }
 }

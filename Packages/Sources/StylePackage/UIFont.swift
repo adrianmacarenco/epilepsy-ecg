@@ -91,7 +91,7 @@ extension UIFont {
 
 public extension UIFont {
     static let headline1 = UIFont.sfProBold(withSize: 28)
-    static let headline2 = UIFont.sfProBold(withSize: 24)
+    static let headline2 = UIFont.sfProBold(withSize: 22)
     static let headline3 = UIFont.sfProBold(withSize: 18)
     static let subheader1 = UIFont.sfProRegular(withSize: 12)
     static let overline = UIFont.sfProMedium(withSize: 14)

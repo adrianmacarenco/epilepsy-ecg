@@ -15,6 +15,7 @@ import Dependencies
 import BluetoothClient
 import Model
 import PersistenceClient
+import Clocks
 
 public class AddDeviceViewModel: ObservableObject, Equatable {
     public static func == (lhs: AddDeviceViewModel, rhs: AddDeviceViewModel) -> Bool {
@@ -27,7 +28,9 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
 
     @Dependency(\.bluetoothClient) var bluetoothClient
     @Dependency(\.persistenceClient) var persistenceClient
-    
+    @Dependency (\.continuousClock) var clock
+    private var discoveredDevicesSubscription: Task<Void, Never>?
+
     var isConnectButtonEnabled: Bool {
         return selectedDeviceId != nil && connectedDevice == nil
     }
@@ -36,16 +39,43 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
         return connectedDevice != nil
     }
 
+    // MARK: - Public Interface
+    
     public init(){}
     
-    @MainActor
     func task() async {
         bluetoothClient.scanDevices()
-        for await device in bluetoothClient.discoveredDevicesStream() {
-            print(device.movesenseDevice.isConnected)
-            discoveredDevices.append(device)
+        
+        discoveredDevicesSubscription = Task { [weak self] in
+            await self?.subscribeToDiscoveredDevicesStream()
+        }
+        
+        try? await clock.sleep(for: .seconds(1))
+        guard discoveredDevices.isEmpty else { return }
+        let apiDiscoveredDevices = bluetoothClient.getDiscoveredDevices()
+        print("👹 Api discovered devices: \(apiDiscoveredDevices)")
+        guard !apiDiscoveredDevices.isEmpty else { return }
+        await MainActor.run { [weak self] in
+            apiDiscoveredDevices.forEach {
+                self?.discoveredDevices.append($0)
+            }
         }
     }
+    
+    func onDisappear() {
+        bluetoothClient.stopScanningDevices()
+        discoveredDevicesSubscription?.cancel()
+    }
+    // MARK: - Private Interface
+    func subscribeToDiscoveredDevicesStream() async {
+        for await device in bluetoothClient.discoveredDevicesStream() {
+            await MainActor.run { [weak self] in
+                 self?.discoveredDevices.append(device)
+            }
+        }
+    }
+    
+    // MARK: - Actions
     
     func connectButtonTapped() {
         guard let selectedDeviceId = selectedDeviceId,
@@ -125,6 +155,7 @@ public struct AddDeviceView: View {
         .task {
             await viewModel.task()
         }
+        .onDisappear(perform: viewModel.onDisappear)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -152,6 +183,7 @@ struct DiscoveredDeviceCell: View {
             HStack {
                 Image.movesenseDevice
                 Text(device.localName)
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                     .font(.title1)
                     .foregroundColor(.black)
                 if vm.isSelected {

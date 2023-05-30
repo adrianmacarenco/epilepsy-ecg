@@ -316,7 +316,7 @@ public struct TrackIntakeView: View {
                 Spacer()
                 Button(vm.actionButtonTitle, action: vm.actionButtonTapped)
                     .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isAddButtonEnabled))
-                    .padding(.bottom, 36)
+                    .padding(.bottom, 24)
                     .disabled(!vm.isAddButtonEnabled)
             }
             .padding(.horizontal, 16)

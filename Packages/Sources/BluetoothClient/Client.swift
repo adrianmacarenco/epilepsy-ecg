@@ -20,6 +20,7 @@ public struct BluetoothClient {
     public var stopScanningDevices: () -> Void
     public var getDevice:(DeviceNameSerial) -> DeviceWrapper?
     public var getDiscoveredDevices: () -> [DeviceWrapper]
+    public var getDeviceBatteryPercentage: (DeviceWrapper) async throws -> Int
     public var getDeviceInfo: (DeviceWrapper) async throws -> MovesenseEcgInfo
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
@@ -38,6 +39,7 @@ public struct BluetoothClient {
         stopScanningDevices: @escaping () -> Void,
         getDevice: @escaping (DeviceNameSerial) -> (DeviceWrapper?),
         getDiscoveredDevices: @escaping() -> [DeviceWrapper] ,
+        getDeviceBatteryPercentage: @escaping(DeviceWrapper) async throws -> Int,
         getDeviceInfo: @escaping (DeviceWrapper) async throws -> MovesenseEcgInfo,
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
@@ -54,6 +56,7 @@ public struct BluetoothClient {
         self.scanDevices = scanDevices
         self.getDevice = getDevice
         self.getDiscoveredDevices = getDiscoveredDevices
+        self.getDeviceBatteryPercentage = getDeviceBatteryPercentage
         self.getDeviceInfo = getDeviceInfo
         self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
@@ -79,6 +82,7 @@ extension BluetoothClient: DependencyKey {
             stopScanningDevices: bluetoothManager.stopScanningDevices,
             getDevice: bluetoothManager.getDevice(with: ),
             getDiscoveredDevices: bluetoothManager.getDiscoveredDevices,
+            getDeviceBatteryPercentage: bluetoothManager.getDeviceBattery(_:),
             getDeviceInfo: { try await bluetoothManager.getDeviceInfo($0) },
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },

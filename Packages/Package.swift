@@ -36,6 +36,10 @@ let package = Package(
             targets: ["DBManager"]
         ),
         .library(
+            name: "DeviceInfo",
+            targets: ["DeviceInfo"]
+        ),
+        .library(
             name: "ECG",
             targets: ["ECG"]
         ),
@@ -113,6 +117,7 @@ let package = Package(
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "Clocks", package: "swift-clocks"),
             ]
         ),
         .target(
@@ -153,6 +158,7 @@ let package = Package(
             "AddDevice",
             "BluetoothClient",
             "DBClient",
+            "DeviceInfo",
             "ECG",
             "ECG Settings",
             "Model",
@@ -183,6 +189,13 @@ let package = Package(
             dependencies: [
                 "Model",
                 .product(name: "SQLite", package: "SQLite.swift")
+            ]
+        ),
+        .target(
+            name: "DeviceInfo",
+            dependencies: [
+                "Model",
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
             ]
         ),
         .target(
@@ -260,7 +273,6 @@ let package = Package(
             dependencies: [],
             resources: [
                 .process("Fonts"),
-//                .copy("Images.xcassets"),
                 .copy("Colors.xcassets")
             ]
         ),

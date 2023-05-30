@@ -21,6 +21,7 @@ import ECG
 import Onboarding
 import ECG_Settings
 import DBClient
+import DeviceInfo
 import Shared
 import Combine
 import MovesenseApi
@@ -30,6 +31,7 @@ public class DashboardViewModel: ObservableObject {
         case addDevice(AddDeviceViewModel)
         case ecgSettings(EcgSettingsViewModel)
         case onboarding(OnboardingViewModel)
+        case deviceInfo(DeviceInfoViewModel)
     }
     
     @Published var route: Destination? {
@@ -41,6 +43,7 @@ public class DashboardViewModel: ObservableObject {
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var connectedDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var ecgViewModel: EcgViewModel = .init(data: [], ecgConfig: .defaultValue)
+    @Published var deviceBatteryPercentage: Int?
     
     var index = 0
     let previewInterval = 4
@@ -56,34 +59,22 @@ public class DashboardViewModel: ObservableObject {
     @Dependency (\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
     @Dependency (\.dbClient) var dbClient
-
+    
     // MARK: - Public interface
-
+    
     public init() {
         if let ecgConfig = persistenceClient.ecgConfiguration.load() {
             ecgViewModel.configuration = ecgConfig
         }
         
-        if let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() {
-            //Display the previous device here
-            previousDevices.append(savedDeviceNameSerial)
-            bluetoothClient.scanDevices()
-        }
+        guard let savedDeviceNameSerial = persistenceClient.deviceNameSerial.load() else { return }
+        //Display the previous device here
+        previousDevices.append(savedDeviceNameSerial)
+        bluetoothClient.scanDevices()
+        
+        // Subscribe to streams
         subscribeToEcgStream()
         subscribeToHrStream()
-    }
-    
-    func onAppear() {
-        resetEcgData()
-    }
-    
-    @MainActor
-    func task() async {
-        Task {
-            for await device in bluetoothClient.discoveredDevicesStream() {
-                discoveredDevices.append(device)
-            }
-        }
         
         Task {
             try await clock.sleep(for: .seconds(1))
@@ -91,15 +82,39 @@ public class DashboardViewModel: ObservableObject {
             let apiDiscoveredDevices = bluetoothClient.getDiscoveredDevices()
             print("👹 Api discovered devices: \(apiDiscoveredDevices)")
             guard !apiDiscoveredDevices.isEmpty else { return }
-
-            apiDiscoveredDevices.forEach {
-                self.discoveredDevices.append($0)
+            await MainActor.run { [weak self] in
+                apiDiscoveredDevices.forEach {
+                    self?.discoveredDevices.append($0)
+                }
             }
         }
-//        Task { @MainActor in
-//            try await clock.sleep(for: .seconds(5))
-//            route = .onboarding(.init())
-//        }
+    }
+    
+    func onAppear() {
+        Task {
+            for await device in bluetoothClient.discoveredDevicesStream() {
+                await MainActor.run {
+                    discoveredDevices.append(device)
+                }
+            }
+        }
+        resetEcgData()
+    }
+    
+    func isConnectable(deviceSerial: String) -> Bool {
+        discoveredDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial } && !connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
+    }
+    
+    func isDisconnectable(deviceSerial: String) -> Bool {
+        connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
+    }
+    
+    func computeTime(for index: Int, interval: Int) -> Double {
+        let elapsedTime = Double(index) / Double(ecgViewModel.configuration.frequency)
+        // Calculate the time within the current 4-second interval
+        let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(interval))
+        
+        return timeValue
     }
     
     // MARK: - Private interface
@@ -137,7 +152,7 @@ public class DashboardViewModel: ObservableObject {
     
     // Subscribes to 5 HR, calculates the average HR and then unsubscribes
     private func subscribeToHrStream() {
-
+        
         Task {
             var count: Float = 0.0
             var isFirstDiscarded = false
@@ -191,8 +206,8 @@ public class DashboardViewModel: ObservableObject {
                     try await dbClient.addEcg(localData)
                     ecgDataEvents = []
                     print("Data saved ✅")
-//                    let ecgDtos = try await dbClient.fetchRecentEcgData(3600)
-//                    print(ecgDtos)
+                    //                    let ecgDtos = try await dbClient.fetchRecentEcgData(3600)
+                    //                    print(ecgDtos)
                 } catch {
                     print("🥴 error when saving: \(error.localizedDescription)")
                 }
@@ -217,13 +232,25 @@ public class DashboardViewModel: ObservableObject {
     
     private func frequencyChanged() {
         guard let connectedDevice = connectedDevices.first,
-        let ecgConfiguration = persistenceClient.ecgConfiguration.load() else { return }
+              let ecgConfiguration = persistenceClient.ecgConfiguration.load() else { return }
         ecgViewModel.configuration.frequency = ecgConfiguration.frequency
         bluetoothClient.unsubscribeEcg(connectedDevice)
         bluetoothClient.subscribeToEcg(connectedDevice, ecgViewModel.configuration.frequency)
         resetEcgData()
     }
+    
+    private func getConnectedDeviceBatter(device: DeviceWrapper) {
+        Task { [weak self] in
+            let batteryPercentage = try await self?.bluetoothClient.getDeviceBattery(device)
+            await MainActor.run { [weak self] in
+                withAnimation {
+                    self?.deviceBatteryPercentage = batteryPercentage
 
+                }
+            }
+        }
+    }
+    
     // MARK: - Actions
     func addDeviceButtonTapped() {
         let addDeviceViewModel = withDependencies(from: self) {
@@ -250,7 +277,8 @@ public class DashboardViewModel: ObservableObject {
             connectedDevices.append(connectedDevice)
             bluetoothClient.stopScanningDevices()
             bluetoothClient.subscribeToHr(connectedDevice)
-//            saveEcgData()
+            getConnectedDeviceBatter(device: connectedDevice)
+            //            saveEcgData()
         }
     }
     
@@ -279,24 +307,17 @@ public class DashboardViewModel: ObservableObject {
         route = .ecgSettings(ecgSettingVm)
     }
     
-    func isConnectable(deviceSerial: String) -> Bool {
-        discoveredDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial } && !connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
-    }
-    
-    func isDisconnectable(deviceSerial: String) -> Bool {
-        connectedDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial }
-    }
-    
-    func computeTime(for index: Int, interval: Int) -> Double {
-        let elapsedTime = Double(index) / Double(ecgViewModel.configuration.frequency)
-        // Calculate the time within the current 4-second interval
-        let timeValue = elapsedTime.truncatingRemainder(dividingBy: Double(interval))
-        
-        return timeValue
-    }
-    
     func colorSelected(_ newColor: Color) {
         self.ecgViewModel.configuration.viewConfiguration.chartColor = newColor
+    }
+    
+    func deviceCellTapped(_ cachedDevice: DeviceNameSerial) {
+        guard let connectedDevice = connectedDevices.first(where: { $0.movesenseDevice.serialNumber == cachedDevice.serial }) else { return }
+        route = .deviceInfo(
+            withDependencies(from: self, operation: {
+                DeviceInfoViewModel(connectedDevice: connectedDevice)
+            })
+        )
     }
 }
 
@@ -311,48 +332,61 @@ public struct DashboardView: View {
     
     public var body: some View {
         NavigationStack {
-            VStack {
-                ForEach(vm.previousDevices) { deviceSerialName in
-                    DeviceCell(
-                        deviceSerialName: deviceSerialName,
-                        connectButtonTapped: { vm.connectButtonTapped(deviceNameSerial: deviceSerialName)},
-                        disconnectButtonTapped: { vm.disconnectButtonTapped(deviceNameSerial: deviceSerialName)},
-                        vm: .init(
-                            isConnectEnabled: vm.isConnectable(deviceSerial: deviceSerialName.serial),
-                            isDisconnectEnabled: vm.isDisconnectable(deviceSerial: deviceSerialName.serial
-                                                                    )))
-                    .padding(.horizontal, 16)
-                }
+            ScrollView {
                 VStack {
-                    Text("ECG Preview")
-                        .font(.headline3)
-                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 16)
+                    if vm.previousDevices.isEmpty {
+                        GetStartedView()
+                    } else {
+                        ForEach(vm.previousDevices) { deviceSerialName in
+                            DeviceCell(
+                                deviceSerialName: deviceSerialName,
+                                connectButtonTapped: { vm.connectButtonTapped(deviceNameSerial: deviceSerialName)},
+                                disconnectButtonTapped: { vm.disconnectButtonTapped(deviceNameSerial: deviceSerialName)},
+                                vm: .init(
+                                    isConnectEnabled: vm.isConnectable(deviceSerial: deviceSerialName.serial),
+                                    isDisconnectEnabled: vm.isDisconnectable(deviceSerial: deviceSerialName.serial),
+                                    batteryPercentage: vm.deviceBatteryPercentage
+                                )
+                            )
+                            .padding(.horizontal, 16)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                vm.deviceCellTapped(deviceSerialName)
+                            }
+                        }
+                        VStack {
+                            Text("ECG Preview")
+                                .font(.headline3)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                .padding(.top, 16)
+                                .padding(.horizontal, 16)
+                            
+                            EcgView(
+                                model: $vm.ecgViewModel,
+                                computeTime: vm.computeTime
+                            )
+                            .background(Color.white)
+                            .padding(.all, 16)
+                            .onTapGesture(perform: vm.ecgViewTapped)
+                            
+                        }
+                        .background(Color.white)
+                        .cornerRadius(20)
                         .padding(.horizontal, 16)
-                    
-                    EcgView(
-                        model: $vm.ecgViewModel,
-                        computeTime: vm.computeTime
-                    )
-                    .background(Color.white)
-                    .padding(.all, 16)
-                    .onTapGesture(perform: vm.ecgViewTapped)
-                    
+                    }
+                    Spacer()
+                    Button("Add my device", action: vm.addDeviceButtonTapped)
+                        .buttonStyle(MyButtonStyle.init(style: .primary))
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 24)
+                    Divider()
                 }
-                .background(Color.white)
-                .cornerRadius(20)
-                .padding(.horizontal, 16)
-                Spacer()
-                Button("Add my device", action: vm.addDeviceButtonTapped)
-                    .buttonStyle(MyButtonStyle.init(style: .primary))
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 58)
-                Divider()
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+                .navigationTitle("Dashboard")
+                .onAppear(perform: vm.onAppear)
             }
-            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
             .background(Color.background)
-            .onAppear(perform: vm.onAppear)
-            .task { await vm.task() }
+            
             .sheet(
                 unwrapping: $vm.route,
                 case: /DashboardViewModel.Destination.addDevice
@@ -387,13 +421,19 @@ public struct DashboardView: View {
                         .toolbarBackground(.white, for: .navigationBar)
                         .toolbar {
                             ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Close") {
-                                vm.closeOnboarding()
+                                Button("Close") {
+                                    vm.closeOnboarding()
+                                }
                             }
-                          }
                         }
                 }
-
+                
+            }
+            .navigationDestination(
+                unwrapping: self.$vm.route,
+                case: /DashboardViewModel.Destination.deviceInfo
+            ) { $deviceInfoVm in
+                DeviceInfoView(vm: deviceInfoVm)
             }
             .navigationDestination(
                 unwrapping: self.$vm.route,
@@ -408,10 +448,33 @@ public struct DashboardView: View {
 class DeviceCellViewModel: ObservableObject {
     @Published var isConnectEnabled: Bool
     @Published var isDisconnectEnabled: Bool
-    
-    init(isConnectEnabled: Bool, isDisconnectEnabled: Bool) {
+    @Published var batteryPercentage: Int?
+    init(
+        isConnectEnabled: Bool,
+        isDisconnectEnabled: Bool,
+        batteryPercentage: Int?
+    ) {
         self.isConnectEnabled = isConnectEnabled
         self.isDisconnectEnabled = isDisconnectEnabled
+        self.batteryPercentage = batteryPercentage
+    }
+    
+    var batteryIcon: Image {
+        guard let batteryPercentage else { return Image.batteryLowIcon }
+        switch batteryPercentage {
+            case 76...100:
+                return Image.batteryFullIcon
+            case 51...75:
+                return Image.batterySecondFullIcon
+            case 26...50:
+                return Image.batteryHalfIcon
+            case 11...25:
+                return Image.batteryQuarterIcon
+            case 0...10:
+                return Image.batteryLowIcon
+            default:
+                return Image.batteryLowIcon
+            }
     }
 }
 
@@ -422,11 +485,33 @@ struct DeviceCell: View {
     @ObservedObject var vm: DeviceCellViewModel
     
     var body: some View {
-        VStack {
-            Text(deviceSerialName.localName)
-                .foregroundColor(.black)
-                .font(.headline2)
-                .padding(.all, 16)
+        VStack(spacing: 0) {
+            HStack {
+                Text(deviceSerialName.localName)
+                    .font(.headline2)
+                    .foregroundColor(.black)
+                Spacer()
+                if let percentageValue = vm.batteryPercentage {
+                    Text("\(percentageValue)%")
+                        .font(.sectionTitle)
+                        .foregroundColor(.tint1)
+                    vm.batteryIcon
+                }
+            }
+            .padding([.horizontal, .top], 16)
+            
+            HStack {
+                Text("See more")
+                    .font(.body1)
+                    .foregroundColor(.gray)
+                Image.openIndicator
+                    .foregroundColor(.gray)
+                Spacer()
+                
+            }
+            .padding(.horizontal, 16)
+            .opacity(vm.isDisconnectEnabled ? 1 : 0)
+            
             HStack {
                 Button("Connect", action: connectButtonTapped)
                     .padding(.all, 16)
@@ -437,8 +522,30 @@ struct DeviceCell: View {
                     .padding(.all, 16)
                     .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isDisconnectEnabled))
             }
+            .padding(.top, 10)
         }
         .background(Color.white)
         .cornerRadius(20)
+    }
+}
+
+struct GetStartedView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image.addFirstDeviceIcon
+                .padding(.top, 32)
+            
+            Text("Monitor your heart activity")
+                .font(.largeInput)
+                .padding(.horizontal, 16)
+            
+            Text("Get started by adding your Movesense device")
+                .font(.body1)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+        }
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+        .background(Color.background)
     }
 }

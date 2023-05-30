@@ -25,6 +25,15 @@ extension Image {
     public static let pillsIcon = Image(systemName: "pills.fill")
     public static let openIndicator = Image(systemName: "chevron.right")
     public static let clockIcon = Image(systemName: "clock")
+    
+    // Dashboard
+    public static let addFirstDeviceIcon = Image(decorative: "addFirstDeviceIcon", bundle: .myModule)
+    public static let batteryLowIcon = Image(decorative: "batteryLowIcon", bundle: .myModule)
+    public static let batteryHalfIcon = Image(decorative: "batteryHalfIcon", bundle: .myModule)
+    public static let batteryFullIcon = Image(decorative: "batteryFullIcon", bundle: .myModule)
+    public static let batteryQuarterIcon = Image(decorative: "batteryQuarterIcon", bundle: .myModule)
+    public static let batterySecondFullIcon = Image(decorative: "batterySecondFullIcon", bundle: .myModule)
+
 
 
     //UserCreation
