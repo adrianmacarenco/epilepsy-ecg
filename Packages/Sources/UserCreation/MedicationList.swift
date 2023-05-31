@@ -32,15 +32,18 @@ public class MedicationListViewModel: ObservableObject {
     @Dependency (\.persistenceClient) var persistenceClient
     let type: ActionType
     var localUser: User
-    
+    var userCreationFlowEnded: () -> Void
+
     // MARK: - Public Interface
     
     public init(
         user: User,
-        type: ActionType = .add
+        type: ActionType = .add,
+        userCreationFlowEnded: @escaping() -> Void
     ) {
         self.localUser = user
         self.type = type
+        self.userCreationFlowEnded = userCreationFlowEnded
         if case let ActionType.edit(medications) = type {
             self.medications = medications
         }
@@ -73,7 +76,7 @@ public class MedicationListViewModel: ObservableObject {
         switch type {
         case .add:
             // Dismiss flow
-            break
+            userCreationFlowEnded()
         case .edit:
             break
         }

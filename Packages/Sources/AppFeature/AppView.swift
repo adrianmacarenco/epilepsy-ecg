@@ -29,9 +29,9 @@ public class AppViewModel: ObservableObject {
     }()
     
     lazy var gettingStartedVm: GettingStartedViewModel =  { [weak self] in
-        guard let self else { return .init() }
+        guard let self else { return .init(userCreationFlowEnded: {}) }
         return withDependencies(from: self) {
-            GettingStartedViewModel()
+            GettingStartedViewModel(userCreationFlowEnded: self.userCreationFlowEnded)
         }
     }()
 
@@ -63,7 +63,20 @@ public class AppViewModel: ObservableObject {
     }
     
     // MARK: - Private interface
-    
+    func userCreationFlowEnded() {
+        if let user = persistenceClient.user.load() {
+            Task {
+                do {
+                    let savedDbUser = try await dbClient.getUser(user.id)
+                    await MainActor.run { [weak self] in
+                        self?.user = savedDbUser
+                    }
+                } catch {
+                    print("Error fetching the user")
+                }
+            }
+        }
+    }
 }
 
 public struct AppView: View {

@@ -40,17 +40,20 @@ public class GenderSelectionViewModel: ObservableObject {
     
     var localUser: User
     let userUpdated: ((User) -> Void)?
+    var userCreationFlowEnded: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
 
     // MARK: - Public Interface
     
     public init(
         user: User,
         type: ActionType = .add,
-        userUpdated: ((User) -> Void)? = nil
+        userUpdated: ((User) -> Void)? = nil,
+        userCreationFlowEnded: @escaping() -> Void
     ) {
         self.localUser = user
         self.type = type
         self.userUpdated = userUpdated
+        self.userCreationFlowEnded = userCreationFlowEnded
         if case let ActionType.edit(initialUser) = type {
             selectedGender = initialUser.gender
         }
@@ -93,7 +96,10 @@ public class GenderSelectionViewModel: ObservableObject {
             localUser.gender = selectedGender
             route = .weightSelection(
                 withDependencies(from: self) {
-                    .init(user: localUser)
+                    .init(
+                        user: localUser,
+                        userCreationFlowEnded: self.userCreationFlowEnded
+                    )
                 }
             )
         case .edit(let initialUser):

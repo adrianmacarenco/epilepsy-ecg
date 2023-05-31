@@ -32,17 +32,20 @@ public class PersonalIdentityViewModel: ObservableObject {
     let type: ActionType
     var localUser: User
     let userUpdated: ((User) -> Void)?
-    
+    var userCreationFlowEnded: () -> Void
+
     // MARK: - Public Interface
     
     public init(
         user: User,
         type: ActionType = .add,
-        userUpdated: ((User) -> Void)? = nil
+        userUpdated: ((User) -> Void)? = nil,
+        userCreationFlowEnded: @escaping() -> Void
     ) {
         self.localUser = user
         self.type = type
         self.userUpdated = userUpdated
+        self.userCreationFlowEnded = userCreationFlowEnded
         if case let ActionType.edit(initialUser) = type {
             name = initialUser.fullName
         }
@@ -84,7 +87,10 @@ public class PersonalIdentityViewModel: ObservableObject {
             localUser.fullName = name
             route = .birthday(
                 withDependencies(from: self) {
-                    .init(user: localUser)
+                    .init(
+                        user: localUser,
+                        userCreationFlowEnded: self.userCreationFlowEnded
+                    )
                 }
             )
         case .edit(let initialUser):

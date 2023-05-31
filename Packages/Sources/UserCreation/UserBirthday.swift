@@ -15,7 +15,7 @@ import Dependencies
 import DBClient
 import PersistenceClient
 import Shared
-
+import XCTestDynamicOverlay
 
 public class UserBirthdayViewModel: ObservableObject {
     enum Destination {
@@ -32,19 +32,22 @@ public class UserBirthdayViewModel: ObservableObject {
     
     let type: ActionType
     var localUser: User
-    let userUpdated: ((User) -> Void)?
     let now = Date()
+    let userUpdated: ((User) -> Void)?
+    var userCreationFlowEnded: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
     
     // MARK: - Public Interface
 
     public init(
         user: User,
         type: ActionType = .add,
-        userUpdated: ((User) -> Void)? = nil
+        userUpdated: ((User) -> Void)? = nil,
+        userCreationFlowEnded: @escaping() -> Void
     ) {
         self.localUser = user
         self.type = type
         self.userUpdated = userUpdated
+        self.userCreationFlowEnded = userCreationFlowEnded
         if case let ActionType.edit(initialUser) = type {
             birthdayDate = initialUser.birthday
         }
@@ -95,7 +98,10 @@ public class UserBirthdayViewModel: ObservableObject {
             localUser.birthday = birthdayDate
             route = .genderSelection(
                 withDependencies(from: self) {
-                    .init(user: localUser)
+                    .init(
+                        user: localUser,
+                        userCreationFlowEnded: self.userCreationFlowEnded
+                    )
                 }
             )
         case .edit(let initialUser):

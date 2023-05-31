@@ -14,6 +14,7 @@ import SwiftUINavigation
 import Dependencies
 import DBClient
 import PersistenceClient
+import XCTestDynamicOverlay
 
 public class GettingStartedViewModel: ObservableObject {
     enum Destination {
@@ -22,8 +23,13 @@ public class GettingStartedViewModel: ObservableObject {
     @Published var route: Destination?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    var userCreationFlowEnded: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
     
-    public init() {}
+    public init(
+        userCreationFlowEnded: @escaping() -> Void
+    ) {
+        self.userCreationFlowEnded = userCreationFlowEnded
+    }
     
     func startButtonTapped() {
         let localUser = User(
@@ -38,7 +44,10 @@ public class GettingStartedViewModel: ObservableObject {
         
         route = .personalIdentity(
             withDependencies(from: self) {
-                .init(user: localUser)
+                .init(
+                    user: localUser,
+                    userCreationFlowEnded: self.userCreationFlowEnded
+                )
             }
         )
     }

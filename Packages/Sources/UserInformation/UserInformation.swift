@@ -15,6 +15,7 @@ import PersistenceClient
 import UserCreation
 import Dependencies
 import SwiftUINavigation
+import XCTestDynamicOverlay
 
 public class UserInformationViewModel: ObservableObject {
     enum Destination {
@@ -60,7 +61,8 @@ public class UserInformationViewModel: ObservableObject {
                                 self?.route = nil
                                 self?.user = updatedUser
                             }
-                        }
+                        },
+                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")
                     )
                 })
             )
@@ -75,7 +77,8 @@ public class UserInformationViewModel: ObservableObject {
                                 self?.route = nil
                                 self?.user = updatedUser
                             }
-                        }
+                        },
+                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")
                     )
                 })
             )
@@ -90,7 +93,8 @@ public class UserInformationViewModel: ObservableObject {
                                 self?.route = nil
                                 self?.user = updatedUser
                             }
-                        }
+                        },
+                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")
                     )
                 })
             )
@@ -105,7 +109,8 @@ public class UserInformationViewModel: ObservableObject {
                                 self?.route = nil
                                 self?.user = updatedUser
                             }
-                        }
+                        },
+                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")
                     )
                 })
             )
@@ -120,7 +125,8 @@ public class UserInformationViewModel: ObservableObject {
                                 self?.route = nil
                                 self?.user = updatedUser
                             }
-                        }
+                        },
+                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")
                     )
                 })
             )
@@ -129,7 +135,8 @@ public class UserInformationViewModel: ObservableObject {
                 withDependencies(from: self, operation: {
                     MedicationListViewModel(
                         user: self.user,
-                        type: .edit(medications)
+                        type: .edit(medications),
+                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")  
                     )
                 })
             )

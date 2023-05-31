@@ -25,10 +25,16 @@ public class DiagnosisViewModel: ObservableObject {
     @Dependency (\.persistenceClient) var persistenceClient
     
     var localUser: User
+    var userCreationFlowEnded: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
+
  // MARK: - Public interface
     
-    public init(user: User) {
+    public init(
+        user: User,
+        userCreationFlowEnded: @escaping() -> Void
+    ) {
         self.localUser = user
+        self.userCreationFlowEnded = userCreationFlowEnded
     }
     
     var isNextButtonEnabled: Bool {
@@ -43,7 +49,10 @@ public class DiagnosisViewModel: ObservableObject {
         persistenceClient.user.save(savedUser)
         route = .medicationList(
             withDependencies(from: self) {
-                .init(user: savedUser)
+                .init(
+                    user: savedUser,
+                    userCreationFlowEnded: self.userCreationFlowEnded
+                )
             }
         )
     }
