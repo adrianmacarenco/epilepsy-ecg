@@ -24,6 +24,7 @@ import DBClient
 import DeviceInfo
 import Shared
 import Combine
+import APIClient
 import MovesenseApi
 
 public class DashboardViewModel: ObservableObject {
@@ -59,7 +60,8 @@ public class DashboardViewModel: ObservableObject {
     @Dependency (\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
     @Dependency (\.dbClient) var dbClient
-    
+    @Dependency(\.apiClient) var apiClient
+
     // MARK: - Public interface
     
     public init() {
@@ -97,6 +99,15 @@ public class DashboardViewModel: ObservableObject {
             }
         }
         resetEcgData()
+        
+        Task {
+            try await clock.sleep(for: .seconds(2))
+            do {
+                try await apiClient.uploadDbFile()
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
     }
     
     func isConnectable(deviceSerial: String) -> Bool {

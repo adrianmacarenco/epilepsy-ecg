@@ -8,6 +8,8 @@
 import Foundation
 import Dependencies
 import PersistenceClient
+import APIClient
+import APIClientLive
 
 extension PersistenceClient: DependencyKey {
     
@@ -15,5 +17,13 @@ extension PersistenceClient: DependencyKey {
         @Dependency(\.envVars) var envVars
         
         return .live(keyPrefix: envVars.persistenceKeyPrefix)
+    }
+}
+
+extension APIClient: DependencyKey {
+    public static var liveValue: APIClient {
+        @Dependency(\.envVars) var envVars
+
+        return APIClient.live(baseUrl: envVars.baseUrl)
     }
 }

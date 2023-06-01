@@ -10,12 +10,14 @@ import Dependencies
 
 public struct EnvVars {
     var persistenceKeyPrefix: String
+    var baseUrl: URL
 }
 
 extension EnvVars: DependencyKey {
     public static var liveValue: EnvVars {
         .init(
-            persistenceKeyPrefix: Bundle.main.bundleIdentifier!
+            persistenceKeyPrefix: Bundle.main.bundleIdentifier!,
+            baseUrl: URL(string: "https://cans.cachet.dk/dev")!
         )
     }
 }

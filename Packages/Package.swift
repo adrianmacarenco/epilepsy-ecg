@@ -18,6 +18,14 @@ let package = Package(
             targets: ["AppFeature"]
         ),
         .library(
+            name: "APIClient",
+            targets: ["APIClient"]
+        ),
+        .library(
+            name: "APIClientLive",
+            targets: ["APIClientLive"]
+        ),
+        .library(
             name: "BluetoothClient",
             targets: ["BluetoothClient"]),
         .library(
@@ -47,11 +55,11 @@ let package = Package(
             name: "ECG Settings",
             targets: ["ECG Settings"]
         ),
-
-        .library(
-            name: "Localizations",
-            targets: ["Localizations"]
-        ),
+        
+            .library(
+                name: "Localizations",
+                targets: ["Localizations"]
+            ),
         .library(
             name: "Model",
             targets: ["Model"]
@@ -134,6 +142,21 @@ let package = Package(
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation")
             ]
         ),
+        
+            .target(
+                name: "APIClient",
+                dependencies: [
+                    .product(name: "Dependencies", package: "swift-dependencies"),
+                    .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
+                ]
+            ),
+        .target(
+            name: "APIClientLive",
+            dependencies: [
+                "APIClient",
+                .product(name: "Dependencies", package: "swift-dependencies")
+            ]
+        ),
         .target(
             name: "BluetoothClient",
             dependencies: [
@@ -155,24 +178,25 @@ let package = Package(
         .target(
             name: "Dashboard",
             dependencies: [
-            "AddDevice",
-            "BluetoothClient",
-            "DBClient",
-            "DeviceInfo",
-            "ECG",
-            "ECG Settings",
-            "Model",
-            "Onboarding",
-            "Shared",
-            "StylePackage",
-            "PersistenceClient",
-            .product(name: "Clocks", package: "swift-clocks"),
-            .product(name: "Dependencies", package: "swift-dependencies"),
-            .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
-            .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
-            .product(name: "SwiftUICharts", package: "ChartView"),
-            .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
-
+                "AddDevice",
+                "APIClient",
+                "BluetoothClient",
+                "DBClient",
+                "DeviceInfo",
+                "ECG",
+                "ECG Settings",
+                "Model",
+                "Onboarding",
+                "Shared",
+                "StylePackage",
+                "PersistenceClient",
+                .product(name: "Clocks", package: "swift-clocks"),
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+                .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
+                .product(name: "SwiftUICharts", package: "ChartView"),
+                .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
+                
             ]
         ),
         .target(
@@ -255,7 +279,7 @@ let package = Package(
                 "Model",
                 .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
-
+                
             ]
         ),
         .target(
