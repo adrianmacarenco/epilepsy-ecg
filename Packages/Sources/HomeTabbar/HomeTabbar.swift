@@ -32,16 +32,26 @@ public class HomeTabbarViewModel: ObservableObject {
     }()
     
     lazy var profileVm: ProfileViewModel =  { [weak self] in
-        guard let self else { return .init() }
+        guard let self else { return .init(onConfirmProfileDeletion: {}) }
         return withDependencies(from: self) {
-            ProfileViewModel()
+            ProfileViewModel(onConfirmProfileDeletion: self.onConfirmProfileDeletion)
         }
     }()
     
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    var onConfirmProfileDeletion: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
+
+    public init(
+        onConfirmProfileDeletion: @escaping () -> Void
+    ) {
+        self.onConfirmProfileDeletion = onConfirmProfileDeletion
+    }
     
-    public init() {}
+    deinit {
+        print("Deinitialized 💀")
+    }
+    
 }
 
 public struct HomeTabbarView: View {

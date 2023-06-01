@@ -49,68 +49,108 @@ public class DBManager: NSObject {
         super.init()
         print("Creating tables..... 🤌")
         
-        do {
-            try dbConnection.run(medications.create { [weak self] t in
-                guard let self else { return }
-                t.column(self.id, primaryKey: .autoincrement)
-                t.column(self.name)
-            })
-        } catch {
-            print("Medications table is already created: \n \(error.localizedDescription) 📑")
-        }
-        
-        do {
-            try dbConnection.run(activeIngredients.create { [weak self] t in
-                guard let self else { return }
-                t.column(self.id, primaryKey: .autoincrement)
-                t.column(self.name)
-                t.column(self.activeIngredientQuantity)
-                t.column(self.unit)
-                t.column(self.medicationId, references: medications, id)
-            })
-        } catch {
-            print("ActiveIngredients table is already created: \n \(error.localizedDescription) 📑")
-        }
-        
-        do {
-            try dbConnection.run(intakes.create { [weak self] t in
-                guard let self else { return }
-                t.column(self.id, primaryKey: .autoincrement)
-                t.column(self.timestamp)
-                t.column(self.pillQuantity)
-                t.column(self.medicationId, references: medications, id)
-            })
-        } catch {
-            print("intakes table is already created: \n \(error.localizedDescription) 📑")
-        }
-        
-        createEcgTable()
-        
-        do {
-            try dbConnection.run(users.create { t in
-                t.column(userId, primaryKey: true)
-                t.column(fullName)
-                t.column(birthday)
-                t.column(gender)
-                t.column(weight)
-                t.column(height)
-                t.column(diagnosis)
-            })
-        } catch {
-            print("Failed to create users table: \(error)")
+        Task {
+            try await createTables()
         }
     }
     
-    func createEcgTable() {
-        do {
-            try dbConnection.run(ecgEvents.create { [weak self] t in
-                guard let self else { return }
-                t.column(self.id, primaryKey: .autoincrement)
-                t.column(self.ecgTimestamp)
-                t.column(self.ecgData)
-            })
-        } catch {
-            print("ecgEvents table is already created: \n \(error.localizedDescription) 📑")
+    // MARK: - Create tables
+    
+    func createTables() async throws {
+        async let _ = try createMedicationsTable()
+        async let _ = try createActiveIngredientsTable()
+        async let _ = try createIntakesTable()
+        async let _ = try createEcgTable()
+        async let _ = try createUsersTable()
+    }
+    
+    func createMedicationsTable() async throws {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                try dbConnection.run(medications.create { [weak self] t in
+                    guard let self else { return }
+                    t.column(self.id, primaryKey: .autoincrement)
+                    t.column(self.name)
+                })
+                cont.resume(returning: ())
+            } catch {
+                print("Medications table is already created: \n \(error.localizedDescription) 📑")
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    func createActiveIngredientsTable() async throws {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                try dbConnection.run(activeIngredients.create { [weak self] t in
+                    guard let self else { return }
+                    t.column(self.id, primaryKey: .autoincrement)
+                    t.column(self.name)
+                    t.column(self.activeIngredientQuantity)
+                    t.column(self.unit)
+                    t.column(self.medicationId, references: medications, id)
+                })
+                cont.resume(returning: ())
+            } catch {
+                print("ActiveIngredients table is already created: \n \(error.localizedDescription) 📑")
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    func createIntakesTable() async throws {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                try dbConnection.run(intakes.create { [weak self] t in
+                    guard let self else { return }
+                    t.column(self.id, primaryKey: .autoincrement)
+                    t.column(self.timestamp)
+                    t.column(self.pillQuantity)
+                    t.column(self.medicationId, references: medications, id)
+                })
+                cont.resume(returning: ())
+            } catch {
+                print("intakes table is already created: \n \(error.localizedDescription) 📑")
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    func createEcgTable() async throws {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                try dbConnection.run(ecgEvents.create { [weak self] t in
+                    guard let self else { return }
+                    t.column(self.id, primaryKey: .autoincrement)
+                    t.column(self.ecgTimestamp)
+                    t.column(self.ecgData)
+                })
+                cont.resume(returning: ())
+            } catch {
+                print("ecgEvents table is already created: \n \(error.localizedDescription) 📑")
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    func createUsersTable() async throws {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                try dbConnection.run(users.create { t in
+                    t.column(userId, primaryKey: true)
+                    t.column(fullName)
+                    t.column(birthday)
+                    t.column(gender)
+                    t.column(weight)
+                    t.column(height)
+                    t.column(diagnosis)
+                })
+                cont.resume(returning: ())
+            } catch {
+                print("Failed to create users table: \(error)")
+                cont.resume(throwing: error)
+            }
         }
     }
     
@@ -537,6 +577,28 @@ public class DBManager: NSObject {
             do {
                 let deleteAll = ecgEvents.delete()
                 try dbConnection.run(deleteAll)
+                cont.resume(returning: ())
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func clearDb() async throws -> Void {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                let deleteAllEvents = ecgEvents.delete()
+                let deleteAllUsers = users.delete()
+                let deleteAllMedications = medications.delete()
+                let deleteAllActiveIngredients = activeIngredients.delete()
+                let deleteAllIntakes = intakes.delete()
+
+                try dbConnection.run(deleteAllEvents)
+                try dbConnection.run(deleteAllUsers)
+                try dbConnection.run(deleteAllMedications)
+                try dbConnection.run(deleteAllActiveIngredients)
+                try dbConnection.run(deleteAllIntakes)
+
                 cont.resume(returning: ())
             } catch {
                 cont.resume(throwing: error)

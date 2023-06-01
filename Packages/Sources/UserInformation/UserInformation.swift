@@ -191,63 +191,67 @@ public struct UserInformationView: View {
     }
     
     public var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                ForEach(0 ..< vm.components.count, id: \.self) { index in
-                    ProfileCellView(
-                        description: vm.components[index].description(),
-                        title: vm.components[index].title(user: vm.user)
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        vm.componentTapped(index: index)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(0 ..< vm.components.count, id: \.self) { index in
+                        ProfileCellView(
+                            description: vm.components[index].description(),
+                            title: vm.components[index].title(user: vm.user)
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            vm.componentTapped(index: index)
+                        }
                     }
+
                 }
-            }
-            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, 16)
-            .task { await vm.task() }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /UserInformationViewModel.Destination.fullName
-            ) { $personalIdenityVm in
-                PersonalIdentityView(vm: personalIdenityVm)
-                    .navigationTitle("Edit name")
-            }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /UserInformationViewModel.Destination.birthday
-            ) { $birthdayVm in
-                UserBirthdayView(vm: birthdayVm)
-                    .navigationTitle("Edit birthday")
-            }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /UserInformationViewModel.Destination.gender
-            ) { $genderVm in
-                GenderSelectionView(vm: genderVm)
-                    .navigationTitle("Edit gender")
-            }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /UserInformationViewModel.Destination.weight
-            ) { $weightVm in
-                WeightSelectionView(vm: weightVm)
-                    .navigationTitle("Edit weight")
-            }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /UserInformationViewModel.Destination.height
-            ) { $heightVm in
-                HeightSelectionView(vm: heightVm)
-                    .navigationTitle("Edit height")
-            }
-            .navigationDestination(
-                unwrapping: self.$vm.route,
-                case: /UserInformationViewModel.Destination.medicationList
-            ) { $medicaitonsVm in
-                MedicationListView(vm: medicaitonsVm)
-                    .navigationTitle("Edit medications list")
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+                .frame(height: geometry.size.height)
+                .padding(.horizontal, 16)
+                .task { await vm.task() }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /UserInformationViewModel.Destination.fullName
+                ) { $personalIdenityVm in
+                    PersonalIdentityView(vm: personalIdenityVm)
+                        .navigationTitle("Edit name")
+                }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /UserInformationViewModel.Destination.birthday
+                ) { $birthdayVm in
+                    UserBirthdayView(vm: birthdayVm)
+                        .navigationTitle("Edit birthday")
+                }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /UserInformationViewModel.Destination.gender
+                ) { $genderVm in
+                    GenderSelectionView(vm: genderVm)
+                        .navigationTitle("Edit gender")
+                }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /UserInformationViewModel.Destination.weight
+                ) { $weightVm in
+                    WeightSelectionView(vm: weightVm)
+                        .navigationTitle("Edit weight")
+                }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /UserInformationViewModel.Destination.height
+                ) { $heightVm in
+                    HeightSelectionView(vm: heightVm)
+                        .navigationTitle("Edit height")
+                }
+                .navigationDestination(
+                    unwrapping: self.$vm.route,
+                    case: /UserInformationViewModel.Destination.medicationList
+                ) { $medicaitonsVm in
+                    MedicationListView(vm: medicaitonsVm)
+                        .navigationTitle("Edit medications list")
+                }
             }
         }
         .background(Color.background)

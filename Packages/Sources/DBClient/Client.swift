@@ -31,7 +31,8 @@ public struct DBClient {
     // EcgEvents
     public var addEcg: ([(timestamp: Date, ecgData: String)]) async throws -> Void
     public var fetchRecentEcgData: (_ seconds: Int) async throws -> [EcgDTO]
-    public var deleteCurrentDb:() async throws -> Void
+    public var clearDb: () async throws -> Void
+    public var deleteCurrentDb: () async throws -> Void
     public init(
         createUser: @escaping (_ userId: String, _ fullName: String, _ birthday: Date, _ gender: String, _ weight: Double, _ height: Double, _ diagnosis: String?) async throws -> User,
         getUser: @escaping (_ userId: String) async throws -> User,
@@ -47,7 +48,8 @@ public struct DBClient {
         fetchIntakes: @escaping () async throws -> [MedicationIntake],
         addEcg: @escaping ([(timestamp: Date, ecgData: String)]) async throws -> Void,
         fetchRecentEcgData: @escaping(_ seconds: Int) async throws -> [EcgDTO],
-        deleteCurrentDb: @escaping() async throws -> Void
+        clearDb: @escaping () async throws -> Void,
+        deleteCurrentDb: @escaping () async throws -> Void
     ) {
         self.createUser = createUser
         self.getUser = getUser
@@ -63,6 +65,7 @@ public struct DBClient {
         self.fetchIntakes = fetchIntakes
         self.addEcg = addEcg
         self.fetchRecentEcgData = fetchRecentEcgData
+        self.clearDb = clearDb
         self.deleteCurrentDb = deleteCurrentDb
     }
 }
@@ -101,6 +104,7 @@ extension DBClient: DependencyKey {
             fetchIntakes: { try await dbManager.fetchIntakes() },
             addEcg: { try await dbManager.addEcg(batch: $0)},
             fetchRecentEcgData: { try await dbManager.fetchRecentEcgData(seconds: $0)},
+            clearDb: dbManager.clearDb,
             deleteCurrentDb: {
                 try await withCheckedThrowingContinuation { cont in
                     if FileManager.default.fileExists(atPath: ecgDbPath) {

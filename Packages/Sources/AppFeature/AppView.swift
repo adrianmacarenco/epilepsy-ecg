@@ -17,24 +17,14 @@ import HomeTabbar
 import SwiftUINavigation
 
 public class AppViewModel: ObservableObject {
-    @Published var user: User?
+    public enum Destination {
+        case userCreation(GettingStartedViewModel)
+        case home(HomeTabbarViewModel)
+    }
+    @Published var route: Destination?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
     
-    lazy var homeViewModel: HomeTabbarViewModel =  { [weak self] in
-        guard let self else { return .init() }
-        return withDependencies(from: self) {
-            HomeTabbarViewModel()
-        }
-    }()
-    
-    lazy var gettingStartedVm: GettingStartedViewModel =  { [weak self] in
-        guard let self else { return .init(userCreationFlowEnded: {}) }
-        return withDependencies(from: self) {
-            GettingStartedViewModel(userCreationFlowEnded: self.userCreationFlowEnded)
-        }
-    }()
-
     // MARK: - Public interface
     public init() {
 //        Task {
@@ -42,20 +32,22 @@ public class AppViewModel: ObservableObject {
 //            persistenceClient.user.save(nil)
 //        }
         if let user = persistenceClient.user.load() {
-            self.user = user
             Task {
                 do {
-                    let savedDbUser = try await dbClient.getUser(user.id)
-                    print(savedDbUser)
+                    _ = try await dbClient.getUser(user.id)
+                    await MainActor.run { [weak self] in
+                        self?.presentHomeScreen()
+                    }
                 } catch {
                     print("Error fetching the user")
+                    await MainActor.run { [weak self] in
+                        self?.presentUserCretionFlow()
+                    }
                 }
             }
+        } else {
+            presentUserCretionFlow()
         }
-    }
-    
-    var userExists: Bool {
-        user != nil
     }
     
     func onAppear() {
@@ -67,15 +59,46 @@ public class AppViewModel: ObservableObject {
         if let user = persistenceClient.user.load() {
             Task {
                 do {
-                    let savedDbUser = try await dbClient.getUser(user.id)
+                    _ = try await dbClient.getUser(user.id)
                     await MainActor.run { [weak self] in
-                        self?.user = savedDbUser
+                        self?.presentHomeScreen()
                     }
                 } catch {
                     print("Error fetching the user")
                 }
             }
         }
+    }
+    
+    func onConfirmUserDeletion() {
+        persistenceClient.user.save(nil)
+        persistenceClient.deviceNameSerial.save(nil)
+        persistenceClient.deviceConfigurations.save(nil)
+        persistenceClient.ecgConfiguration.save(nil)
+        persistenceClient.medications.save(nil)
+        persistenceClient.medicationIntakes.save(nil)
+        Task {
+            try await dbClient.clearDb()
+            await MainActor.run { [weak self] in
+                self?.presentUserCretionFlow()
+            }
+        }
+    }
+    
+    func presentHomeScreen() {
+        self.route = .home(
+            withDependencies(from: self) {
+                HomeTabbarViewModel(onConfirmProfileDeletion: { [weak self] in self?.onConfirmUserDeletion() })
+            }
+        )
+    }
+    
+    func presentUserCretionFlow() {
+        self.route = .userCreation(
+            withDependencies(from: self) {
+                GettingStartedViewModel(userCreationFlowEnded: { [weak self] in self?.userCreationFlowEnded() })
+            }
+        )
     }
 }
 
@@ -89,10 +112,16 @@ public struct AppView: View {
     }
     
     public var body: some View {
-        if vm.userExists {
-            HomeTabbarView(vm: vm.homeViewModel)
-        } else {
-            GettingStartedView(vm: vm.gettingStartedVm)
+        IfLet($vm.route) { $destination in
+            Switch($destination) {
+                CaseLet(/AppViewModel.Destination.userCreation) { $userCreationVm in
+                    GettingStartedView(vm: userCreationVm)
+                    
+                }
+                CaseLet(/AppViewModel.Destination.home) { $homeViewModel in
+                    HomeTabbarView(vm: homeViewModel)
+                }
+            }
         }
     }
 }
