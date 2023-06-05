@@ -10,6 +10,9 @@ import Dependencies
 import PersistenceClient
 import APIClient
 import APIClientLive
+import DBClient
+import DBManager
+import SQLite
 
 extension PersistenceClient: DependencyKey {
     
@@ -36,5 +39,17 @@ extension APIClient: DependencyKey {
             userId: user.id
         )
         return APIClient.live(baseUrl: envVars.baseUrl, authenticationHandler: authHandler)
+    }
+}
+
+extension DBClient: DependencyKey {
+
+    public static var liveValue: DBClient {
+        @Dependency(\.envVars) var envVars
+
+        let ecgDbPath = "\(envVars.dbBasePath)/ECGData.sqlite3"
+        let connection = try! Connection(ecgDbPath)
+        let dbManager = DBManager(dbConnection: connection)
+        return .live(dbManager: dbManager, dbPathUrl: ecgDbPath)
     }
 }

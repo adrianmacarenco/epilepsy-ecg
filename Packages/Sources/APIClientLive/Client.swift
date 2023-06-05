@@ -24,7 +24,7 @@ extension APIClient {
                 let ecgDbPath = "ECGData.sqlite3"
                 let folderUrl = URL(filePath: path)
                 let dbFileUrl = folderUrl.appendingPathComponent(ecgDbPath)
-                let result = try await authenticationHandler.performAuthenticatedUploadRequest(makePostRequest(url: uploadfileUrl), dbFileUrl)
+                _ = try await authenticationHandler.performAuthenticatedUploadRequest(makePostRequest(url: uploadfileUrl), dbFileUrl)
             }
         )
     }

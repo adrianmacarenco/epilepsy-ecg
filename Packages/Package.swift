@@ -209,7 +209,8 @@ let package = Package(
                 "DBManager",
                 "Model",
                 .product(name: "Dependencies", package: "swift-dependencies"),
-                .product(name: "SQLite", package: "SQLite.swift")
+                .product(name: "SQLite", package: "SQLite.swift"),
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
             ]
         ),
         .target(

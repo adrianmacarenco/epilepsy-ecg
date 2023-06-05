@@ -10,8 +10,10 @@ import Dependencies
 import SQLite
 import DBManager
 import Model
+import XCTestDynamicOverlay
 
 public struct DBClient {
+    let dbPathUrl: String
     public var createUser: (_ userId: String, _ fullName: String, _ birthday: Date, _ gender: String, _ weight: Double, _ height: Double, _ diagnosis: String?) async throws -> User
     public var getUser: (_ userId: String) async throws -> User
     public var updateUser: (_ user: User) async throws -> Void
@@ -34,6 +36,7 @@ public struct DBClient {
     public var clearDb: () async throws -> Void
     public var deleteCurrentDb: () async throws -> Void
     public init(
+        dbPathUrl: String,
         createUser: @escaping (_ userId: String, _ fullName: String, _ birthday: Date, _ gender: String, _ weight: Double, _ height: Double, _ diagnosis: String?) async throws -> User,
         getUser: @escaping (_ userId: String) async throws -> User,
         updateUser: @escaping (_ user: User) async throws -> Void,
@@ -51,6 +54,7 @@ public struct DBClient {
         clearDb: @escaping () async throws -> Void,
         deleteCurrentDb: @escaping () async throws -> Void
     ) {
+        self.dbPathUrl = dbPathUrl
         self.createUser = createUser
         self.getUser = getUser
         self.updateUser = updateUser
@@ -70,20 +74,13 @@ public struct DBClient {
     }
 }
 
-
-extension DBClient: DependencyKey {
-    public static var liveValue: DBClient {
-        
-        //This directory is backed up by iTunes and iCloud, ensuring that your users won't lose their data
-        let path = NSSearchPathForDirectoriesInDomains(
-             .documentDirectory, .userDomainMask, true
-         ).first!
-        let ecgDbPath = "\(path)/ECGData.sqlite3"
-        let connect = try! Connection(ecgDbPath)
- 
-        let dbManager = DBManager(dbConnection: connect)
-        
-        return .init(
+extension DBClient {
+    public static func live(
+        dbManager: DBManager,
+        dbPathUrl: String
+    ) -> Self {
+        return Self(
+            dbPathUrl: dbPathUrl,
             createUser: { userId, fullName, birthday, gender, weight, height, diagnosis in
                 try await dbManager.addUser(userId: userId, fullName: fullName, birthday: birthday, gender: gender, weight: weight, height: height, diagnosis: diagnosis)
             },
@@ -107,9 +104,9 @@ extension DBClient: DependencyKey {
             clearDb: dbManager.clearDb,
             deleteCurrentDb: {
                 try await withCheckedThrowingContinuation { cont in
-                    if FileManager.default.fileExists(atPath: ecgDbPath) {
+                    if FileManager.default.fileExists(atPath: dbPathUrl) {
                         do {
-                            try FileManager.default.removeItem(atPath: ecgDbPath)
+                            try FileManager.default.removeItem(atPath: dbPathUrl)
                             cont.resume(returning: ())
                         } catch {
                             cont.resume(throwing: error)
@@ -126,10 +123,97 @@ extension DBClient: DependencyKey {
         )
     }
 }
+//extension DBClient: DependencyKey {
+//    public static var liveValue: DBClient {
+//
+//        //This directory is backed up by iTunes and iCloud, ensuring that your users won't lose their data
+//        let path = NSSearchPathForDirectoriesInDomains(
+//             .documentDirectory, .userDomainMask, true
+//         ).first!
+//        let ecgDbPath = "\(path)/ECGData.sqlite3"
+//        let connect = try! Connection(ecgDbPath)
+//
+//        let dbManager = DBManager(dbConnection: connect)
+//
+//        return .init(
+//            createUser: { userId, fullName, birthday, gender, weight, height, diagnosis in
+//                try await dbManager.addUser(userId: userId, fullName: fullName, birthday: birthday, gender: gender, weight: weight, height: height, diagnosis: diagnosis)
+//            },
+//            getUser: { try await dbManager.getUser(with: $0) },
+//            updateUser: { try await dbManager.updateUser($0) },
+//            createMedication: { medicationName, activeIngredients in
+//                try await dbManager.addMedication(name: medicationName, activeIngredients: activeIngredients)
+//            },
+//            fetchMedications: { try await dbManager.fetchMedications() },
+//            updateMedication: { try await dbManager.updateMedication($0) },
+//            updateMedications: { try await dbManager.updateMedications($0)},
+//            deleteMedication: { try await dbManager.deleteMedication(with: $0) },
+//            addIntake: { timeStamp, pillQuantity, medication in
+//                try await dbManager.addIntake(timestamp: timeStamp, pillQuantity: pillQuantity, medication: medication)
+//            },
+//            updateIntake: { try await dbManager.updateIntake($0)},
+//            fetchDailyIntakes: { try await dbManager.fetchDailyIntakes() },
+//            fetchIntakes: { try await dbManager.fetchIntakes() },
+//            addEcg: { try await dbManager.addEcg(batch: $0)},
+//            fetchRecentEcgData: { try await dbManager.fetchRecentEcgData(seconds: $0)},
+//            clearDb: dbManager.clearDb,
+//            deleteCurrentDb: {
+//                try await withCheckedThrowingContinuation { cont in
+//                    if FileManager.default.fileExists(atPath: ecgDbPath) {
+//                        do {
+//                            try FileManager.default.removeItem(atPath: ecgDbPath)
+//                            cont.resume(returning: ())
+//                        } catch {
+//                            cont.resume(throwing: error)
+//                        }
+//                    } else {
+//                        cont.resume(throwing: NSError(
+//                            domain: "dk.dtu.compute.Epilepsy-ECG",
+//                            code: 5000,
+//                            userInfo: ["ErrorMessage" : "File not found at given path"]
+//                        ))
+//                    }
+//                }
+//            }
+//        )
+//    }
+//}
+
+extension DBClient: TestDependencyKey {
+    public static var testValue: DBClient {
+        .failing
+    }
+    
+    public static var previewValue: DBClient {
+        .mock
+    }
+}
 
 public extension DependencyValues {
     var dbClient: DBClient {
         get { self[DBClient.self] }
         set { self[DBClient.self] = newValue }
     }
+}
+
+
+extension DBClient {
+    public static let failing = Self(
+        dbPathUrl: "",
+        createUser: unimplemented("createUser db file failing called"),
+        getUser: unimplemented("getUser db file failing called"),
+        updateUser: unimplemented("updateUser db file failing called"),
+        createMedication: unimplemented("createMedication db file failing called"),
+        fetchMedications: unimplemented("fetchMedications db file failing called"),
+        updateMedication: unimplemented("updateMedication db file failing called"),
+        updateMedications: unimplemented("updateMedications db file failing called"),
+        deleteMedication: unimplemented("deleteMedication db file failing called"),
+        addIntake: unimplemented("addIntake db file failing called"),
+        updateIntake: unimplemented("updateIntake db file failing called"),
+        fetchDailyIntakes: unimplemented("fetchDailyIntakes db file failing called"),
+        fetchIntakes: unimplemented("fetchIntakes db file failing called"),
+        addEcg: unimplemented("addEcg db file failing called"),
+        fetchRecentEcgData: unimplemented("fetchRecentEcgData db file failing called"),
+        clearDb: unimplemented("clearDb db file failing called"),
+        deleteCurrentDb: unimplemented("deleteCurrentDb db file failing called"))
 }

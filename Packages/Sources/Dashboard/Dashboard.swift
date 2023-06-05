@@ -146,25 +146,28 @@ public class DashboardViewModel: ObservableObject {
     private func subscribeToEcgStream() {
         guard !hasSubscribedToEcg else { return }
         hasSubscribedToEcg = false
-        Task { @MainActor in
+        Task {
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
                 ecgDataStream?(ecgData)
                 ecgDataEvents.append((ecgData, Date()))
                 guard self.route == nil else { continue }
-                ecgData.samples.forEach { sample in
-                    var finalSample = Double(sample)
-                    if sample < ecgViewModel.configuration.viewConfiguration.minValue {
-                        finalSample = Double(ecgViewModel.configuration.viewConfiguration.minValue)
-                    } else if sample >   ecgViewModel.configuration.viewConfiguration.maxValue {
-                        finalSample = Double(ecgViewModel.configuration.viewConfiguration.maxValue)
+                await MainActor.run { [weak self, previewIntervalSamplesNr, index] in
+                    guard let minValue = self?.ecgViewModel.configuration.viewConfiguration.minValue,
+                          let maxValue = self?.ecgViewModel.configuration.viewConfiguration.maxValue else { return }
+                    ecgData.samples.forEach { sample in
+                        var finalSample = Double(sample)
+                        if sample < minValue {
+                            finalSample = Double(minValue)
+                        } else if sample > maxValue {
+                            finalSample = Double(maxValue)
+                        }
+                        self?.ecgViewModel.data[index] =  finalSample
+                        self?.index += 1
+                        if self?.index ==  previewIntervalSamplesNr {
+                            self?.index = 0
+                            self?.ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
+                        }
                     }
-                    ecgViewModel.data[index] =  finalSample
-                    index += 1
-                    if index ==  previewIntervalSamplesNr {
-                        index = 0
-                        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
-                    }
-                    
                 }
             }
         }
