@@ -15,7 +15,8 @@ extension PersistenceClient {
         deviceConfigurations: .noop,
         ecgConfiguration: .noop,
         medications: .noop,
-        medicationIntakes: .noop
+        medicationIntakes: .noop,
+        apiTokenWrapper: .noop
     )
 
     public static let failing = Self(
@@ -24,7 +25,8 @@ extension PersistenceClient {
         deviceConfigurations: .failing,
         ecgConfiguration: .failing,
         medications: .failing,
-        medicationIntakes: .failing
+        medicationIntakes: .failing,
+        apiTokenWrapper: .failing
     )
 
     public static let mock = Self(
@@ -56,6 +58,10 @@ extension PersistenceClient {
         ),
         medicationIntakes: .init(
             load: { [] },
+            save: { _ in }
+        ),
+        apiTokenWrapper: .init(
+            load: {.init(accessToken: "", expiresIn: 0, refreshToken: "", expiryDate: Date())},
             save: { _ in }
         )
     )

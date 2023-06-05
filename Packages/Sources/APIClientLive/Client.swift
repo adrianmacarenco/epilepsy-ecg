@@ -7,23 +7,24 @@
 
 import Foundation
 import APIClient
+import Model
 
 extension APIClient {
     public static func live(
-        baseUrl url: URL
+        baseUrl url: URL,
+        authenticationHandler: AuthenticationHandlerAsync
     ) -> Self {
-        let fileUploader = FileUploader()
         return Self(
             uploadDbFile: {
                 var uploadfileUrl = url
-                uploadfileUrl.appendPathComponent("api/studies/5300a9b7-204b-4c6b-8757-fec603507200/files")
+                uploadfileUrl.appendPathComponent("api/studies/d5f7ab8c-9f27-4b50-9cf5-eb3a19ca993e/files")
                 let path = NSSearchPathForDirectoriesInDomains(
                      .documentDirectory, .userDomainMask, true
                  ).first!
                 let ecgDbPath = "ECGData.sqlite3"
                 let folderUrl = URL(filePath: path)
                 let dbFileUrl = folderUrl.appendingPathComponent(ecgDbPath)
-                try await fileUploader.uploadFile(at: dbFileUrl, at: uploadfileUrl)
+                let result = try await authenticationHandler.performAuthenticatedUploadRequest(makePostRequest(url: uploadfileUrl), dbFileUrl)
             }
         )
     }

@@ -20,7 +20,7 @@ public class FileUploader: NSObject {
         
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//        request.addValue("study-id", forHTTPHeaderField: "5300a9b7-204b-4c6b-8757-fec603507200")
+        request.addValue("study-id", forHTTPHeaderField: "d5f7ab8c-9f27-4b50-9cf5-eb3a19ca993e")
 
         return try await withCheckedThrowingContinuation { cont in
             let uploadTask = URLSession.shared.uploadTask(

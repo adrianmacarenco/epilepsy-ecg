@@ -100,14 +100,14 @@ public class DashboardViewModel: ObservableObject {
         }
         resetEcgData()
         
-        Task {
-            try await clock.sleep(for: .seconds(2))
-            do {
-                try await apiClient.uploadDbFile()
-            } catch {
-                print(error.localizedDescription)
-            }
-        }
+//        Task {
+//            try await clock.sleep(for: .seconds(2))
+//            do {
+//                try await apiClient.uploadDbFile()
+//            } catch {
+//                print(error.localizedDescription)
+//            }
+//        }
     }
     
     func isConnectable(deviceSerial: String) -> Bool {
@@ -199,7 +199,7 @@ public class DashboardViewModel: ObservableObject {
                             self.ecgViewModel.scaleFactor = 1.0
                         }
                     }
-                    
+                    count = 0
                 }
             }
         }
@@ -320,6 +320,7 @@ public class DashboardViewModel: ObservableObject {
         Task { @MainActor in
             _ = try await bluetoothClient.disconnectDevice(deviceWrapper)
             connectedDevice = nil
+            resetEcgData()
         }
     }
     

@@ -15,7 +15,8 @@ extension PersistenceClient {
             deviceConfigurations: .live(key: keyPrefix + ".savedConnectedDeviceConfigurations"),
             ecgConfiguration: .live(key: keyPrefix + ".savedEcgViewConfiguration"),
             medications: .live(key: keyPrefix + ".savedMedications"),
-            medicationIntakes: .live(key: keyPrefix + ".savedMedicationIntakes")
+            medicationIntakes: .live(key: keyPrefix + ".savedMedicationIntakes"),
+            apiTokenWrapper: .live(key: keyPrefix + ".apiTokenWrapper")
         )
     }
 }

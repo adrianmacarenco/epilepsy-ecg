@@ -113,7 +113,9 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.3.1"),
         .package(url: "https://github.com/AppPear/ChartView", from: "1.5.3"),
         .package(url: "https://github.com/mikkojeronen/MovesenseApi-iOS.git", branch: "main"),
-        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.14.1")
+        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.14.1"),
+        .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.6.4"))
+
     ],
     targets: [
         .target(
@@ -154,7 +156,9 @@ let package = Package(
             name: "APIClientLive",
             dependencies: [
                 "APIClient",
-                .product(name: "Dependencies", package: "swift-dependencies")
+                "Model",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "Alamofire", package: "Alamofire")
             ]
         ),
         .target(

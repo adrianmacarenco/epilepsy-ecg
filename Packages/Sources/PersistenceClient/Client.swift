@@ -17,6 +17,7 @@ public struct PersistenceClient {
     public var ecgConfiguration: FileClient<EcgConfiguration>
     public var medications: FileClient<[Medication]>
     public var medicationIntakes: FileClient<[MedicationIntake]>
+    public var apiTokenWrapper: FileClient<ApiTokenWrapper>
 }
 
 extension PersistenceClient: TestDependencyKey {

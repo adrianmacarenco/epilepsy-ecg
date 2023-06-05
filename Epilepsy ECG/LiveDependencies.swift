@@ -23,7 +23,18 @@ extension PersistenceClient: DependencyKey {
 extension APIClient: DependencyKey {
     public static var liveValue: APIClient {
         @Dependency(\.envVars) var envVars
-
-        return APIClient.live(baseUrl: envVars.baseUrl)
+        @Dependency(\.persistenceClient) var persistenceClient
+        
+        let user = persistenceClient.user.load()!
+        
+        let authHandler = AuthenticationHandlerAsync(
+            getTokeUrl: URL(string: "https://cans.cachet.dk/oauth/token")!,
+            getTokens: persistenceClient.apiTokenWrapper.load,
+            saveTokens: { persistenceClient.apiTokenWrapper.save($0) },
+            carpUsername: envVars.carpUserName,
+            carpPassword: envVars.carpPassword,
+            userId: user.id
+        )
+        return APIClient.live(baseUrl: envVars.baseUrl, authenticationHandler: authHandler)
     }
 }
