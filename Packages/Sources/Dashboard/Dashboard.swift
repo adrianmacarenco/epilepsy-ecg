@@ -45,6 +45,8 @@ public class DashboardViewModel: ObservableObject {
     @Published var connectedDevice: DeviceWrapper?
     @Published var ecgViewModel: EcgViewModel = .init(data: [], ecgConfig: .defaultValue)
     @Published var deviceBatteryPercentage: Int?
+    @Published var isConnecting = false
+    @Published var isDisconnecting = false
     
     var index = 0
     let previewInterval = 4
@@ -111,7 +113,7 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func isConnectable(deviceSerial: String) -> Bool {
-        discoveredDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial } && connectedDevice == nil
+        discoveredDevices.contains{ $0.movesenseDevice.serialNumber == deviceSerial } && connectedDevice == nil && !isConnecting
     }
     
     func isDisconnectable(deviceSerial: String) -> Bool {
@@ -146,27 +148,23 @@ public class DashboardViewModel: ObservableObject {
     private func subscribeToEcgStream() {
         guard !hasSubscribedToEcg else { return }
         hasSubscribedToEcg = false
-        Task {
+        Task { @MainActor in
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
                 ecgDataStream?(ecgData)
                 ecgDataEvents.append((ecgData, Date()))
                 guard self.route == nil else { continue }
-                await MainActor.run { [weak self, previewIntervalSamplesNr, index] in
-                    guard let minValue = self?.ecgViewModel.configuration.viewConfiguration.minValue,
-                          let maxValue = self?.ecgViewModel.configuration.viewConfiguration.maxValue else { return }
-                    ecgData.samples.forEach { sample in
-                        var finalSample = Double(sample)
-                        if sample < minValue {
-                            finalSample = Double(minValue)
-                        } else if sample > maxValue {
-                            finalSample = Double(maxValue)
-                        }
-                        self?.ecgViewModel.data[index] =  finalSample
-                        self?.index += 1
-                        if self?.index ==  previewIntervalSamplesNr {
-                            self?.index = 0
-                            self?.ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
-                        }
+                ecgData.samples.forEach { sample in
+                    var finalSample = Double(sample)
+                    if sample < ecgViewModel.configuration.viewConfiguration.minValue {
+                        finalSample = Double(ecgViewModel.configuration.viewConfiguration.minValue)
+                    } else if sample >   ecgViewModel.configuration.viewConfiguration.maxValue {
+                        finalSample = Double(ecgViewModel.configuration.viewConfiguration.maxValue)
+                    }
+                    ecgViewModel.data[index] =  finalSample
+                    index += 1
+                    if index ==  previewIntervalSamplesNr {
+                        index = 0
+                        ecgViewModel.data = Array(repeating: 0.0, count: previewIntervalSamplesNr)
                     }
                 }
             }
@@ -203,6 +201,7 @@ public class DashboardViewModel: ObservableObject {
                         }
                     }
                     count = 0
+                    totalHr = 0
                 }
             }
         }
@@ -308,7 +307,9 @@ public class DashboardViewModel: ObservableObject {
         }
         
         Task { @MainActor in
+            self.isConnecting = true
             let connectedDevice = try await self.bluetoothClient.connectToDevice(deviceWrapper)
+            self.isConnecting = false
             self.connectedDevice = connectedDevice
             bluetoothClient.stopScanningDevices()
             bluetoothClient.subscribeToHr(connectedDevice)
@@ -321,7 +322,9 @@ public class DashboardViewModel: ObservableObject {
         guard let deviceWrapper = discoveredDevices.first(where: { $0.movesenseDevice.serialNumber == deviceNameSerial.serial }) else { return }
         
         Task { @MainActor in
+            self.isDisconnecting = true
             _ = try await bluetoothClient.disconnectDevice(deviceWrapper)
+            self.isDisconnecting = false
             connectedDevice = nil
             resetEcgData()
         }
@@ -399,6 +402,8 @@ public struct DashboardView: View {
                                 vm: .init(
                                     isConnectEnabled: vm.isConnectable(deviceSerial: prevDevice.serial),
                                     isDisconnectEnabled: vm.isDisconnectable(deviceSerial: prevDevice.serial),
+                                    isConnecting: vm.isConnecting,
+                                    isDisconnecting: vm.isDisconnecting,
                                     batteryPercentage: vm.connectedDevice != nil ? vm.deviceBatteryPercentage : nil
                                 )
                             )
@@ -516,14 +521,21 @@ public struct DashboardView: View {
 class DeviceCellViewModel: ObservableObject {
     @Published var isConnectEnabled: Bool
     @Published var isDisconnectEnabled: Bool
+    @Published var isConnecting: Bool
+    @Published var isDisconnecting: Bool
     @Published var batteryPercentage: Int?
+    
     init(
         isConnectEnabled: Bool,
         isDisconnectEnabled: Bool,
+        isConnecting: Bool,
+        isDisconnecting: Bool,
         batteryPercentage: Int?
     ) {
         self.isConnectEnabled = isConnectEnabled
         self.isDisconnectEnabled = isDisconnectEnabled
+        self.isConnecting = isConnecting
+        self.isDisconnecting = isDisconnecting
         self.batteryPercentage = batteryPercentage
     }
     
@@ -583,12 +595,20 @@ struct DeviceCell: View {
             HStack {
                 Button("Connect", action: connectButtonTapped)
                     .padding(.all, 16)
-                    .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isConnectEnabled))
+                    .buttonStyle(MyButtonStyle.init(
+                        style: .primary,
+                        isLoading: vm.isConnecting,
+                        isEnabled: vm.isConnectEnabled
+                    ))
                 
                 Spacer()
                 Button("Disconnect", action: disconnectButtonTapped)
                     .padding(.all, 16)
-                    .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isDisconnectEnabled))
+                    .buttonStyle(MyButtonStyle.init(
+                        style: .primary,
+                        isLoading: vm.isDisconnecting,
+                        isEnabled: vm.isDisconnectEnabled
+                    ))
             }
             .padding(.top, 10)
         }

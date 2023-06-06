@@ -27,7 +27,7 @@ public extension ButtonConfig {
         }
     }
     
-    var disabledBackgroundColor: Color {
+    var disabledBackgroundColor: Color? {
         return Color.tint2
     }
     
@@ -53,7 +53,7 @@ public struct MyButtonStyle: ButtonStyle {
     let style: ButtonConfig
     let isLoading: Bool
     let isEnabled: Bool
-
+    let leadingPadding: CGFloat = 0
     var textColor: Color {
         if isLoading {
             return .clear
@@ -80,9 +80,21 @@ public struct MyButtonStyle: ButtonStyle {
                 .frame(maxWidth: .infinity)
                 .font(style.titleFont)
                 .foregroundColor(textColor)
+            
+            if isLoading {
+                LoadingView()
+                    .frame(width: 24, height: 24)
+                    .padding(6)
+                
+                    .opacity(!isEnabled && style.disabledBackgroundColor == nil ? 0.4 : 1)
+                    .padding(EdgeInsets(top: 0,
+                                        leading: leadingPadding,
+                                        bottom: 0,
+                                        trailing: leadingPadding))
+            }
         }
         .frame(height: 61)
-        .background(isEnabled ? style.backgroundColor : style.disabledBackgroundColor)
+        .background(isEnabled ? style.backgroundColor : (style.disabledBackgroundColor ?? style.backgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
         .scaleEffect(configuration.isPressed ? 0.95 : 1)
     }

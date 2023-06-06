@@ -25,6 +25,7 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var selectedDeviceId: UUID?
     @Published var connectedDevice: DeviceWrapper?
+    @Published var isConnecting: Bool = false
 
     @Dependency(\.bluetoothClient) var bluetoothClient
     @Dependency(\.persistenceClient) var persistenceClient
@@ -32,7 +33,7 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
     private var discoveredDevicesSubscription: Task<Void, Never>?
 
     var isConnectButtonEnabled: Bool {
-        return selectedDeviceId != nil && connectedDevice == nil
+        return selectedDeviceId != nil && connectedDevice == nil && !isConnecting
     }
     let connectedAction: (DeviceWrapper) -> Void
 
@@ -85,6 +86,7 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
         bluetoothClient.stopScanningDevices()
         Task { @MainActor in
             do {
+                self.isConnecting = true
                 let connectedDevice = try await bluetoothClient.connectToDevice(selectedDevice)
                 self.connectedDevice = connectedDevice
                 persistenceClient.deviceNameSerial.save(.init(deviceWrapper: connectedDevice))
@@ -112,36 +114,54 @@ public struct AddDeviceView: View {
         self.viewModel = viewModel
     }
     public var body: some View {
-        VStack {
-            Divider()
-            VStack {
-                ForEach(viewModel.discoveredDevices) { device in
-                    DiscoveredDeviceCell(
-                        device: device.movesenseDevice,
-                        vm: .init(isSelected: device.id == viewModel.selectedDeviceId)
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        viewModel.didTapCell(device: device)
+            ZStack {
+                VStack {
+                    Divider()
+                    VStack {
+                        ForEach(viewModel.discoveredDevices) { device in
+                            DiscoveredDeviceCell(
+                                device: device.movesenseDevice,
+                                vm: .init(isSelected: device.id == viewModel.selectedDeviceId)
+                            )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                viewModel.didTapCell(device: device)
+                            }
+                        }
+                        Spacer()
+                        Button("Connect", action: viewModel.connectButtonTapped)
+                            .buttonStyle(MyButtonStyle(
+                                style: .primary,
+                                isLoading: viewModel.isConnecting,
+                                isEnabled: viewModel.isConnectButtonEnabled
+                            ))
                     }
+                    .padding(.horizontal, 16)
                 }
-                Spacer()
-                Button("Connect", action: viewModel.connectButtonTapped)
-                    .buttonStyle(MyButtonStyle(
-                        style: .primary,
-                        isEnabled: viewModel.isConnectButtonEnabled
-                    ))
+//
+//                if viewModel.isScanning {
+//                    VStack {
+//                        Spacer()
+//                        VStack {
+//                            LoadingView()
+//                                .padding(10)
+//                        }
+//                        .frame(width: 60, height: 60)
+//
+//                        Spacer()
+//                    }
+//
+//                }
+
             }
-            .padding(.horizontal, 16)
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+            .background(Color.background)
+            .task {
+                await viewModel.task()
+            }
+            .onDisappear(perform: viewModel.onDisappear)
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
-        .background(Color.background)
-        .task {
-            await viewModel.task()
-        }
-        .onDisappear(perform: viewModel.onDisappear)
-        .navigationBarTitleDisplayMode(.inline)
-    }
 }
 
 
