@@ -24,7 +24,9 @@ extension DBClient {
     fetchIntakes: { return [] },
     addEcg: { _ in },
     fetchRecentEcgData: { _ in return [] },
+    isEcgTableEmpty: { return false },
+    clearEcgEvents: {},
     clearDb: {},
-    deleteCurrentDb: { }
+    deleteCurrentDb: {}
     )
 }

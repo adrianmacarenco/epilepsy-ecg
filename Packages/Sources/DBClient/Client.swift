@@ -33,6 +33,8 @@ public struct DBClient {
     // EcgEvents
     public var addEcg: ([(timestamp: Date, ecgData: String)]) async throws -> Void
     public var fetchRecentEcgData: (_ seconds: Int) async throws -> [EcgDTO]
+    public var isEcgTableEmpty: () async throws -> Bool
+    public var clearEcgEvents: () async throws -> Void
     public var clearDb: () async throws -> Void
     public var deleteCurrentDb: () async throws -> Void
     public init(
@@ -51,6 +53,8 @@ public struct DBClient {
         fetchIntakes: @escaping () async throws -> [MedicationIntake],
         addEcg: @escaping ([(timestamp: Date, ecgData: String)]) async throws -> Void,
         fetchRecentEcgData: @escaping(_ seconds: Int) async throws -> [EcgDTO],
+        isEcgTableEmpty: @escaping () async throws -> Bool,
+        clearEcgEvents: @escaping () async throws -> Void,
         clearDb: @escaping () async throws -> Void,
         deleteCurrentDb: @escaping () async throws -> Void
     ) {
@@ -69,6 +73,8 @@ public struct DBClient {
         self.fetchIntakes = fetchIntakes
         self.addEcg = addEcg
         self.fetchRecentEcgData = fetchRecentEcgData
+        self.isEcgTableEmpty = isEcgTableEmpty
+        self.clearEcgEvents = clearEcgEvents
         self.clearDb = clearDb
         self.deleteCurrentDb = deleteCurrentDb
     }
@@ -101,6 +107,8 @@ extension DBClient {
             fetchIntakes: { try await dbManager.fetchIntakes() },
             addEcg: { try await dbManager.addEcg(batch: $0)},
             fetchRecentEcgData: { try await dbManager.fetchRecentEcgData(seconds: $0)},
+            isEcgTableEmpty: dbManager.isEcgTableEmpty,
+            clearEcgEvents: { try await dbManager.deleteAllEcgEvents() },
             clearDb: dbManager.clearDb,
             deleteCurrentDb: {
                 try await withCheckedThrowingContinuation { cont in
@@ -214,6 +222,8 @@ extension DBClient {
         fetchIntakes: unimplemented("fetchIntakes db file failing called"),
         addEcg: unimplemented("addEcg db file failing called"),
         fetchRecentEcgData: unimplemented("fetchRecentEcgData db file failing called"),
+        isEcgTableEmpty: unimplemented("isEcgTableEmpty db file failing called"),
+        clearEcgEvents: unimplemented("clearEcgEvents db file failing called"),
         clearDb: unimplemented("clearDb db file failing called"),
         deleteCurrentDb: unimplemented("deleteCurrentDb db file failing called"))
 }

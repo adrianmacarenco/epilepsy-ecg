@@ -98,7 +98,6 @@ public struct ProfileView: View {
     public var body: some View {
         NavigationStack {
             GeometryReader { geometry in
-                
                 ScrollView {
                     VStack(spacing: 10) {
                         ForEach(0 ..< vm.components.count, id: \.self) { index in

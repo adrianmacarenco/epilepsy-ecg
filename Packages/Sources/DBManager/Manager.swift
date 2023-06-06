@@ -521,6 +521,15 @@ public class DBManager: NSObject {
                 let insertedIds = ecgEvents.insertMany(setters)
                 
                 let _ = try dbConnection.run(insertedIds)
+                
+//                let query = ecgEvents.select(*)
+//                
+//                for row in try dbConnection.prepare(query) {
+//                    let timestamp = row[ecgTimestamp]
+//                    let ecgData = row[ecgData]
+//                    
+//                    print("Timestamp: \(timestamp), ECG Data: \(ecgData)")
+//                }
                 cont.resume(returning: ())
                 
             } catch {
@@ -578,6 +587,22 @@ public class DBManager: NSObject {
                 let deleteAll = ecgEvents.delete()
                 try dbConnection.run(deleteAll)
                 cont.resume(returning: ())
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func isEcgTableEmpty() async throws -> Bool {
+        return try await withCheckedThrowingContinuation { cont in
+            do {
+                let count = try dbConnection.scalar(ecgEvents.count)
+
+                if count == 0 {
+                    cont.resume(returning: true)
+                } else {
+                    cont.resume(returning: false)
+                }
             } catch {
                 cont.resume(throwing: error)
             }
@@ -646,5 +671,4 @@ public class DBManager: NSObject {
             print("Intake ID: \(id), Timestamp: \(timestamp), Pill Quantity: \(pillQuantity), Medication ID: \(medicationId)")
         }
     }
-
 }

@@ -18,6 +18,7 @@ public struct PersistenceClient {
     public var medications: FileClient<[Medication]>
     public var medicationIntakes: FileClient<[MedicationIntake]>
     public var apiTokenWrapper: FileClient<ApiTokenWrapper>
+    public var prevEcgUploadingDate: FileClient<Date>
 }
 
 extension PersistenceClient: TestDependencyKey {

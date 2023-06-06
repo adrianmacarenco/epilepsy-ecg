@@ -50,6 +50,8 @@ public class DashboardViewModel: ObservableObject {
     
     var index = 0
     let previewInterval = 4
+    let serverUploadInterval: Double = 5 * 60 // 5 mins
+    let localDbUpdateInterval: Double = 5 // 5 seconds
     var previewIntervalSamplesNr: Int {
         ecgViewModel.configuration.frequency * Int(previewInterval)
     }
@@ -57,7 +59,9 @@ public class DashboardViewModel: ObservableObject {
     var ecgDataEvents: [(MovesenseEcg, Date)] = []
     var localEcgBuffer: [Movesense] = []
     var ecgDataStream: ((MovesenseEcg) -> Void)?
-    
+    private var serverUploadTask: Task<Void, Never>?
+    private var dbUpdateTask: Task<Void, Never>?
+
     @Dependency (\.persistenceClient) var persistenceClient
     @Dependency (\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
@@ -90,6 +94,9 @@ public class DashboardViewModel: ObservableObject {
                 }
             }
         }
+        Task(priority: .background) {
+            try await uploadDbToServerIfNecessary()
+        }
     }
     
     func onAppear() {
@@ -101,15 +108,6 @@ public class DashboardViewModel: ObservableObject {
             }
         }
         resetEcgData()
-        
-//        Task {
-//            try await clock.sleep(for: .seconds(2))
-//            do {
-//                try await apiClient.uploadDbFile()
-//            } catch {
-//                print(error.localizedDescription)
-//            }
-//        }
     }
     
     func isConnectable(deviceSerial: String) -> Bool {
@@ -220,31 +218,80 @@ public class DashboardViewModel: ObservableObject {
     
     // Saves ecg data to the local db every 5 seconds
     // Empty the local array every time after a successful saving
-    private func saveEcgData() {
-        Task(priority: .background) {
-            for await _ in clock.timer(interval: .seconds(5)) {
-                let localData = ecgDataEvents.map { (Date(), $0.0.samples.commaSeparatedString()) }
+    private func startLocalUpdateTimerTask() {
+        dbUpdateTask = Task(priority: .background, operation: { [weak self, clock, localDbUpdateInterval] in
+            for await _ in clock.timer(interval: .seconds(localDbUpdateInterval)) {
                 do {
-                    try await dbClient.addEcg(localData)
-                    ecgDataEvents = []
-                    print("Data saved ✅")
-                    //                    let ecgDtos = try await dbClient.fetchRecentEcgData(3600)
-                    //                    print(ecgDtos)
+                    try await self?.updateLocalDbData()
                 } catch {
                     print("🥴 error when saving: \(error.localizedDescription)")
                 }
             }
-        }
+        })
+    }
+    
+    private func updateLocalDbData() async throws {
+        let localData = ecgDataEvents.map { (Date(), $0.0.samples.commaSeparatedString()) }
+        try await self.dbClient.addEcg(localData)
+        ecgDataEvents = []
+        print("Update local data ✅")
     }
     
     // Saves ecg data to the local db every 5 seconds
     // Empty the local array every time after a successful saving
-    private func uploadEcgToServer() {
-        Task(priority: .background) {
-            for await _ in clock.timer(interval: .seconds(300)) {
-                print("Upload db file to server")
+    private func startServerDbUploadTimerTask() {
+        serverUploadTask = Task(priority: .background, operation: { [weak self, clock, serverUploadInterval] in
+            for await _ in clock.timer(interval: .seconds(serverUploadInterval)) {
+                do {
+                    try await self?.uploadDbToServerIfNecessary()
+                } catch {
+                    
+                }
             }
+        })
+    }
+    
+    private func startTimerTasks() {
+        startLocalUpdateTimerTask()
+        startServerDbUploadTimerTask()
+    }
+    
+    private func cancelTimerTasks() {
+        serverUploadTask?.cancel()
+        dbUpdateTask?.cancel()
+    }
+    
+    private func uploadDbToServerIfNecessary() async throws {
+        guard try await shouldUploadDataToServer() else { return }
+        try await uploadDbToServer()
+    }
+    
+    private func uploadDbToServer() async throws {
+        do {
+            try await apiClient.uploadDbFile()
+        } catch {
+            print("🥴 error while uploading to server: \(error.localizedDescription)")
         }
+        do {
+            try await dbClient.clearEcgEvents()
+        } catch {
+            print("🥴 error while clearing localEcgEvents: \(error.localizedDescription)")
+        }
+        persistenceClient.prevEcgUploadingDate.save(Date())
+        print("Update to server 👻")
+
+    }
+    
+    private func shouldUploadDataToServer() async throws -> Bool {
+        guard try await !dbClient.isEcgTableEmpty() else {
+            return false
+        }
+        
+        guard let prevUploadDate = persistenceClient.prevEcgUploadingDate.load() else {
+            return true
+        }
+        
+        return Date().timeIntervalSince(prevUploadDate) >= serverUploadInterval
     }
     
     private func colorChanged() {
@@ -314,6 +361,7 @@ public class DashboardViewModel: ObservableObject {
             bluetoothClient.stopScanningDevices()
             bluetoothClient.subscribeToHr(connectedDevice)
             getConnectedDeviceBattery(device: connectedDevice)
+            self.startTimerTasks()
             //            saveEcgData()
         }
     }
@@ -328,6 +376,12 @@ public class DashboardViewModel: ObservableObject {
             connectedDevice = nil
             resetEcgData()
         }
+        
+        Task {
+            guard try await !dbClient.isEcgTableEmpty() else { return }
+            try await uploadDbToServer()
+        }
+        cancelTimerTasks()
     }
     
     func ecgViewTapped() {
@@ -391,7 +445,6 @@ public struct DashboardView: View {
     public var body: some View {
         NavigationStack {
             GeometryReader { proxy in
-                
                 ScrollView {
                     VStack {
                         if let prevDevice = vm.previousDevice {
