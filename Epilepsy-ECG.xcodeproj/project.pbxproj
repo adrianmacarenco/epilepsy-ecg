@@ -32,7 +32,7 @@
 		2ADC9D2D2A03B80C000B412F /* EnvVars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvVars.swift; sourceTree = "<group>"; };
 		2ADC9D2F2A03BC91000B412F /* LiveDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveDependencies.swift; sourceTree = "<group>"; };
 		E23F0FB229B4DFD800A93242 /* Packages */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Packages; sourceTree = "<group>"; };
-		E25B787D29B4D4D500527F4A /* Epilepsy-ECG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Epilepsy-ECG.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E25B787D29B4D4D500527F4A /* Epilepsy-ECG-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Epilepsy-ECG-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E25B788029B4D4D500527F4A /* Epilepsy_ECGApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Epilepsy_ECGApp.swift; sourceTree = "<group>"; };
 		E25B788229B4D4D500527F4A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		E25B788429B4D4D600527F4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -84,7 +84,7 @@
 		E25B787E29B4D4D500527F4A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E25B787D29B4D4D500527F4A /* Epilepsy-ECG.app */,
+				E25B787D29B4D4D500527F4A /* Epilepsy-ECG-Staging.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -143,7 +143,7 @@
 				2AE8DF312A2E9A89003AB1AC /* DBManager */,
 			);
 			productName = "Epilepsy ECG";
-			productReference = E25B787D29B4D4D500527F4A /* Epilepsy-ECG.app */;
+			productReference = E25B787D29B4D4D500527F4A /* Epilepsy-ECG-Staging.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -328,7 +328,7 @@
 		E25B788D29B4D4D600527F4A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconDevelopment;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Epilepsy ECG/Epilepsy_ECG.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -360,7 +360,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "dk.dtu.compute.Epilepsy-ECG-development";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "$(TARGET_NAME)-Staging";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
