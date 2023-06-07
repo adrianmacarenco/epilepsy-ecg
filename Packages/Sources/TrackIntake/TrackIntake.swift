@@ -333,7 +333,7 @@ public struct TrackIntakeView: View {
                         medications: self.vm.medications,
                         medicationSelected: vm.medicationSelected(_:)))
                     .toolbar {
-                        ToolbarItem(placement: .navigationBarLeading) {
+                        ToolbarItem(placement: .confirmationAction) {
                             Button("Cancel") {
                                 vm.cancelSelectionTapped()
                             }

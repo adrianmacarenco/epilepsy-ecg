@@ -225,9 +225,7 @@ public struct AddMedicationView: View {
                     }
                 }
             }
-            
         }
-
     }
 }
 

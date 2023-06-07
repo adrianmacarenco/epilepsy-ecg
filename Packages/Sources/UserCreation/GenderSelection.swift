@@ -54,8 +54,8 @@ public class GenderSelectionViewModel: ObservableObject {
         self.type = type
         self.userUpdated = userUpdated
         self.userCreationFlowEnded = userCreationFlowEnded
-        if case let ActionType.edit(initialUser) = type {
-            selectedGender = initialUser.gender
+        if case let ActionType.edit(initialUser) = type, let initialUserGender = initialUser.gender {
+            selectedGender = initialUserGender
         }
     }
     

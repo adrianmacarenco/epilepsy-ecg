@@ -9,20 +9,20 @@ import Foundation
 
 public struct User: Codable {
     public let id: String
-    public var fullName: String
-    public var birthday: Date
-    public var gender: String
-    public var weight: Double
-    public var height: Double
+    public var fullName: String?
+    public var birthday: Date?
+    public var gender: String?
+    public var weight: Double?
+    public var height: Double?
     public var diagnosis: String?
     
     public init(
         id: String,
-        fullName: String,
-        birthday: Date,
-        gender: String,
-        weight: Double,
-        height: Double,
+        fullName: String?,
+        birthday: Date?,
+        gender: String?,
+        weight: Double?,
+        height: Double?,
         diagnosis: String?
     ) {
         self.id = id

@@ -32,7 +32,7 @@
 		2ADC9D2D2A03B80C000B412F /* EnvVars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvVars.swift; sourceTree = "<group>"; };
 		2ADC9D2F2A03BC91000B412F /* LiveDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveDependencies.swift; sourceTree = "<group>"; };
 		E23F0FB229B4DFD800A93242 /* Packages */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Packages; sourceTree = "<group>"; };
-		E25B787D29B4D4D500527F4A /* Epilepsy-ECG-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Epilepsy-ECG-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E25B787D29B4D4D500527F4A /* EpiHeartMonitor-Staging.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "EpiHeartMonitor-Staging.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E25B788029B4D4D500527F4A /* Epilepsy_ECGApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Epilepsy_ECGApp.swift; sourceTree = "<group>"; };
 		E25B788229B4D4D500527F4A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		E25B788429B4D4D600527F4A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -84,7 +84,7 @@
 		E25B787E29B4D4D500527F4A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E25B787D29B4D4D500527F4A /* Epilepsy-ECG-Staging.app */,
+				E25B787D29B4D4D500527F4A /* EpiHeartMonitor-Staging.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -114,9 +114,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E25B787C29B4D4D500527F4A /* Epilepsy-ECG */ = {
+		E25B787C29B4D4D500527F4A /* EpiHeartMonitor */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E25B788C29B4D4D600527F4A /* Build configuration list for PBXNativeTarget "Epilepsy-ECG" */;
+			buildConfigurationList = E25B788C29B4D4D600527F4A /* Build configuration list for PBXNativeTarget "EpiHeartMonitor" */;
 			buildPhases = (
 				E25B787929B4D4D500527F4A /* Sources */,
 				E25B787A29B4D4D500527F4A /* Frameworks */,
@@ -126,7 +126,7 @@
 			);
 			dependencies = (
 			);
-			name = "Epilepsy-ECG";
+			name = EpiHeartMonitor;
 			packageProductDependencies = (
 				2AB8EAD729E078C1004AC5D6 /* Dependencies */,
 				2AB8EADA29E07A70004AC5D6 /* BluetoothClient */,
@@ -143,7 +143,7 @@
 				2AE8DF312A2E9A89003AB1AC /* DBManager */,
 			);
 			productName = "Epilepsy ECG";
-			productReference = E25B787D29B4D4D500527F4A /* Epilepsy-ECG-Staging.app */;
+			productReference = E25B787D29B4D4D500527F4A /* EpiHeartMonitor-Staging.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -178,7 +178,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				E25B787C29B4D4D500527F4A /* Epilepsy-ECG */,
+				E25B787C29B4D4D500527F4A /* EpiHeartMonitor */,
 			);
 		};
 /* End PBXProject section */
@@ -431,7 +431,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E25B788C29B4D4D600527F4A /* Build configuration list for PBXNativeTarget "Epilepsy-ECG" */ = {
+		E25B788C29B4D4D600527F4A /* Build configuration list for PBXNativeTarget "EpiHeartMonitor" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E25B788D29B4D4D600527F4A /* Debug */,

@@ -37,11 +37,11 @@ public class DBManager: NSObject {
     
     private let users = Table("users")
     private let userId = Expression<String>("id")
-    private let fullName = Expression<String>("full_name")
-    private let birthday = Expression<Date>("birthday")
-    private let gender = Expression<String>("gender")
-    private let weight = Expression<Double>("weight")
-    private let height = Expression<Double>("height")
+    private let fullName = Expression<String?>("full_name")
+    private let birthday = Expression<Date?>("birthday")
+    private let gender = Expression<String?>("gender")
+    private let weight = Expression<Double?>("weight")
+    private let height = Expression<Double?>("height")
     private let diagnosis = Expression<String?>("diagnosis")
     
     public init(dbConnection: Connection) {
@@ -156,7 +156,7 @@ public class DBManager: NSObject {
     
     // MARK: - User Entity
     
-    public func addUser(userId: String, fullName: String, birthday: Date, gender: String, weight: Double, height: Double, diagnosis: String?) async throws -> User {
+    public func addUser(userId: String, fullName: String?, birthday: Date?, gender: String?, weight: Double?, height: Double?, diagnosis: String?) async throws -> User {
         return try await withCheckedThrowingContinuation { cont in
             do {
                 let insert = users.insert(self.userId <- userId, self.fullName <- fullName, self.birthday <- birthday, self.gender <- gender, self.weight <- weight, self.height <- height, self.diagnosis <- diagnosis)

@@ -46,8 +46,8 @@ public class PersonalIdentityViewModel: ObservableObject {
         self.type = type
         self.userUpdated = userUpdated
         self.userCreationFlowEnded = userCreationFlowEnded
-        if case let ActionType.edit(initialUser) = type {
-            name = initialUser.fullName
+        if case let ActionType.edit(initialUser) = type, let initialUserValue = initialUser.fullName {
+            name = initialUserValue
         }
     }
     

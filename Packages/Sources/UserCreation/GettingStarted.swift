@@ -24,7 +24,15 @@ public class GettingStartedViewModel: ObservableObject {
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
     var userCreationFlowEnded: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
-    
+    let localUser = User(
+        id: UUID().uuidString,
+        fullName: nil,
+        birthday: nil,
+        gender: nil,
+        weight: nil,
+        height: nil,
+        diagnosis: nil
+    )
     public init(
         userCreationFlowEnded: @escaping() -> Void
     ) {
@@ -32,16 +40,6 @@ public class GettingStartedViewModel: ObservableObject {
     }
     
     func startButtonTapped() {
-        let localUser = User(
-            id: UUID().uuidString,
-            fullName: "",
-            birthday: Date(),
-            gender: "",
-            weight: 0.0,
-            height: 0.0,
-            diagnosis: nil
-        )
-        
         route = .personalIdentity(
             withDependencies(from: self) {
                 .init(
@@ -50,6 +48,14 @@ public class GettingStartedViewModel: ObservableObject {
                 )
             }
         )
+    }
+    
+    func skipButtonTapped() {
+        Task {
+            let savedUser = try await dbClient.createUser(localUser.id, localUser.fullName, localUser.birthday, localUser.gender, localUser.weight, localUser.height, localUser.diagnosis)
+            persistenceClient.user.save(savedUser)
+            userCreationFlowEnded()
+        }
     }
 }
 
@@ -89,6 +95,14 @@ public struct GettingStartedView: View {
                     .navigationBarTitleDisplayMode(.inline)
 
             }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Set up later") {
+                        vm.skipButtonTapped()
+                    }
+                }
+            }
+            
         }
         .tint(.tint1)
     }

@@ -14,7 +14,7 @@ import XCTestDynamicOverlay
 
 public struct DBClient {
     let dbPathUrl: String
-    public var createUser: (_ userId: String, _ fullName: String, _ birthday: Date, _ gender: String, _ weight: Double, _ height: Double, _ diagnosis: String?) async throws -> User
+    public var createUser: (_ userId: String, _ fullName: String?, _ birthday: Date?, _ gender: String?, _ weight: Double?, _ height: Double?, _ diagnosis: String?) async throws -> User
     public var getUser: (_ userId: String) async throws -> User
     public var updateUser: (_ user: User) async throws -> Void
     // Medications
@@ -39,7 +39,7 @@ public struct DBClient {
     public var deleteCurrentDb: () async throws -> Void
     public init(
         dbPathUrl: String,
-        createUser: @escaping (_ userId: String, _ fullName: String, _ birthday: Date, _ gender: String, _ weight: Double, _ height: Double, _ diagnosis: String?) async throws -> User,
+        createUser: @escaping (_ userId: String, _ fullName: String?, _ birthday: Date?, _ gender: String?, _ weight: Double?, _ height: Double?, _ diagnosis: String?) async throws -> User,
         getUser: @escaping (_ userId: String) async throws -> User,
         updateUser: @escaping (_ user: User) async throws -> Void,
         createMedication: @escaping (_ name: String, _ activeIngredients: [ActiveIngredient]) async throws -> Medication,

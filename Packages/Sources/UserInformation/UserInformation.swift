@@ -153,27 +153,35 @@ extension UserInformationViewModel {
         case height = "Height"
         case currentMedications = "Current medications"
         
-        public func description() -> String? {
+        public func description(user: User) -> String? {
             switch self {
+            case .fullName:
+                return user.fullName != nil ? self.rawValue : nil
+            case .birthday:
+                return user.birthday != nil ? self.rawValue : nil
+            case .gender:
+                return user.gender != nil ? self.rawValue : nil
+            case .weight:
+                return user.weight != nil ? self.rawValue : nil
+            case .height:
+                return user.height != nil ? self.rawValue : nil
             case .currentMedications:
                 return nil
-            default:
-                return self.rawValue
             }
         }
         
         public func title(user: User) -> String {
             switch self {
             case .fullName:
-                return user.fullName
+                return user.fullName ?? self.rawValue
             case .birthday:
-                return Date.dayMonthYear.string(from: user.birthday)
+                return user.birthday != nil ? Date.dayMonthYear.string(from: user.birthday!) : self.rawValue
             case .gender:
-                return user.gender
+                return user.gender ?? self.rawValue
             case .weight:
-                return String(format: "%.0f", user.weight)
+                return user.weight != nil ? String(format: "%.0f", user.weight!) : self.rawValue
             case .height:
-                return String(format: "%.0f", user.height)
+                return user.height != nil ? String(format: "%.0f", user.height!) : self.rawValue
             case .currentMedications:
                 return self.rawValue
             }
@@ -196,7 +204,7 @@ public struct UserInformationView: View {
                 VStack(spacing: 10) {
                     ForEach(0 ..< vm.components.count, id: \.self) { index in
                         ProfileCellView(
-                            description: vm.components[index].description(),
+                            description: vm.components[index].description(user: vm.user),
                             title: vm.components[index].title(user: vm.user)
                         )
                         .contentShape(Rectangle())

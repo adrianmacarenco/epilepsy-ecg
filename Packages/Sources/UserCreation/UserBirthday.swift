@@ -59,7 +59,8 @@ public class UserBirthdayViewModel: ObservableObject {
         case .add:
             return birthdayDate < now
         case .edit(let initialUser):
-            return birthdayDate < now && !birthdayDate.isSameDay(as: initialUser.birthday)
+            guard let initialUserBirthday = initialUser.birthday else { return false }
+            return birthdayDate < now && !birthdayDate.isSameDay(as: initialUserBirthday)
         }
     }
     
