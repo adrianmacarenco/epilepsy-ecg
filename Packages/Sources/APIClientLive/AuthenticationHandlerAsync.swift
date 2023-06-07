@@ -7,7 +7,6 @@
 
 import Foundation
 import Model
-import Alamofire
 
 public actor AuthenticationHandlerAsync {
     
