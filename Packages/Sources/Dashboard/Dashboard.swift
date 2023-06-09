@@ -35,11 +35,7 @@ public class DashboardViewModel: ObservableObject {
         case deviceInfo(DeviceInfoViewModel)
     }
     
-    @Published var route: Destination? {
-        didSet {
-            print("🏖️ Route has changed: \(route)")
-        }
-    }
+    @Published var route: Destination?
     @Published var previousDevice: DeviceNameSerial?
     @Published var discoveredDevices: IdentifiedArrayOf<DeviceWrapper> = []
     @Published var connectedDevice: DeviceWrapper?
@@ -47,6 +43,7 @@ public class DashboardViewModel: ObservableObject {
     @Published var deviceBatteryPercentage: Int?
     @Published var isConnecting = false
     @Published var isDisconnecting = false
+    @Published var shouldRenderEcg = true
     
     var index = 0
     let previewInterval = 4
@@ -150,7 +147,7 @@ public class DashboardViewModel: ObservableObject {
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
                 ecgDataStream?(ecgData)
                 ecgDataEvents.append((ecgData, Date()))
-                guard self.route == nil else { continue }
+                guard self.route == nil, shouldRenderEcg else { continue }
                 ecgData.samples.forEach { sample in
                     var finalSample = Double(sample)
                     if sample < ecgViewModel.configuration.viewConfiguration.minValue {
@@ -252,8 +249,8 @@ public class DashboardViewModel: ObservableObject {
     }
     
     private func startTimerTasks() {
-        startLocalUpdateTimerTask()
-        startServerDbUploadTimerTask()
+//        startLocalUpdateTimerTask()
+//        startServerDbUploadTimerTask()
     }
     
     private func cancelTimerTasks() {
@@ -431,11 +428,23 @@ public class DashboardViewModel: ObservableObject {
             })
         )
     }
+    
+    func scenePhaseDidChange(newValue: ScenePhase) {
+        switch newValue {
+        case .background:
+            shouldRenderEcg = false
+        case .active:
+            shouldRenderEcg = true
+        default:
+            break
+        }
+    }
 }
 
 public struct DashboardView: View {
     @ObservedObject var vm: DashboardViewModel
-    
+    @Environment(\.scenePhase) var scenePhase
+
     public init(
         vm: DashboardViewModel
     ) {
@@ -511,7 +520,7 @@ public struct DashboardView: View {
                     .onAppear(perform: vm.onAppear)
                 }
                 .background(Color.background)
-                
+                .onChange(of: scenePhase, perform: vm.scenePhaseDidChange(newValue:))
                 .sheet(
                     unwrapping: $vm.route,
                     case: /DashboardViewModel.Destination.addDevice
