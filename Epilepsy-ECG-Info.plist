@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>dk.dtu.compute.Epilepsy-ECG.refresh</string>
+	</array>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>EpiHeartMonitorStatusIntent</string>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>SF-Pro-Display-Medium.ttf</string>
@@ -11,6 +19,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>
+		<string>fetch</string>
 	</array>
 </dict>
 </plist>

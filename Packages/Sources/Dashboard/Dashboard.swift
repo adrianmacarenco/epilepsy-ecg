@@ -26,6 +26,8 @@ import Shared
 import Combine
 import APIClient
 import MovesenseApi
+import WidgetKit
+import WidgetClient
 
 public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
@@ -47,8 +49,9 @@ public class DashboardViewModel: ObservableObject {
     
     var index = 0
     let previewInterval = 4
-    let serverUploadInterval: Double = 5 * 60 // 5 mins
+    let serverUploadInterval: Double = 15 // 5 mins
     let localDbUpdateInterval: Double = 5 // 5 seconds
+    let batteryCheckInterval: Double = 15 * 60 // 15 mins
     var previewIntervalSamplesNr: Int {
         ecgViewModel.configuration.frequency * Int(previewInterval)
     }
@@ -58,12 +61,15 @@ public class DashboardViewModel: ObservableObject {
     var ecgDataStream: ((MovesenseEcg) -> Void)?
     private var serverUploadTask: Task<Void, Never>?
     private var dbUpdateTask: Task<Void, Never>?
+    private var batteryCheckTask: Task<Void, Never>?
+    private var disconnectionTask: Task<Void, Never>?
 
     @Dependency (\.persistenceClient) var persistenceClient
     @Dependency (\.bluetoothClient) var bluetoothClient
     @Dependency (\.continuousClock) var clock
     @Dependency (\.dbClient) var dbClient
     @Dependency(\.apiClient) var apiClient
+    @Dependency(\.widgetClient) var widgetClient
 
     // MARK: - Public interface
     
@@ -202,15 +208,14 @@ public class DashboardViewModel: ObservableObject {
         }
     }
     
-    private func deleteDb() {
-        Task {
-            do {
-                try await dbClient.deleteCurrentDb()
-                print("Db deleted 💀")
-            } catch {
-                print("db couln't be delete \(error)")
+    // Check battery level every 15 mins
+    private func startBatteryCheckTask() {
+        guard let connectedDevice else { return }
+        batteryCheckTask = Task(priority: .background, operation: { [weak self, clock, batteryCheckInterval] in
+            for await _ in clock.timer(interval: .seconds(batteryCheckInterval)) {
+                self?.getConnectedDeviceBattery(device: connectedDevice)
             }
-        }
+        })
     }
     
     // Saves ecg data to the local db every 5 seconds
@@ -248,14 +253,18 @@ public class DashboardViewModel: ObservableObject {
         })
     }
     
-    private func startTimerTasks() {
+    private func startConnectedDeviceTasks() {
 //        startLocalUpdateTimerTask()
 //        startServerDbUploadTimerTask()
+        startBatteryCheckTask()
+        startDisconnectionStreamTask()
     }
     
-    private func cancelTimerTasks() {
+    private func cancelConnectedDeviceTasks() {
         serverUploadTask?.cancel()
         dbUpdateTask?.cancel()
+        batteryCheckTask?.cancel()
+        disconnectionTask?.cancel()
     }
     
     private func uploadDbToServerIfNecessary() async throws {
@@ -291,6 +300,21 @@ public class DashboardViewModel: ObservableObject {
         return Date().timeIntervalSince(prevUploadDate) >= serverUploadInterval
     }
     
+    private func startDisconnectionStreamTask() {
+        disconnectionTask = Task { [weak self, bluetoothClient] in
+            for await device in bluetoothClient.disconnectionStream() {
+                if device.serialNumber == self?.connectedDevice?.movesenseDevice.serialNumber {
+                    self?.updateWidgetConnectionStatus(isConnected: false)
+                }
+            }
+        }
+    }
+    
+    private func updateWidgetConnectionStatus(isConnected: Bool) {
+        self.widgetClient.updateConnectionStatus(isConnected)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetClient.kind)
+    }
+    
     private func colorChanged() {
         guard let newColor = persistenceClient.ecgConfiguration.load()?.viewConfiguration.chartColor else { return }
         ecgViewModel.configuration.viewConfiguration.chartColor = newColor
@@ -311,7 +335,10 @@ public class DashboardViewModel: ObservableObject {
             await MainActor.run { [weak self] in
                 withAnimation {
                     self?.deviceBatteryPercentage = batteryPercentage
-                    
+                    if let batteryPercentage {
+                        self?.widgetClient.updateBatteryPercentage(batteryPercentage)
+                        WidgetCenter.shared.reloadTimelines(ofKind: WidgetClient.kind)
+                    }
                 }
             }
         }
@@ -358,8 +385,8 @@ public class DashboardViewModel: ObservableObject {
             bluetoothClient.stopScanningDevices()
             bluetoothClient.subscribeToHr(connectedDevice)
             getConnectedDeviceBattery(device: connectedDevice)
-            self.startTimerTasks()
-            //            saveEcgData()
+            self.updateWidgetConnectionStatus(isConnected: true)
+            self.startConnectedDeviceTasks()
         }
     }
     
@@ -372,13 +399,14 @@ public class DashboardViewModel: ObservableObject {
             self.isDisconnecting = false
             connectedDevice = nil
             resetEcgData()
+            self.updateWidgetConnectionStatus(isConnected: false)
         }
         
         Task {
             guard try await !dbClient.isEcgTableEmpty() else { return }
             try await uploadDbToServer()
         }
-        cancelTimerTasks()
+        cancelConnectedDeviceTasks()
     }
     
     func ecgViewTapped() {

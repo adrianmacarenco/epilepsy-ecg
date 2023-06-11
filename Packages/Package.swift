@@ -103,6 +103,10 @@ let package = Package(
         .library(
             name: "UserInformation",
             targets: ["UserInformation"]
+        ),
+        .library(
+            name: "WidgetClient",
+            targets: ["WidgetClient"]
         )
     ],
     dependencies: [
@@ -137,6 +141,7 @@ let package = Package(
                 "StylePackage",
                 "PersistenceClient",
                 "UserCreation",
+                "WidgetClient",
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation")
@@ -191,6 +196,7 @@ let package = Package(
                 "Shared",
                 "StylePackage",
                 "PersistenceClient",
+                "WidgetClient",
                 .product(name: "Clocks", package: "swift-clocks"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
@@ -347,6 +353,12 @@ let package = Package(
                 "UserCreation",
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
+            ]
+        ),
+        .target(
+            name: "WidgetClient",
+            dependencies: [
+                .product(name: "Dependencies", package: "swift-dependencies"),
             ]
         ),
         .testTarget(

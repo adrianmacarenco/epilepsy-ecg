@@ -14,6 +14,7 @@ import MovesenseApi
 import Model
 
 public struct BluetoothClient {
+    public var isDeviceConnected: () ->  Bool
     public var getDeviceBattery: (DeviceWrapper) async throws -> Int
     // TODO: Modify scanDevices and stopScanningDevices to async
     public var scanDevices: () -> Void
@@ -25,6 +26,7 @@ public struct BluetoothClient {
     public var discoveredDevicesStream: () -> AsyncStream<DeviceWrapper>
     public var connectToDevice: (DeviceWrapper) async throws -> DeviceWrapper
     public var disconnectDevice: (DeviceWrapper) async throws -> DeviceWrapper
+    public var disconnectionStream: () -> AsyncStream<MovesenseDevice>
     public var subscribeToEcg: (DeviceWrapper, Int) -> Void
     public var unsubscribeEcg: (DeviceWrapper) -> Void
     public var subscribeToHr: (DeviceWrapper) -> Void
@@ -34,6 +36,7 @@ public struct BluetoothClient {
     public var settingsEcgPacketsStream: () -> AsyncStream<MovesenseEcg>
 
     public init(
+        isDeviceConnected:  @escaping () -> Bool,
         getDeviceBattery: @escaping (DeviceWrapper) async throws -> Int,
         scanDevices: @escaping () -> Void,
         stopScanningDevices: @escaping () -> Void,
@@ -42,6 +45,7 @@ public struct BluetoothClient {
         getDeviceBatteryPercentage: @escaping(DeviceWrapper) async throws -> Int,
         getDeviceEcgInfo: @escaping (DeviceWrapper) async throws -> MovesenseEcgInfo,
         discoveredDevicesStream: @escaping () -> AsyncStream<DeviceWrapper>,
+        disconnectionStream: @escaping () -> AsyncStream<MovesenseDevice>,
         connectToDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         disconnectDevice: @escaping (DeviceWrapper) async throws -> DeviceWrapper,
         subscribeToEcg: @escaping (DeviceWrapper, Int) -> Void,
@@ -52,6 +56,7 @@ public struct BluetoothClient {
         dashboardEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>,
         settingsEcgPacketsStream: @escaping () -> AsyncStream<MovesenseEcg>
     ) {
+        self.isDeviceConnected = isDeviceConnected
         self.getDeviceBattery = getDeviceBattery
         self.scanDevices = scanDevices
         self.getDevice = getDevice
@@ -60,6 +65,7 @@ public struct BluetoothClient {
         self.getDeviceEcgInfo = getDeviceEcgInfo
         self.stopScanningDevices = stopScanningDevices
         self.discoveredDevicesStream = discoveredDevicesStream
+        self.disconnectionStream = disconnectionStream
         self.connectToDevice = connectToDevice
         self.disconnectDevice = disconnectDevice
         self.subscribeToEcg = subscribeToEcg
@@ -77,6 +83,7 @@ extension BluetoothClient: DependencyKey {
         let bluetoothManager = BluetoothManager()
         
         return .init(
+            isDeviceConnected: { bluetoothManager.isDeviceConnected },
             getDeviceBattery: { try await bluetoothManager.getDeviceBattery($0) },
             scanDevices: bluetoothManager.scanAvailableDevices,
             stopScanningDevices: bluetoothManager.stopScanningDevices,
@@ -85,6 +92,7 @@ extension BluetoothClient: DependencyKey {
             getDeviceBatteryPercentage: bluetoothManager.getDeviceBattery(_:),
             getDeviceEcgInfo: { try await bluetoothManager.getDeviceEcgInfo($0) },
             discoveredDevicesStream: { bluetoothManager.discoveredDevicesStream },
+            disconnectionStream: { bluetoothManager.disconnectionStream },
             connectToDevice: { try await bluetoothManager.connectToDevice($0) },
             disconnectDevice: { try await bluetoothManager.disconnectDevice($0) },
             subscribeToEcg: { device, freq in bluetoothManager.subscribeToEcg(device, frequency: freq) },

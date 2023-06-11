@@ -580,6 +580,20 @@ public class DBManager: NSObject {
             }
         }
     }
+    private func printAllEcg() {
+        let query = ecgEvents.select(*)
+        do {
+            
+            for row in try dbConnection.prepare(query) {
+                let ecgTimeStamp = row[ecgTimestamp]
+                let ecgData = row[ecgData]
+                
+                print("ECG:  timestamp - \(ecgTimeStamp), ecgData - \(ecgData)")
+            }
+        } catch {
+            
+        }
+    }
     
     public func deleteAllEcgEvents() async throws -> Void {
         return try await withCheckedThrowingContinuation { cont in

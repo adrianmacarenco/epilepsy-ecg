@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A1ADD782A333CF900263C37 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A1ADD772A333CF900263C37 /* WidgetKit.framework */; };
+		2A1ADD7A2A333CF900263C37 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A1ADD792A333CF900263C37 /* SwiftUI.framework */; };
+		2A1ADD7D2A333CF900263C37 /* EpiHeartMonitorWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1ADD7C2A333CF900263C37 /* EpiHeartMonitorWidgetsBundle.swift */; };
+		2A1ADD7F2A333CF900263C37 /* EpiHeartMonitorWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1ADD7E2A333CF900263C37 /* EpiHeartMonitorWidgets.swift */; };
+		2A1ADD822A333CFA00263C37 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A1ADD812A333CFA00263C37 /* Assets.xcassets */; };
+		2A1ADD842A333CFA00263C37 /* EpiHeartMonitorWidgets.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = 2A1ADD802A333CF900263C37 /* EpiHeartMonitorWidgets.intentdefinition */; };
+		2A1ADD852A333CFA00263C37 /* EpiHeartMonitorWidgets.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = 2A1ADD802A333CF900263C37 /* EpiHeartMonitorWidgets.intentdefinition */; };
+		2A1ADD882A333CFA00263C37 /* EpiHeartMonitorWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2A1ADD762A333CF900263C37 /* EpiHeartMonitorWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2A1ADD912A33E39D00263C37 /* StylePackage in Frameworks */ = {isa = PBXBuildFile; productRef = 2A1ADD902A33E39D00263C37 /* StylePackage */; };
+		2A1ADD932A34970F00263C37 /* WidgetClient in Frameworks */ = {isa = PBXBuildFile; productRef = 2A1ADD922A34970F00263C37 /* WidgetClient */; };
 		2A36A2782A29344C007555EE /* APIClient in Frameworks */ = {isa = PBXBuildFile; productRef = 2A36A2772A29344C007555EE /* APIClient */; };
 		2A36A27A2A29344C007555EE /* APIClientLive in Frameworks */ = {isa = PBXBuildFile; productRef = 2A36A2792A29344C007555EE /* APIClientLive */; };
 		2A809CBF2A1BDD37009A2620 /* UserCreation in Frameworks */ = {isa = PBXBuildFile; productRef = 2A809CBE2A1BDD37009A2620 /* UserCreation */; };
@@ -28,7 +38,42 @@
 		E25B788929B4D4D600527F4A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E25B788829B4D4D600527F4A /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		2A1ADD862A333CFA00263C37 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E25B787529B4D4D500527F4A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2A1ADD752A333CF900263C37;
+			remoteInfo = EpiHeartMonitorWidgetsExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2A1ADD8C2A333CFA00263C37 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2A1ADD882A333CFA00263C37 /* EpiHeartMonitorWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		2A1ADD762A333CF900263C37 /* EpiHeartMonitorWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = EpiHeartMonitorWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A1ADD772A333CF900263C37 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		2A1ADD792A333CF900263C37 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		2A1ADD7C2A333CF900263C37 /* EpiHeartMonitorWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpiHeartMonitorWidgetsBundle.swift; sourceTree = "<group>"; };
+		2A1ADD7E2A333CF900263C37 /* EpiHeartMonitorWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpiHeartMonitorWidgets.swift; sourceTree = "<group>"; };
+		2A1ADD802A333CF900263C37 /* EpiHeartMonitorWidgets.intentdefinition */ = {isa = PBXFileReference; lastKnownFileType = file.intentdefinition; path = EpiHeartMonitorWidgets.intentdefinition; sourceTree = "<group>"; };
+		2A1ADD812A333CFA00263C37 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2A1ADD832A333CFA00263C37 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2A1ADD8D2A333E7800263C37 /* EpiHeartMonitorWidgetsExtensionDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EpiHeartMonitorWidgetsExtensionDebug.entitlements; sourceTree = "<group>"; };
+		2A1ADD8E2A33441900263C37 /* EpiHeartMonitorDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EpiHeartMonitorDebug.entitlements; sourceTree = "<group>"; };
+		2A1ADD8F2A334E0000263C37 /* EpiHeartMonitorWidgetsExtensionRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EpiHeartMonitorWidgetsExtensionRelease.entitlements; sourceTree = "<group>"; };
 		2ADC9D2D2A03B80C000B412F /* EnvVars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvVars.swift; sourceTree = "<group>"; };
 		2ADC9D2F2A03BC91000B412F /* LiveDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveDependencies.swift; sourceTree = "<group>"; };
 		E23F0FB229B4DFD800A93242 /* Packages */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Packages; sourceTree = "<group>"; };
@@ -41,6 +86,17 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2A1ADD732A333CF900263C37 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A1ADD912A33E39D00263C37 /* StylePackage in Frameworks */,
+				2A1ADD7A2A333CF900263C37 /* SwiftUI.framework in Frameworks */,
+				2A1ADD782A333CF900263C37 /* WidgetKit.framework in Frameworks */,
+				2A1ADD932A34970F00263C37 /* WidgetClient in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E25B787A29B4D4D500527F4A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -64,9 +120,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2A1ADD7B2A333CF900263C37 /* EpiHeartMonitorWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				2A1ADD7C2A333CF900263C37 /* EpiHeartMonitorWidgetsBundle.swift */,
+				2A1ADD7E2A333CF900263C37 /* EpiHeartMonitorWidgets.swift */,
+				2A1ADD802A333CF900263C37 /* EpiHeartMonitorWidgets.intentdefinition */,
+				2A1ADD812A333CFA00263C37 /* Assets.xcassets */,
+				2A1ADD832A333CFA00263C37 /* Info.plist */,
+			);
+			path = EpiHeartMonitorWidgets;
+			sourceTree = "<group>";
+		};
 		2AB8EAD929E07A70004AC5D6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2A1ADD772A333CF900263C37 /* WidgetKit.framework */,
+				2A1ADD792A333CF900263C37 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -74,8 +144,12 @@
 		E25B787429B4D4D500527F4A = {
 			isa = PBXGroup;
 			children = (
+				2A1ADD8F2A334E0000263C37 /* EpiHeartMonitorWidgetsExtensionRelease.entitlements */,
+				2A1ADD8E2A33441900263C37 /* EpiHeartMonitorDebug.entitlements */,
+				2A1ADD8D2A333E7800263C37 /* EpiHeartMonitorWidgetsExtensionDebug.entitlements */,
 				E23F0FB229B4DFD800A93242 /* Packages */,
 				E25B787F29B4D4D500527F4A /* Epilepsy ECG */,
+				2A1ADD7B2A333CF900263C37 /* EpiHeartMonitorWidgets */,
 				E25B787E29B4D4D500527F4A /* Products */,
 				2AB8EAD929E07A70004AC5D6 /* Frameworks */,
 			);
@@ -85,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				E25B787D29B4D4D500527F4A /* EpiHeartMonitor-Staging.app */,
+				2A1ADD762A333CF900263C37 /* EpiHeartMonitorWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -114,6 +189,27 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2A1ADD752A333CF900263C37 /* EpiHeartMonitorWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A1ADD892A333CFA00263C37 /* Build configuration list for PBXNativeTarget "EpiHeartMonitorWidgetsExtension" */;
+			buildPhases = (
+				2A1ADD722A333CF900263C37 /* Sources */,
+				2A1ADD732A333CF900263C37 /* Frameworks */,
+				2A1ADD742A333CF900263C37 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EpiHeartMonitorWidgetsExtension;
+			packageProductDependencies = (
+				2A1ADD902A33E39D00263C37 /* StylePackage */,
+				2A1ADD922A34970F00263C37 /* WidgetClient */,
+			);
+			productName = EpiHeartMonitorWidgetsExtension;
+			productReference = 2A1ADD762A333CF900263C37 /* EpiHeartMonitorWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		E25B787C29B4D4D500527F4A /* EpiHeartMonitor */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E25B788C29B4D4D600527F4A /* Build configuration list for PBXNativeTarget "EpiHeartMonitor" */;
@@ -121,10 +217,12 @@
 				E25B787929B4D4D500527F4A /* Sources */,
 				E25B787A29B4D4D500527F4A /* Frameworks */,
 				E25B787B29B4D4D500527F4A /* Resources */,
+				2A1ADD8C2A333CFA00263C37 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2A1ADD872A333CFA00263C37 /* PBXTargetDependency */,
 			);
 			name = EpiHeartMonitor;
 			packageProductDependencies = (
@@ -153,9 +251,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1400;
+				LastSwiftUpdateCheck = 1430;
 				LastUpgradeCheck = 1400;
 				TargetAttributes = {
+					2A1ADD752A333CF900263C37 = {
+						CreatedOnToolsVersion = 14.3;
+					};
 					E25B787C29B4D4D500527F4A = {
 						CreatedOnToolsVersion = 14.0.1;
 					};
@@ -179,11 +280,20 @@
 			projectRoot = "";
 			targets = (
 				E25B787C29B4D4D500527F4A /* EpiHeartMonitor */,
+				2A1ADD752A333CF900263C37 /* EpiHeartMonitorWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2A1ADD742A333CF900263C37 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A1ADD822A333CFA00263C37 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E25B787B29B4D4D500527F4A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -196,11 +306,22 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2A1ADD722A333CF900263C37 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A1ADD7F2A333CF900263C37 /* EpiHeartMonitorWidgets.swift in Sources */,
+				2A1ADD842A333CFA00263C37 /* EpiHeartMonitorWidgets.intentdefinition in Sources */,
+				2A1ADD7D2A333CF900263C37 /* EpiHeartMonitorWidgetsBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E25B787929B4D4D500527F4A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				2ADC9D302A03BC91000B412F /* LiveDependencies.swift in Sources */,
+				2A1ADD852A333CFA00263C37 /* EpiHeartMonitorWidgets.intentdefinition in Sources */,
 				2ADC9D2E2A03B80C000B412F /* EnvVars.swift in Sources */,
 				E25B788329B4D4D500527F4A /* HomeView.swift in Sources */,
 				E25B788129B4D4D500527F4A /* Epilepsy_ECGApp.swift in Sources */,
@@ -209,7 +330,76 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		2A1ADD872A333CFA00263C37 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2A1ADD752A333CF900263C37 /* EpiHeartMonitorWidgetsExtension */;
+			targetProxy = 2A1ADD862A333CFA00263C37 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		2A1ADD8A2A333CFA00263C37 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = EpiHeartMonitorWidgetsExtensionDebug.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 585MGPH6LU;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EpiHeartMonitorWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = EpiHeartMonitorWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dk.dtu.compute.Epilepsy-ECG-development.DepartureBoardWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2A1ADD8B2A333CFA00263C37 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = EpiHeartMonitorWidgetsExtensionRelease.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 585MGPH6LU;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EpiHeartMonitorWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = EpiHeartMonitorWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dk.dtu.compute.Epilepsy-ECG.DepartureBoardWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		E25B788A29B4D4D600527F4A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -328,9 +518,10 @@
 		E25B788D29B4D4D600527F4A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconDevelopment;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Epilepsy ECG/Epilepsy_ECG.entitlements";
+				CODE_SIGN_ENTITLEMENTS = EpiHeartMonitorDebug.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -377,6 +568,7 @@
 		E25B788E29B4D4D600527F4A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Epilepsy ECG/Epilepsy_ECG.entitlements";
@@ -426,6 +618,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2A1ADD892A333CFA00263C37 /* Build configuration list for PBXNativeTarget "EpiHeartMonitorWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A1ADD8A2A333CFA00263C37 /* Debug */,
+				2A1ADD8B2A333CFA00263C37 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		E25B787829B4D4D500527F4A /* Build configuration list for PBXProject "Epilepsy-ECG" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -466,6 +667,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2A1ADD902A33E39D00263C37 /* StylePackage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StylePackage;
+		};
+		2A1ADD922A34970F00263C37 /* WidgetClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WidgetClient;
+		};
 		2A36A2772A29344C007555EE /* APIClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = APIClient;

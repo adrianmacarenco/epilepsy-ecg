@@ -15,6 +15,9 @@ import Model
 import UserCreation
 import HomeTabbar
 import SwiftUINavigation
+import WidgetClient
+import WidgetKit
+import BackgroundTasks
 
 public class AppViewModel: ObservableObject {
     public enum Destination {
@@ -24,13 +27,12 @@ public class AppViewModel: ObservableObject {
     @Published var route: Destination?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
-    
+    @Dependency(\.widgetClient) var widgetClient
+    @Dependency(\.bluetoothClient) var bluetoothClient
+    let taskIdentifier = "dk.dtu.compute.Epilepsy-ECG.refresh"
+
     // MARK: - Public interface
     public init() {
-//        Task {
-//            try await dbClient.deleteCurrentDb()
-//            persistenceClient.user.save(nil)
-//        }
         if let user = persistenceClient.user.load() {
             Task {
                 do {
@@ -48,10 +50,26 @@ public class AppViewModel: ObservableObject {
         } else {
             presentUserCretionFlow()
         }
+
+        NotificationCenter.default.addObserver(forName: UIApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.setDisconnectedStatus()
+        }
+        register()
+    }
+        
+    func setDisconnectedStatus() {
+        widgetClient.updateConnectionStatus(false)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetClient.kind)
     }
     
-    func onAppear() {
-        
+    func scenePhaseChanged(newValue: ScenePhase) {
+        switch newValue {
+        case .background where bluetoothClient.isDeviceConnected():
+            scheduleAppRefresh()
+            print("scheduled")
+        default:
+            break
+        }
     }
     
     // MARK: - Private interface
@@ -100,11 +118,43 @@ public class AppViewModel: ObservableObject {
             }
         )
     }
+    
+    private func register() {
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: taskIdentifier, using: nil) { task in
+            self.handleAppRefresh(task: task as! BGProcessingTask)
+        }
+    }
+    
+    private func scheduleAppRefresh() {
+        let request = BGProcessingTaskRequest(identifier: taskIdentifier)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 5 * 60)
+        request.requiresExternalPower = true
+        do {
+            try BGTaskScheduler.shared.submit(request)
+        } catch {
+            print("Could not schedule app refresh: \(error)")
+        }
+        NSLog("⭐️ Scheduled for app refresh")
+        print("⭐️ Scheduled for app refresh")
+
+    }
+    
+    private func handleAppRefresh(task: BGProcessingTask) {
+        scheduleAppRefresh()
+        let isDeviceConnected = bluetoothClient.isDeviceConnected()
+        widgetClient.updateConnectionStatus(isDeviceConnected)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetClient.kind)
+        task.setTaskCompleted(success: true)
+        print("⭐️ handle app refresh")
+        NSLog("⭐️ handle app refresh")
+    }
+    
 }
 
 public struct AppView: View {
     @ObservedObject var vm: AppViewModel
-    
+    @Environment(\.scenePhase) var scenePhase
+
     public init(
         vm: AppViewModel
     ) {
@@ -116,10 +166,10 @@ public struct AppView: View {
             Switch($destination) {
                 CaseLet(/AppViewModel.Destination.userCreation) { $userCreationVm in
                     GettingStartedView(vm: userCreationVm)
-                    
-                }
+                 }
                 CaseLet(/AppViewModel.Destination.home) { $homeViewModel in
                     HomeTabbarView(vm: homeViewModel)
+                        .onChange(of: scenePhase, perform: vm.scenePhaseChanged(newValue:))
                 }
             }
         }
