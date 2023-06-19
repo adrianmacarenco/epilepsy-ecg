@@ -34,12 +34,13 @@ struct Provider: IntentTimelineProvider {
     }
     
     func getTimeline(for configuration: EpiHeartMonitorStatusIntent, in context: Context, completion: @escaping (Timeline<EpiHeartMonitorWidgetsEntryViewModel>) -> ()) {
-        guard let isConnected = widgetClient.fetchConnectionStatus(),
-                  let batteryPercentage = widgetClient.fetchBatteryPercentage() else {
-                      let vm = EpiHeartMonitorWidgetsEntryViewModel(isConnected: false, batteryPercentage: -1)
-                      completion(.init(entries: [vm], policy: .atEnd))
-                      return
-                  }
+        guard
+            let isConnected = widgetClient.fetchConnectionStatus(),
+            let batteryPercentage = widgetClient.fetchBatteryPercentage() else {
+            let vm = EpiHeartMonitorWidgetsEntryViewModel(isConnected: false, batteryPercentage: -1)
+            completion(.init(entries: [vm], policy: .atEnd))
+            return
+        }
         
         
         let vm = EpiHeartMonitorWidgetsEntryViewModel(isConnected: isConnected, batteryPercentage: batteryPercentage)
@@ -83,8 +84,6 @@ struct EpiHeartMonitorWidgetsEntryView : View {
     
     var body: some View {
         switch widgetFamily {
-        case .accessoryInline:
-            Text("3 undone todos")
         case .accessoryRectangular:
             ZStack {
                 AccessoryWidgetBackground()
@@ -128,16 +127,17 @@ struct EpiHeartMonitorWidgets: Widget {
     
     var body: some WidgetConfiguration {
         registerFonts()
-        return IntentConfiguration(kind: kind, intent: EpiHeartMonitorStatusIntent.self, provider: Provider()) { entry in
-            EpiHeartMonitorWidgetsEntryView(vm: entry)
-        }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
-        .supportedFamilies([
-            .accessoryRectangular,
-            .accessoryCircular,
-            .accessoryInline
-        ])
+        return IntentConfiguration(
+            kind: kind,
+            intent: EpiHeartMonitorStatusIntent.self,
+            provider: Provider()) { entry in
+                EpiHeartMonitorWidgetsEntryView(vm: entry)
+            }
+            .configurationDisplayName("EpiHeartMonitor Widget")
+            .description("EpiHeartMonitor widget displays device connection status and its battery level")
+            .supportedFamilies([
+                .accessoryRectangular
+            ])
         
     }
 }

@@ -191,6 +191,7 @@ let package = Package(
                 "DeviceInfo",
                 "ECG",
                 "ECG Settings",
+                "Localizations",
                 "Model",
                 "Onboarding",
                 "Shared",
@@ -254,7 +255,13 @@ let package = Package(
         ),
         .target(
             name: "Localizations",
-            dependencies: []
+            dependencies: [
+                .product(name: "Dependencies", package: "swift-dependencies"),
+            ],
+            resources: [
+                .copy("Localizations_da-DK.json"),
+                .copy("Localizations_en-DK.json")
+            ]
         ),
         .target(
             name: "Model",

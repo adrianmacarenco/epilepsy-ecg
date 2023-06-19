@@ -19,6 +19,7 @@
 		2A1ADD932A34970F00263C37 /* WidgetClient in Frameworks */ = {isa = PBXBuildFile; productRef = 2A1ADD922A34970F00263C37 /* WidgetClient */; };
 		2A36A2782A29344C007555EE /* APIClient in Frameworks */ = {isa = PBXBuildFile; productRef = 2A36A2772A29344C007555EE /* APIClient */; };
 		2A36A27A2A29344C007555EE /* APIClientLive in Frameworks */ = {isa = PBXBuildFile; productRef = 2A36A2792A29344C007555EE /* APIClientLive */; };
+		2A5E5A882A3B43F100B25F9C /* Localizations in Frameworks */ = {isa = PBXBuildFile; productRef = 2A5E5A872A3B43F100B25F9C /* Localizations */; };
 		2A809CBF2A1BDD37009A2620 /* UserCreation in Frameworks */ = {isa = PBXBuildFile; productRef = 2A809CBE2A1BDD37009A2620 /* UserCreation */; };
 		2A8B40322A220A8800FC8E52 /* AppFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 2A8B40312A220A8800FC8E52 /* AppFeature */; };
 		2AB8EAD829E078C1004AC5D6 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 2AB8EAD729E078C1004AC5D6 /* Dependencies */; };
@@ -104,6 +105,7 @@
 				2AE8DF302A2E9A50003AB1AC /* SQLite in Frameworks */,
 				2AB8EADB29E07A70004AC5D6 /* BluetoothClient in Frameworks */,
 				2AB9D95C29FF300B00D8E8E7 /* StylePackage in Frameworks */,
+				2A5E5A882A3B43F100B25F9C /* Localizations in Frameworks */,
 				2A36A27A2A29344C007555EE /* APIClientLive in Frameworks */,
 				2A809CBF2A1BDD37009A2620 /* UserCreation in Frameworks */,
 				2ADC9D2A29FFF7ED000B412F /* HomeTabbar in Frameworks */,
@@ -239,6 +241,7 @@
 				2AE8DF2C2A2E98EC003AB1AC /* DBClient */,
 				2AE8DF2F2A2E9A50003AB1AC /* SQLite */,
 				2AE8DF312A2E9A89003AB1AC /* DBManager */,
+				2A5E5A872A3B43F100B25F9C /* Localizations */,
 			);
 			productName = "Epilepsy ECG";
 			productReference = E25B787D29B4D4D500527F4A /* EpiHeartMonitor-Staging.app */;
@@ -682,6 +685,10 @@
 		2A36A2792A29344C007555EE /* APIClientLive */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = APIClientLive;
+		};
+		2A5E5A872A3B43F100B25F9C /* Localizations */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Localizations;
 		};
 		2A809CBE2A1BDD37009A2620 /* UserCreation */ = {
 			isa = XCSwiftPackageProductDependency;

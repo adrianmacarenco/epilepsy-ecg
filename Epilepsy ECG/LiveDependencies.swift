@@ -13,6 +13,7 @@ import APIClientLive
 import DBClient
 import DBManager
 import SQLite
+import Localizations
 
 extension PersistenceClient: DependencyKey {
     
@@ -51,5 +52,11 @@ extension DBClient: DependencyKey {
         let connection = try! Connection(ecgDbPath)
         let dbManager = DBManager(dbConnection: connection)
         return .live(dbManager: dbManager, dbPathUrl: ecgDbPath)
+    }
+}
+
+extension ObservableLocalizations: DependencyKey {
+    public static var liveValue: ObservableLocalizations {
+        return .bundled
     }
 }

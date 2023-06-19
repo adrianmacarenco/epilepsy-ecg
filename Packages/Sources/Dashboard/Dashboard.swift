@@ -28,6 +28,7 @@ import APIClient
 import MovesenseApi
 import WidgetKit
 import WidgetClient
+import Localizations
 
 public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
@@ -70,6 +71,7 @@ public class DashboardViewModel: ObservableObject {
     @Dependency (\.dbClient) var dbClient
     @Dependency(\.apiClient) var apiClient
     @Dependency(\.widgetClient) var widgetClient
+    @Dependency(\.localizations) var localizations
 
     // MARK: - Public interface
     
@@ -84,6 +86,12 @@ public class DashboardViewModel: ObservableObject {
         // Subscribe to streams
         subscribeToEcgStream()
         subscribeToHrStream()
+        
+        Task {
+            try await clock.sleep(for: . seconds(10))
+            localizations.updateLocalization(with: .da)
+            
+        }
         
         Task {
             try await clock.sleep(for: .seconds(1))
@@ -472,6 +480,7 @@ public class DashboardViewModel: ObservableObject {
 public struct DashboardView: View {
     @ObservedObject var vm: DashboardViewModel
     @Environment(\.scenePhase) var scenePhase
+    @EnvironmentObject var localizations: ObservableLocalizations
 
     public init(
         vm: DashboardViewModel
@@ -484,6 +493,7 @@ public struct DashboardView: View {
             GeometryReader { proxy in
                 ScrollView {
                     VStack {
+                        Text(localizations.defaultSection.save)
                         if let prevDevice = vm.previousDevice {
                             DeviceCell(
                                 deviceSerialName: prevDevice,
