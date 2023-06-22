@@ -393,7 +393,7 @@ public class DashboardViewModel: ObservableObject {
             getConnectedDeviceBattery(device: connectedDevice)
             self.updateWidgetConnectionStatus(isConnected: true)
             self.startConnectedDeviceTasks()
-            UIAccessibility.post(notification: .announcement, argument: "Device connected")
+            UIAccessibility.post(notification: .announcement, argument: localizations.accessibilitySection.deviceConnected)
         }
     }
     
@@ -409,7 +409,7 @@ public class DashboardViewModel: ObservableObject {
             }
             resetEcgData()
             self.updateWidgetConnectionStatus(isConnected: false)
-            UIAccessibility.post(notification: .announcement, argument: "Device disconnected")
+            UIAccessibility.post(notification: .announcement, argument: localizations.accessibilitySection.deviceDisconnected)
         }
         
         Task {
@@ -522,7 +522,7 @@ public struct DashboardView: View {
                         } else {
                             GetStartedView()
                             Spacer()
-                            Button("Add my device", action: vm.addDeviceButtonTapped)
+                            Button(localizations.dashboardSection.addMyDevice, action: vm.addDeviceButtonTapped)
                                 .buttonStyle(MyButtonStyle.init(style: .primary))
                                 .padding(.horizontal, 16)
                                 .padding(.bottom, 24)
@@ -531,7 +531,7 @@ public struct DashboardView: View {
                     }
                     .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
                     .frame(height: proxy.size.height)
-                    .navigationTitle("Dashboard")
+                    .navigationTitle(localizations.dashboardSection.dashboardTitle)
                     .onAppear(perform: vm.onAppear)
                 }
                 .background(Color.background)
@@ -547,13 +547,13 @@ public struct DashboardView: View {
                             .toolbar {
                                 ToolbarItem(placement: .confirmationAction) {
                                     Button(action: vm.cancelAddDeviceTapped) {
-                                        Text("Cancel")
+                                        Text(localizations.defaultSection.cancel.capitalizedFirstLetter())
                                     }
                                 }
                             }
                             .toolbar {
                                 ToolbarItem(placement: .principal) {
-                                    Text("Add device")
+                                    Text(localizations.dashboardSection.addDevice)
                                         .font(.title1)
                                         .foregroundColor(.black)
                                 }
@@ -570,7 +570,7 @@ public struct DashboardView: View {
                             .toolbarBackground(.white, for: .navigationBar)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarTrailing) {
-                                    Button("Close") {
+                                    Button(localizations.defaultSection.close.capitalizedFirstLetter()) {
                                         vm.closeOnboarding()
                                     }
                                 }
@@ -596,7 +596,7 @@ public struct DashboardView: View {
     
     private var ecgPreview: some View {
         VStack {
-            Text("ECG Preview")
+            Text(localizations.dashboardSection.ecgPreviewTitle)
                 .font(.headline3)
                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 16)
@@ -604,7 +604,7 @@ public struct DashboardView: View {
             VStack {
                 if vm.connectedDevice != nil {
                     HStack {
-                        Text("See more")
+                        Text(localizations.defaultSection.seeMore.capitalizedFirstLetter())
                             .font(.body1)
                             .foregroundColor(.gray)
                         Image.openIndicator
@@ -634,12 +634,12 @@ public struct DashboardView: View {
                 .frame(height: 100)
                 .padding(.bottom, 16)
 
-            Text("Connect to device")
+            Text(localizations.dashboardSection.ecgPlaceholderTitle)
                 .font(.largeInput)
                 .padding(.bottom, 6)
                 .accessibilityHidden(true)
 
-            Text("Visualize your ECG by connecting to your device")
+            Text(localizations.dashboardSection.ecgPlaceholderMessage)
                 .font(.body1)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
@@ -696,7 +696,8 @@ struct DeviceCell: View {
     let connectButtonTapped: () -> ()
     let disconnectButtonTapped: () -> ()
     @ObservedObject var vm: DeviceCellViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -714,7 +715,7 @@ struct DeviceCell: View {
             .padding([.horizontal, .top], 16)
             
             HStack {
-                Text("See more")
+                Text(localizations.defaultSection.seeMore.capitalizedFirstLetter())
                     .font(.body1)
                     .foregroundColor(.gray)
                 Image.openIndicator
@@ -726,7 +727,7 @@ struct DeviceCell: View {
             .opacity(vm.isDisconnectEnabled ? 1 : 0)
             
             HStack {
-                Button("Connect", action: connectButtonTapped)
+                Button(localizations.defaultSection.connect.capitalizedFirstLetter(), action: connectButtonTapped)
                     .padding(.all, 16)
                     .buttonStyle(MyButtonStyle.init(
                         style: .primary,
@@ -735,7 +736,7 @@ struct DeviceCell: View {
                     ))
                 
                 Spacer()
-                Button("Disconnect", action: disconnectButtonTapped)
+                Button(localizations.defaultSection.disconnect.capitalizedFirstLetter(), action: disconnectButtonTapped)
                     .padding(.all, 16)
                     .buttonStyle(MyButtonStyle.init(
                         style: .primary,
@@ -753,16 +754,18 @@ struct DeviceCell: View {
 }
 
 struct GetStartedView: View {
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     var body: some View {
         VStack(spacing: 16) {
             Image.addFirstDeviceIcon
                 .padding(.top, 32)
             
-            Text("Monitor your heart activity")
+            Text(localizations.dashboardSection.getStartedTitle)
                 .font(.largeInput)
                 .padding(.horizontal, 16)
             
-            Text("Get started by adding your Movesense device")
+            Text(localizations.dashboardSection.getStartedMessage)
                 .font(.body1)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)

@@ -14,10 +14,12 @@ import PersistenceClient
 import Dependencies
 import UserInformation
 import SwiftUINavigation
+import Localizations
 
 public class ProfileViewModel: ObservableObject {
     enum Destination {
         case userInformation(UserInformationViewModel)
+        case languageSelection(LanguageSelectionViewModel)
         case alert(AlertState<AlertAction>)
     }
     
@@ -29,6 +31,7 @@ public class ProfileViewModel: ObservableObject {
     @Published var route: Destination?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
     var onConfirmProfileDeletion: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
 
     // MARK: - Public Interface
@@ -61,7 +64,16 @@ public class ProfileViewModel: ObservableObject {
         case .termsAndCond:
             break
         case .language:
-            break
+            var language = "en"
+            if let selectedLanguage = persistenceClient.selectedLanguage.load() {
+                language = selectedLanguage
+            }
+            
+            route = .languageSelection(
+                withDependencies(from: self, operation: {
+                    LanguageSelectionViewModel(cachedLanguage: language)
+                })
+            )
         case .help:
             break
         case .permissions:
@@ -74,7 +86,12 @@ public class ProfileViewModel: ObservableObject {
     }
     
     func deleteProfileTapped() {
-        route = .alert(.delete)
+        route = .alert(.delete(
+            title: localizations.profileSection.deleteProfileAlertTitle,
+            message: localizations.profileSection.deleteProfileAlertMessage,
+            yesBtntitle: localizations.defaultSection.yes.capitalizedFirstLetter(),
+            noBtnAction: localizations.defaultSection.no.capitalizedFirstLetter()
+        ))
     }
     
     func alertButtonTapped(_ action: AlertAction) {
@@ -86,9 +103,9 @@ public class ProfileViewModel: ObservableObject {
 }
 
 public struct ProfileView: View {
-    
     @ObservedObject var vm: ProfileViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: ProfileViewModel
     ) {
@@ -102,13 +119,13 @@ public struct ProfileView: View {
                     VStack(spacing: 10) {
                         ForEach(0 ..< vm.components.count, id: \.self) { index in
                             if vm.components[index].isSection() {
-                                Text(vm.components[index].rawValue)
+                                Text(vm.components[index].getDescription(profileLozalizations: localizations.profileSection))
                                     .font(.sectionTitle)
                                     .foregroundColor(.sectionTitle)
                                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                     .padding(.top, 16)
                             } else {
-                                ProfileCellView(title: vm.components[index].rawValue)
+                                ProfileCellView(title: vm.components[index].getDescription(profileLozalizations: localizations.profileSection))
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         vm.componentTapped(index: index)
@@ -117,7 +134,7 @@ public struct ProfileView: View {
                             
                         }
                         Spacer()
-                        Button("Delete profile", action: vm.deleteProfileTapped)
+                        Button(localizations.profileSection.deleteProfileBtnTitle, action: vm.deleteProfileTapped)
                             .buttonStyle(MyButtonStyle.init(style: .delete))
                             .padding(.bottom, 24)
                     }
@@ -130,6 +147,18 @@ public struct ProfileView: View {
                     ) { $userInfoVm in
                         UserInformationView(vm: userInfoVm)
                     }
+                    .navigationDestination(
+                        unwrapping: self.$vm.route,
+                        case: /ProfileViewModel.Destination.userInformation
+                    ) { $userInfoVm in
+                        UserInformationView(vm: userInfoVm)
+                    }
+                    .navigationDestination(
+                        unwrapping: self.$vm.route,
+                        case: /ProfileViewModel.Destination.languageSelection
+                    ) { $languageSelectionVm in
+                        LanguageSelectionView(vm: languageSelectionVm)
+                    }
                     .alert(
                       unwrapping: self.$vm.route,
                       case: /ProfileViewModel.Destination.alert
@@ -138,7 +167,7 @@ public struct ProfileView: View {
                     }
                 }
                 .background(Color.background)
-                .navigationTitle("Profile")
+                .navigationTitle(localizations.profileSection.profileTitle)
             }
         }
     }
@@ -165,17 +194,47 @@ extension ProfileViewModel {
                 return false
             }
         }
+        
+        public func getDescription(profileLozalizations: Localizations.ProfileSection) -> String {
+            switch self {
+            case .acountDetails:
+                return profileLozalizations.accountDetailsCellTitle
+            case .userInformation:
+                return profileLozalizations.userInformationCellTitle
+            case .termsAndCond:
+                return profileLozalizations.termsAndCondCellTitle
+            case .appSettings:
+                return profileLozalizations.appSettingsCellTitle
+            case .language:
+                return profileLozalizations.languageCellTitle
+            case .help:
+                return profileLozalizations.helpCellTitle
+            case .permissions:
+                return profileLozalizations.permissionsCellTitle
+            case .voiceControl:
+                return profileLozalizations.voiceControlCellTitle
+            case .siriShortcuts:
+                return profileLozalizations.siriShortcutsCellTitle
+            }
+        }
     }
 }
 
 
 extension AlertState where Action == ProfileViewModel.AlertAction {
-  static let delete = AlertState(
-    title: TextState("Delete profile"),
-    message: TextState("Are you sure you want to delete this profile?"),
-    buttons: [
-      .destructive(TextState("Yes"), action: .send(.confirmDeletion)),
-      .cancel(TextState("No"))
-    ]
-  )
+    static func delete(
+        title: String,
+        message:String,
+        yesBtntitle: String,
+        noBtnAction: String
+    ) -> Self {
+        AlertState(
+        title: TextState(title),
+        message: TextState(message),
+        buttons: [
+          .destructive(TextState(yesBtntitle), action: .send(.confirmDeletion)),
+          .cancel(TextState(noBtnAction))
+        ]
+      )
+    }
 }

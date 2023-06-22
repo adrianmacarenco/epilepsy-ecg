@@ -10,7 +10,7 @@ import Combine
 
 @dynamicMemberLookup
 public class ObservableLocalizations: ObservableObject {
-    @Published private var _localizations: Localizations = .bundled
+    @Published private var _localizations: Localizations = .englishBundled
     
     public init(_ translations: Localizations) {
         self._localizations = translations
@@ -40,12 +40,21 @@ public class ObservableLocalizations: ObservableObject {
 
 
 extension Localizations {
-    public static var bundled: Localizations = loadTranslationsFromJSON(
+    public static var englishBundled: Localizations = loadTranslationsFromJSON(
         "Localizations_en-DK", in: .myModule)
+    public static var danishBundled: Localizations = loadTranslationsFromJSON(
+        "Localizations_da-DK", in: .myModule)
 }
 
 extension ObservableLocalizations {
-    public static var bundled = ObservableLocalizations(.bundled)
+    public static func getBundledLocalizations(for languageType: LanguageType) -> ObservableLocalizations {
+        switch languageType {
+        case .da:
+            return ObservableLocalizations(.danishBundled)
+        case .en:
+            return ObservableLocalizations(.englishBundled)
+        }
+    }
 }
 
 class CurrentBundleFinder {}

@@ -125,6 +125,7 @@ let package = Package(
             dependencies: [
                 "StylePackage",
                 "BluetoothClient",
+                "Localizations",
                 "PersistenceClient",
                 .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
                 .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
@@ -228,9 +229,12 @@ let package = Package(
             name: "DeviceInfo",
             dependencies: [
                 "Model",
+                "Localizations",
+                "Shared",
                 .product(name: "MovesenseApi", package: "MovesenseApi-iOS"),
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
-                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+                .product(name: "Dependencies", package: "swift-dependencies")
             ]
         ),
         .target(
@@ -246,9 +250,11 @@ let package = Package(
             dependencies: [
                 "BluetoothClient",
                 "ECG",
+                "Localizations",
                 "Model",
                 "PersistenceClient",
                 "StylePackage",
+                "Shared",
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "SwiftUINavigation", package: "swiftui-navigation"),
             ]
@@ -273,6 +279,7 @@ let package = Package(
             name: "HomeTabbar",
             dependencies: [
                 "Dashboard",
+                "Localizations",
                 "Profile",
                 "StylePackage",
                 "TrackIntake"
@@ -301,6 +308,7 @@ let package = Package(
             name: "Profile",
             dependencies: [
                 "DBClient",
+                "Localizations",
                 "Model",
                 "StylePackage",
                 "PersistenceClient",
@@ -328,6 +336,7 @@ let package = Package(
             name: "TrackIntake",
             dependencies: [
                 "DBClient",
+                "Localizations",
                 "Model",
                 "Shared",
                 "StylePackage",
@@ -341,6 +350,7 @@ let package = Package(
             name: "UserCreation",
             dependencies: [
                 "DBClient",
+                "Localizations",
                 "StylePackage",
                 "Model",
                 "Shared",
@@ -354,6 +364,7 @@ let package = Package(
             dependencies: [
                 "DBClient",
                 "StylePackage",
+                "Localizations",
                 "Model",
                 "Shared",
                 "PersistenceClient",

@@ -49,6 +49,7 @@ extension DBClient: DependencyKey {
         @Dependency(\.envVars) var envVars
 
         let ecgDbPath = "\(envVars.dbBasePath)/ECGData.sqlite3"
+        print("🌈 \(ecgDbPath)")
         let connection = try! Connection(ecgDbPath)
         let dbManager = DBManager(dbConnection: connection)
         return .live(dbManager: dbManager, dbPathUrl: ecgDbPath)
@@ -57,6 +58,12 @@ extension DBClient: DependencyKey {
 
 extension ObservableLocalizations: DependencyKey {
     public static var liveValue: ObservableLocalizations {
-        return .bundled
+        @Dependency(\.persistenceClient) var persistenceClient
+        
+        if let cachedLanguage = persistenceClient.selectedLanguage.load(), let cachedLanguageType =  ObservableLocalizations.LanguageType(rawValue: cachedLanguage) {
+            return .getBundledLocalizations(for: cachedLanguageType)
+        } else {
+            return .getBundledLocalizations(for: .en)
+        }
     }
 }

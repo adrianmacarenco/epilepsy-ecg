@@ -16,6 +16,7 @@ import DBClient
 import PersistenceClient
 import Shared
 import XCTestDynamicOverlay
+import Localizations
 
 public class UserBirthdayViewModel: ObservableObject {
     enum Destination {
@@ -29,7 +30,8 @@ public class UserBirthdayViewModel: ObservableObject {
     @Published var birthdayDate: Date?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
-    
+    @Dependency (\.localizations) var localizations
+
     let type: ActionType
     var localUser: User
     let now = Date()
@@ -75,9 +77,9 @@ public class UserBirthdayViewModel: ObservableObject {
     var actionButtonTitle: String {
         switch type {
         case .add:
-            return "Next"
+            return localizations.defaultSection.next.capitalizedFirstLetter()
         case .edit:
-            return "Save"
+            return localizations.defaultSection.save.capitalizedFirstLetter()
         }
     }
     
@@ -120,7 +122,8 @@ public class UserBirthdayViewModel: ObservableObject {
 
 public struct UserBirthdayView: View {
     @ObservedObject var vm: UserBirthdayViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init (
         vm: UserBirthdayViewModel
     ) {
@@ -129,16 +132,16 @@ public struct UserBirthdayView: View {
     public var body: some View {
         VStack(spacing: 16) {
             if vm.isAddAction {
-                Text("Age Calculation")
+                Text(localizations.userCreationSection.birthdaySelectionSelectionTitle)
                     .font(.largeInput)
             }
-            Text("Please provide your date of birth. This information allows us to calculate your age, which is important for tailoring your heart monitoring and seizure management recommendations.")
+            Text(localizations.userCreationSection.birthdaySelectionSelectionInfo)
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.gray)
             DatePicker(
-                "Select your birthday",
+                localizations.userCreationSection.birthdaySelectionIdentityPrompt,
                 selection: Binding<Date>.init(
                     get: { vm.birthdayDate ?? Date() },
                     set: vm.setBirthday(_:)),

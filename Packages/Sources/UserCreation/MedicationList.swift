@@ -15,6 +15,7 @@ import Dependencies
 import DBClient
 import PersistenceClient
 import Shared
+import Localizations
 
 public class MedicationListViewModel: ObservableObject {
     enum Destination {
@@ -30,6 +31,8 @@ public class MedicationListViewModel: ObservableObject {
     
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
+
     let type: ActionType
     var localUser: User
     var userCreationFlowEnded: () -> Void
@@ -55,9 +58,9 @@ public class MedicationListViewModel: ObservableObject {
     var actionButtonTitle: String {
         switch type {
         case .add:
-            return "Finish"
+            return localizations.defaultSection.finish.capitalizedFirstLetter()
         case .edit:
-            return "Save"
+            return localizations.defaultSection.save.capitalizedFirstLetter()
         }
     }
     
@@ -133,7 +136,8 @@ public class MedicationListViewModel: ObservableObject {
 
 public struct MedicationListView: View {
     @ObservedObject var vm: MedicationListViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init (
         vm: MedicationListViewModel
     ) {
@@ -142,11 +146,11 @@ public struct MedicationListView: View {
     public var body: some View {
         VStack(spacing: 16) {
             if case MedicationListViewModel.ActionType.add = vm.type {
-                Text("Current medications")
+                Text(localizations.userCreationSection.medicationListSelectionTitle)
                     .font(.largeInput)
             }
 
-            Text("Set up your Medication List! This list will contain all your prescribed medications, which you can select from when tracking your daily pill intake. By maintaining an accurate Medication List, you can easily record and monitor your pill intake, ensuring you stay on track with your prescribed regimen. This information is invaluable to us as it enables us to provide you with personalized support and optimize your overall health management.")
+            Text(localizations.userCreationSection.medicationListSelectionInfo)
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
@@ -179,7 +183,7 @@ public struct MedicationListView: View {
                     vm.editMedicationTapped(index: index)
                 }
             }
-            DashedFrameView(title: "Add medication", tapAction: vm.addMedicationTapped)
+            DashedFrameView(title: localizations.addMedicationSection.addMedicationScreenTitle, tapAction: vm.addMedicationTapped)
                 .padding(.top, 8)
             Spacer()
             if case MedicationListViewModel.ActionType.add = vm.type {
@@ -203,7 +207,7 @@ public struct MedicationListView: View {
                     .toolbarBackground(.white, for: .navigationBar)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
-                            Button("Close") {
+                            Button(localizations.defaultSection.close.capitalizedFirstLetter()) {
                                 vm.closeAddMedicationTapped()
                             }
                         }

@@ -14,6 +14,7 @@ import Model
 import Dependencies
 import DBClient
 import PersistenceClient
+import Localizations
 
 public class PersonalIdentityViewModel: ObservableObject {
     enum Destination {
@@ -29,6 +30,8 @@ public class PersonalIdentityViewModel: ObservableObject {
     @Published var name = ""
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
+
     let type: ActionType
     var localUser: User
     let userUpdated: ((User) -> Void)?
@@ -63,9 +66,9 @@ public class PersonalIdentityViewModel: ObservableObject {
     var actionButtonTitle: String {
         switch type {
         case .add:
-            return "Next"
+            return localizations.defaultSection.next.capitalizedFirstLetter()
         case .edit:
-            return "Save"
+            return localizations.defaultSection.save.capitalizedFirstLetter()
         }
     }
     
@@ -104,6 +107,7 @@ public class PersonalIdentityViewModel: ObservableObject {
 public struct PersonalIdentityView: View {
     @ObservedObject var vm: PersonalIdentityViewModel
     @FocusState private var isFocused: Bool
+    @EnvironmentObject var localizations: ObservableLocalizations
 
     public init (
         vm: PersonalIdentityViewModel
@@ -113,10 +117,10 @@ public struct PersonalIdentityView: View {
     public var body: some View {
         VStack(spacing: 16) {
             if case PersonalIdentityViewModel.ActionType.add = vm.type {
-                Text("Your Personal Identity")
+                Text(localizations.userCreationSection.personalIdentitySelectionTitle)
                     .font(.largeInput)
             }
-            Text("Please enter your full name. This information helps us personalize your experience and ensures that any generated reports or alerts are accurately addressed to you.")
+            Text(localizations.userCreationSection.personalIdentitySelectionInfo)
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
@@ -124,7 +128,7 @@ public struct PersonalIdentityView: View {
             TextField(
                 "Full name",
                 text: $vm.name,
-                prompt: Text("Type your full name").foregroundColor(.gray)
+                prompt: Text(localizations.userCreationSection.personalIdentityPrompt).foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle())
             .focused($isFocused)

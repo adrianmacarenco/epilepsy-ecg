@@ -10,7 +10,7 @@ import Dependencies
 
 extension ObservableLocalizations: TestDependencyKey {
     public static var testValue: ObservableLocalizations {
-        .bundled
+        .getBundledLocalizations(for: .en)
     }
 }
 

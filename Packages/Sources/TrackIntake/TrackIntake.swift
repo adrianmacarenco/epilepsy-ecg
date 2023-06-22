@@ -15,6 +15,7 @@ import Dependencies
 import DBClient
 import PersistenceClient
 import Shared
+import Localizations
 
 public class TrackIntakeViewModel: ObservableObject {
     enum Destination {
@@ -37,6 +38,8 @@ public class TrackIntakeViewModel: ObservableObject {
     @Published var type: ActionType
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
+
     let intakeEditted: (() -> Void)?
     
     var isAddButtonEnabled: Bool {
@@ -54,25 +57,25 @@ public class TrackIntakeViewModel: ObservableObject {
         if let selectedMedication {
             return selectedMedication.name
         } else {
-            return "Select from your medication list"
+            return localizations.trackIntakeSection.selectFromMedication
         }
     }
     
     var navigationTitle: String {
         switch type {
         case .add:
-            return "Track intake"
+            return localizations.trackIntakeSection.trackIntakeNavTitle
         case .edit:
-            return "Edit intake"
+            return localizations.trackIntakeSection.editIntakeNavTitle
         }
     }
     
     var actionButtonTitle: String {
         switch type {
         case .add:
-            return "Track intake"
+            return localizations.trackIntakeSection.trackIntakeNavTitle
         case .edit:
-            return "Save"
+            return localizations.defaultSection.edit
         }
     }
     
@@ -224,7 +227,8 @@ public class TrackIntakeViewModel: ObservableObject {
 public struct TrackIntakeView: View {
     @ObservedObject var vm: TrackIntakeViewModel
     @FocusState private var isFocused: Bool
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: TrackIntakeViewModel
     ) {
@@ -234,7 +238,7 @@ public struct TrackIntakeView: View {
     public var body: some View {
         NavigationStack {
             VStack(spacing: 8) {
-                Text("Medication")
+                Text(localizations.trackIntakeSection.medication)
                     .font(.sectionTitle)
                     .foregroundColor(.sectionTitle)
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -255,25 +259,23 @@ public struct TrackIntakeView: View {
                 .cornerRadius(8)
                 .foregroundColor(.black)
                 .contentShape(Rectangle())
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Select from your medication list")
                 .onTapGesture {
                     vm.medicationSelectorTapped()
                 }
-                Text("Amount & date")
+                Text(localizations.trackIntakeSection.amountDate)
                     .font(.sectionTitle)
                     .foregroundColor(.sectionTitle)
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 22)
                 HStack {
                     TextField(
-                        "Amount",
+                        localizations.trackIntakeSection.amount,
                         value: $vm.pillAmount,
                         format: .number
                     )
                     .multilineTextAlignment(.center)
                     .textFieldStyle(EcgTextFieldStyle(
-                        description: "pills",
+                        description: localizations.trackIntakeSection.pills,
                         padding: 7,
                         { Image.pillsIcon }
                     ))
@@ -285,7 +287,7 @@ public struct TrackIntakeView: View {
                 }
                 
                 if vm.isAddType {
-                    Text("Daily review")
+                    Text(localizations.trackIntakeSection.dailyReviewTitle)
                         .font(.sectionTitle)
                         .foregroundColor(.sectionTitle)
                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -298,7 +300,7 @@ public struct TrackIntakeView: View {
                         }
                     }
                     HStack {
-                        Text("Intake history")
+                        Text(localizations.trackIntakeSection.intakeHistoryTitle)
                             .foregroundColor(.black)
                             .font(.body1)
                             .padding(.horizontal, 16)
@@ -337,8 +339,8 @@ public struct TrackIntakeView: View {
                         medications: self.vm.medications,
                         medicationSelected: vm.medicationSelected(_:)))
                     .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Cancel") {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(localizations.defaultSection.cancel.capitalizedFirstLetter()) {
                                 vm.cancelSelectionTapped()
                             }
                         }

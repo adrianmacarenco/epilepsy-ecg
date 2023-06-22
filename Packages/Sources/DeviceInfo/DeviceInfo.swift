@@ -14,6 +14,9 @@ import MovesenseApi
 import XCTestDynamicOverlay
 import SwiftUINavigation
 import SwiftUINavigation
+import Localizations
+import Dependencies
+import Shared
 
 public class DeviceInfoViewModel: ObservableObject {
 
@@ -29,6 +32,7 @@ public class DeviceInfoViewModel: ObservableObject {
     @Published var route: Destination?
     let connectedDevice: DeviceWrapper
     var onConfirmDeletion: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
+    @Dependency (\.localizations) var localizations
 
     // MARK: - Public Interface
     
@@ -41,7 +45,12 @@ public class DeviceInfoViewModel: ObservableObject {
     }
     
     func forgetDeviceTapped() {
-        route = .alert(.delete)
+        route = .alert(.delete(
+            title: localizations.deviceInfo.forgetDeviceAlertTitle,
+            message: localizations.deviceInfo.forgetDeviceAlertMessage,
+            yesBtnTitle: localizations.defaultSection.yes.capitalizedFirstLetter(),
+            notBtnTitle: localizations.defaultSection.no.capitalizedFirstLetter()
+        ))
     }
     
     func alertButtonTapped(_ action: AlertAction) {
@@ -57,14 +66,29 @@ extension DeviceInfoViewModel: Equatable {
     }
 }
 extension DeviceInfoViewModel {
-    public enum Component: String, CaseIterable, Equatable {
-        case productName = "Product name"
-        case serialNumber = "Serial number"
-        case software = "Software version"
-        case hardware = "Hardware version"
-        case mode = "Mode"
+    public enum Component: CaseIterable, Equatable {
+        case productName
+        case serialNumber
+        case software
+        case hardware
+        case mode
         
-        public func description(info: MovesenseDeviceInfo?) -> String {
+        public func title(deviceInfoLocalizations: Localizations.DeviceInfo) -> String {
+            switch self {
+            case .productName:
+                return deviceInfoLocalizations.productName
+            case .serialNumber:
+                return deviceInfoLocalizations.serialNumber
+            case .software:
+                return deviceInfoLocalizations.software
+            case .hardware:
+                return deviceInfoLocalizations.hardware
+            case .mode:
+                return deviceInfoLocalizations.mode
+            }
+        }
+        
+        public func description(info: MovesenseDeviceInfo?, deviceInfoLocalizations: Localizations.DeviceInfo) -> String {
             guard let info else { return "Unknown" }
             switch self {
             case .productName:
@@ -78,11 +102,11 @@ extension DeviceInfoViewModel {
             case .mode:
                 switch info.mode {
                 case 1:
-                    return "Full power off(1)"
+                    return deviceInfoLocalizations.firstMode
                 case 5:
-                    return "Application(5)"
+                    return deviceInfoLocalizations.secondMode
                 case 12:
-                    return "Firmaware update(12)"
+                    return deviceInfoLocalizations.thirdMode
                 default:
                     return "Unknown"
                 }
@@ -93,7 +117,8 @@ extension DeviceInfoViewModel {
 
 public struct DeviceInfoView: View {
     @ObservedObject var vm: DeviceInfoViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: DeviceInfoViewModel
     ) {
@@ -106,12 +131,12 @@ public struct DeviceInfoView: View {
                 VStack(spacing: 10) {
                     ForEach(0 ..< vm.components.count, id: \.self) { index in
                         DeviceInfoCell(
-                            title: vm.components[index].rawValue,
-                            description: vm.components[index].description(info: vm.connectedDevice.movesenseDevice.deviceInfo)
+                            title: vm.components[index].title(deviceInfoLocalizations: localizations.deviceInfo),
+                            description: vm.components[index].description(info: vm.connectedDevice.movesenseDevice.deviceInfo, deviceInfoLocalizations: localizations.deviceInfo)
                         )
                     }
                     Spacer()
-                    Button("Forget device", action: vm.forgetDeviceTapped)
+                    Button(localizations.deviceInfo.forgetDeviceBtnTitle, action: vm.forgetDeviceTapped)
                         .buttonStyle(MyButtonStyle.init(style: .delete))
                         .padding(.bottom, 24)
                 }
@@ -127,7 +152,7 @@ public struct DeviceInfoView: View {
               self.vm.alertButtonTapped(action)
             }
         }
-        .navigationTitle("Device information")
+        .navigationTitle(localizations.deviceInfo.deviceInfoScreenTitle)
     }
 }
 
@@ -165,12 +190,14 @@ public struct DeviceInfoCell: View {
 
 
 extension AlertState where Action == DeviceInfoViewModel.AlertAction {
-  static let delete = AlertState(
-    title: TextState("Forget device"),
-    message: TextState("Are you sure you want to forget this device?"),
-    buttons: [
-      .destructive(TextState("Yes"), action: .send(.confirmDeletion)),
-      .cancel(TextState("No"))
-    ]
-  )
+    static func delete(title: String, message: String, yesBtnTitle: String, notBtnTitle: String) -> AlertState {
+        AlertState(
+            title: TextState(title),
+            message: TextState(message),
+            buttons: [
+                .destructive(TextState(yesBtnTitle), action: .send(.confirmDeletion)),
+                .cancel(TextState(notBtnTitle))
+            ]
+        )
+    }
 }

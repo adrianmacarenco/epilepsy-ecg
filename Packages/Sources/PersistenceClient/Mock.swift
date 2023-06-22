@@ -17,7 +17,8 @@ extension PersistenceClient {
         medications: .noop,
         medicationIntakes: .noop,
         apiTokenWrapper: .noop,
-        prevEcgUploadingDate: .noop
+        prevEcgUploadingDate: .noop,
+        selectedLanguage: .noop
     )
 
     public static let failing = Self(
@@ -28,7 +29,8 @@ extension PersistenceClient {
         medications: .failing,
         medicationIntakes: .failing,
         apiTokenWrapper: .failing,
-        prevEcgUploadingDate: .failing
+        prevEcgUploadingDate: .failing,
+        selectedLanguage: .noop
     )
 
     public static let mock = Self(
@@ -69,6 +71,10 @@ extension PersistenceClient {
         prevEcgUploadingDate: .init(
             load: { .now },
             save: { _ in}
+        ),
+        selectedLanguage: .init(
+            load: { "" },
+            save: { _ in }
         )
     )
 }

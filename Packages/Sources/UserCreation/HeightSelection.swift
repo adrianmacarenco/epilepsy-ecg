@@ -14,6 +14,7 @@ import SwiftUINavigation
 import Dependencies
 import DBClient
 import PersistenceClient
+import Localizations
 
 public class HeightSelectionViewModel: ObservableObject {
     enum Destination {
@@ -28,7 +29,8 @@ public class HeightSelectionViewModel: ObservableObject {
     @Published var height: Double?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
-    
+    @Dependency (\.localizations) var localizations
+
     let type: ActionType
     var localUser: User
     let userUpdated: ((User) -> Void)?
@@ -64,9 +66,9 @@ public class HeightSelectionViewModel: ObservableObject {
     var actionButtonTitle: String {
         switch type {
         case .add:
-            return "Next"
+            return localizations.defaultSection.next.capitalizedFirstLetter()
         case .edit:
-            return "Save"
+            return localizations.defaultSection.save.capitalizedFirstLetter()
         }
     }
     
@@ -105,6 +107,7 @@ public class HeightSelectionViewModel: ObservableObject {
 public struct HeightSelectionView: View {
     @ObservedObject var vm: HeightSelectionViewModel
     @FocusState private var isFocused: Bool
+    @EnvironmentObject var localizations: ObservableLocalizations
 
     public init (
         vm: HeightSelectionViewModel
@@ -114,11 +117,11 @@ public struct HeightSelectionView: View {
     public var body: some View {
         VStack(spacing: 16) {
             if case HeightSelectionViewModel.ActionType.add = vm.type {
-                Text("BMI Calculation")
+                Text(localizations.userCreationSection.heightSelectionTitle)
                     .font(.largeInput)
             }
 
-            Text("Please input your height. This, combined with your weight, allows us to calculate your Body Mass Index (BMI) and provide personalized health guidance.")
+            Text(localizations.userCreationSection.heightSelectionInfo)
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
@@ -127,7 +130,7 @@ public struct HeightSelectionView: View {
                 "Height",
                 value: $vm.height,
                 format: .number,
-                prompt: Text("Type your height in cm").foregroundColor(.gray)
+                prompt: Text(localizations.userCreationSection.heightTFPrompt).foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle())
             .keyboardType(.numbersAndPunctuation)

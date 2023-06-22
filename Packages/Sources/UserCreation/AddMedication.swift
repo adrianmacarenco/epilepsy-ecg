@@ -14,6 +14,7 @@ import Shared
 import DBClient
 import Dependencies
 import PersistenceClient
+import Localizations
 
 
 public class AddMedicationViewModel: ObservableObject {
@@ -27,6 +28,8 @@ public class AddMedicationViewModel: ObservableObject {
     
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
+
     private let medicationAdded: (Medication) -> Void
     private let medicationDeleted: ((Medication) -> Void)?
 
@@ -61,9 +64,9 @@ public class AddMedicationViewModel: ObservableObject {
     var actionButtonTitle: String {
         switch actionType {
         case .add:
-            return "Add"
+            return localizations.defaultSection.add.capitalizedFirstLetter()
         case .edit:
-            return "Update"
+            return localizations.defaultSection.update.capitalizedFirstLetter()
         }
     }
     
@@ -103,7 +106,7 @@ public class AddMedicationViewModel: ObservableObject {
                     persistenceClient.medications.save([medication])
                 }
                 medicationAdded(medication)
-                UIAccessibility.post(notification: .announcement, argument: "Medication added")
+                UIAccessibility.post(notification: .announcement, argument: localizations.accessibilitySection.medicationAdded)
             } catch {
                 print("🫥 ERROR \(error) ")
             }
@@ -123,7 +126,7 @@ public class AddMedicationViewModel: ObservableObject {
                     persistenceClient.medications.save(updatedMedications)
                 }
                 medicationAdded(newMedication)
-                UIAccessibility.post(notification: .announcement, argument: "Medication edited")
+                UIAccessibility.post(notification: .announcement, argument: localizations.accessibilitySection.medicationEdited)
             } catch {
                 print("🫥 ERROR \(error) ")
             }
@@ -163,7 +166,8 @@ public class AddMedicationViewModel: ObservableObject {
 
 public struct AddMedicationView: View {
     @ObservedObject var vm: AddMedicationViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: AddMedicationViewModel
     ) {
@@ -172,7 +176,7 @@ public struct AddMedicationView: View {
     
     public var body: some View {
         VStack(spacing: 8) {
-            Text("Current medications")
+            Text(localizations.addMedicationSection.currentMedicationTitle)
                 .font(.sectionTitle)
                 .foregroundColor(.sectionTitle)
                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -180,12 +184,12 @@ public struct AddMedicationView: View {
             TextField(
                 "Diagnosis",
                 text: $vm.medicationName,
-                prompt: Text("Type").foregroundColor(.gray)
+                prompt: Text(localizations.defaultSection.type.capitalizedFirstLetter()).foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle({
                 Image.pillIcon
             }))
-            Text("Active ingredients")
+            Text(localizations.addMedicationSection.activeIngredients)
                 .font(.sectionTitle)
                 .foregroundColor(.sectionTitle)
                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -203,12 +207,12 @@ public struct AddMedicationView: View {
                 }
             }
             if !vm.isAddIngredientHidden {
-                DashedFrameView(title: "Add active ingredient", tapAction: vm.addIngredientTapped)
+                DashedFrameView(title: localizations.addMedicationSection.addActiveIngredientBtnTitle, tapAction: vm.addIngredientTapped)
                     .padding(.top, 24)
             }
             Spacer()
             if case AddMedicationViewModel.ActionType.edit = vm.actionType{
-                Button("Delete medication", action: vm.deleteMedicationTapped)
+                Button(localizations.addMedicationSection.deleteMedicationBtnTitle, action: vm.deleteMedicationTapped)
                     .buttonStyle(MyButtonStyle.init(style: .delete))
                     .padding(.bottom, 58)
             }
@@ -218,7 +222,7 @@ public struct AddMedicationView: View {
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
         .background(Color.background)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("Add medication")
+        .navigationTitle(localizations.addMedicationSection.addMedicationScreenTitle)
         .toolbar {
             if vm.isAddButtonEnabled {
                 ToolbarItem(placement: .confirmationAction) {
@@ -235,14 +239,16 @@ struct ActiveIngredientCell: View {
     @Binding var name: String
     @Binding var quantity: Double?
     @Binding var unit: ActiveIngredient.Unit
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     let units = ActiveIngredient.Unit.allCases
     
     var body: some View {
         VStack(spacing: 8) {
             TextField(
-                "Active ingredient name",
+                localizations.addMedicationSection.activeIngredientNameCellTitle,
                 text: $name,
-                prompt: Text("Type").foregroundColor(.gray)
+                prompt: Text(localizations.defaultSection.type.capitalizedFirstLetter()).foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle())
             HStack {
@@ -250,11 +256,11 @@ struct ActiveIngredientCell: View {
                     "Weight",
                     value: $quantity,
                     format: .number,
-                    prompt: Text("Count").foregroundColor(.gray)
+                    prompt: Text(localizations.addMedicationSection.countTFPrompt).foregroundColor(.gray)
                 )
                 .textFieldStyle(EcgTextFieldStyle())
 
-                Picker("Select an unit", selection: $unit) {
+                Picker(localizations.addMedicationSection.prickerSelectUnitTitle, selection: $unit) {
                     ForEach(units, id: \.self) { unit in
                         Text(unit.rawValue)
                     }

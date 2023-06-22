@@ -15,6 +15,7 @@ import UserCreation
 import Dependencies
 import DBClient
 import PersistenceClient
+import Localizations
 
 public class SelectMedicationViewModel: ObservableObject {
     enum Destination {
@@ -66,7 +67,8 @@ public class SelectMedicationViewModel: ObservableObject {
 
 public struct SelectMedicationView: View {
     @ObservedObject var vm: SelectMedicationViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     init(
         vm: SelectMedicationViewModel
     ) {
@@ -87,17 +89,17 @@ public struct SelectMedicationView: View {
                     }
                 }
                 
-                DashedFrameView(title: "Add medication", tapAction: vm.addMedicationTapped)
+                DashedFrameView(title: localizations.trackIntakeSection.addMedicationBtnTitle, tapAction: vm.addMedicationTapped)
                     .padding(.top, 8)
             }
             .padding(16)
             .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
-            .navigationTitle("Select medication")
+            .navigationTitle(localizations.trackIntakeSection.selectMedicationNavTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if vm.selectedMedicationId != nil {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Select") {
+                        Button(localizations.defaultSection.select.capitalizedFirstLetter()) {
                             vm.selectButtonTapped()
                         }
                     }

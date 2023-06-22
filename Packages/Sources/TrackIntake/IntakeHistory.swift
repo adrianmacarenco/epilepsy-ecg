@@ -14,6 +14,7 @@ import Dependencies
 import DBClient
 import PersistenceClient
 import SwiftUINavigation
+import Localizations
 
 public class IntakeHistoryViewModel: ObservableObject {
     enum Destination {
@@ -64,7 +65,8 @@ public class IntakeHistoryViewModel: ObservableObject {
 
 public struct IntakeHistoryView: View {
     @ObservedObject var vm: IntakeHistoryViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: IntakeHistoryViewModel
     ) {
@@ -87,7 +89,7 @@ public struct IntakeHistoryView: View {
             .task { await vm.task() }
         }
         .background(Color.background)
-        .navigationTitle("Intake history")
+        .navigationTitle(localizations.trackIntakeSection.intakeHistoryTitle)
         .navigationDestination(
             unwrapping: self.$vm.route,
             case: /IntakeHistoryViewModel.Destination.editIntake

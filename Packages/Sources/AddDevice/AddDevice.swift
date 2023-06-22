@@ -16,6 +16,7 @@ import BluetoothClient
 import Model
 import PersistenceClient
 import Clocks
+import Localizations
 
 public class AddDeviceViewModel: ObservableObject, Equatable {
     public static func == (lhs: AddDeviceViewModel, rhs: AddDeviceViewModel) -> Bool {
@@ -107,7 +108,8 @@ public class AddDeviceViewModel: ObservableObject, Equatable {
 
 public struct AddDeviceView: View {
     @ObservedObject var viewModel: AddDeviceViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         viewModel: AddDeviceViewModel
     ) {

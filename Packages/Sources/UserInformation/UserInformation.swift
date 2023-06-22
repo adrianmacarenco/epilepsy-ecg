@@ -16,6 +16,7 @@ import UserCreation
 import Dependencies
 import SwiftUINavigation
 import XCTestDynamicOverlay
+import Localizations
 
 public class UserInformationViewModel: ObservableObject {
     enum Destination {
@@ -31,6 +32,7 @@ public class UserInformationViewModel: ObservableObject {
     @Published var route: Destination?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
     var medications: [Medication] = []
     public init(
         user: User
@@ -136,7 +138,7 @@ public class UserInformationViewModel: ObservableObject {
                     MedicationListViewModel(
                         user: self.user,
                         type: .edit(medications),
-                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")  
+                        userCreationFlowEnded: unimplemented("UserInformationViewModel.onConfirmDeletion")
                     )
                 })
             )
@@ -145,45 +147,45 @@ public class UserInformationViewModel: ObservableObject {
 }
 
 extension UserInformationViewModel {
-    public enum Component: String, CaseIterable, Equatable {
-        case fullName = "Full name"
-        case birthday = "Birthday"
-        case gender = "Gender"
-        case weight = "Weight"
-        case height = "Height"
-        case currentMedications = "Current medications"
+    public enum Component: CaseIterable, Equatable {
+        case fullName
+        case birthday
+        case gender
+        case weight
+        case height
+        case currentMedications
         
-        public func description(user: User) -> String? {
+        public func description(user: User, userInfoLocalizations: Localizations.UserInformationSection) -> String? {
             switch self {
             case .fullName:
-                return user.fullName != nil ? self.rawValue : nil
+                return user.fullName != nil ? userInfoLocalizations.editNameDescription : nil
             case .birthday:
-                return user.birthday != nil ? self.rawValue : nil
+                return user.birthday != nil ? userInfoLocalizations.editBirthdayDescription : nil
             case .gender:
-                return user.gender != nil ? self.rawValue : nil
+                return user.gender != nil ? userInfoLocalizations.editGenderDescription : nil
             case .weight:
-                return user.weight != nil ? self.rawValue : nil
+                return user.weight != nil ? userInfoLocalizations.editWeightDescription : nil
             case .height:
-                return user.height != nil ? self.rawValue : nil
+                return user.height != nil ? userInfoLocalizations.editHeightDescription : nil
             case .currentMedications:
                 return nil
             }
         }
         
-        public func title(user: User) -> String {
+        public func title(user: User, userInfoLocalizations: Localizations.UserInformationSection) -> String {
             switch self {
             case .fullName:
-                return user.fullName ?? self.rawValue
+                return user.fullName ?? userInfoLocalizations.editNameDescription
             case .birthday:
-                return user.birthday != nil ? Date.dayMonthYear.string(from: user.birthday!) : self.rawValue
+                return user.birthday != nil ? Date.dayMonthYear.string(from: user.birthday!) : userInfoLocalizations.editBirthdayDescription
             case .gender:
-                return user.gender ?? self.rawValue
+                return user.gender ?? userInfoLocalizations.editGenderDescription
             case .weight:
-                return user.weight != nil ? String(format: "%.0f", user.weight!) : self.rawValue
+                return user.weight != nil ? String(format: "%.0f", user.weight!) : userInfoLocalizations.editWeightDescription
             case .height:
-                return user.height != nil ? String(format: "%.0f", user.height!) : self.rawValue
+                return user.height != nil ? String(format: "%.0f", user.height!) : userInfoLocalizations.editHeightDescription
             case .currentMedications:
-                return self.rawValue
+                return userInfoLocalizations.editMedicationListDescription
             }
         }
     }
@@ -191,7 +193,8 @@ extension UserInformationViewModel {
 
 public struct UserInformationView: View {
     @ObservedObject var vm: UserInformationViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: UserInformationViewModel
     ) {
@@ -204,8 +207,8 @@ public struct UserInformationView: View {
                 VStack(spacing: 10) {
                     ForEach(0 ..< vm.components.count, id: \.self) { index in
                         ProfileCellView(
-                            description: vm.components[index].description(user: vm.user),
-                            title: vm.components[index].title(user: vm.user)
+                            description: vm.components[index].description(user: vm.user, userInfoLocalizations: localizations.userInformationSection),
+                            title: vm.components[index].title(user: vm.user, userInfoLocalizations: localizations.userInformationSection)
                         )
                         .contentShape(Rectangle())
                         .onTapGesture {
@@ -223,47 +226,47 @@ public struct UserInformationView: View {
                     case: /UserInformationViewModel.Destination.fullName
                 ) { $personalIdenityVm in
                     PersonalIdentityView(vm: personalIdenityVm)
-                        .navigationTitle("Edit name")
+                        .navigationTitle(localizations.userInformationSection.editNameTitle)
                 }
                 .navigationDestination(
                     unwrapping: self.$vm.route,
                     case: /UserInformationViewModel.Destination.birthday
                 ) { $birthdayVm in
                     UserBirthdayView(vm: birthdayVm)
-                        .navigationTitle("Edit birthday")
+                        .navigationTitle(localizations.userInformationSection.editBirthdayTitle)
                 }
                 .navigationDestination(
                     unwrapping: self.$vm.route,
                     case: /UserInformationViewModel.Destination.gender
                 ) { $genderVm in
                     GenderSelectionView(vm: genderVm)
-                        .navigationTitle("Edit gender")
+                        .navigationTitle(localizations.userInformationSection.editGenderTitle)
                 }
                 .navigationDestination(
                     unwrapping: self.$vm.route,
                     case: /UserInformationViewModel.Destination.weight
                 ) { $weightVm in
                     WeightSelectionView(vm: weightVm)
-                        .navigationTitle("Edit weight")
+                        .navigationTitle(localizations.userInformationSection.editWeightTitle)
                 }
                 .navigationDestination(
                     unwrapping: self.$vm.route,
                     case: /UserInformationViewModel.Destination.height
                 ) { $heightVm in
                     HeightSelectionView(vm: heightVm)
-                        .navigationTitle("Edit height")
+                        .navigationTitle(localizations.userInformationSection.editHeightTitle)
                 }
                 .navigationDestination(
                     unwrapping: self.$vm.route,
                     case: /UserInformationViewModel.Destination.medicationList
                 ) { $medicaitonsVm in
                     MedicationListView(vm: medicaitonsVm)
-                        .navigationTitle("Edit medications list")
+                        .navigationTitle(localizations.userInformationSection.editMedicationListTitle)
                 }
             }
         }
         .background(Color.background)
-        .navigationTitle("User information")
+        .navigationTitle(localizations.userInformationSection.userInformationTitle)
     }
 }
 

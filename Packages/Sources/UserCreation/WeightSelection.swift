@@ -7,6 +7,7 @@ import SwiftUINavigation
 import Dependencies
 import DBClient
 import PersistenceClient
+import Localizations
 
 public class WeightSelectionViewModel: ObservableObject {
     enum Destination {
@@ -22,6 +23,8 @@ public class WeightSelectionViewModel: ObservableObject {
     @Published var weight: Double?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
+
     let type: ActionType
     var localUser: User
     let userUpdated: ((User) -> Void)?
@@ -57,9 +60,9 @@ public class WeightSelectionViewModel: ObservableObject {
     var actionButtonTitle: String {
         switch type {
         case .add:
-            return "Next"
+            return localizations.defaultSection.next.capitalizedFirstLetter()
         case .edit:
-            return "Save"
+            return localizations.defaultSection.save.capitalizedFirstLetter()
         }
     }
     
@@ -98,6 +101,7 @@ public class WeightSelectionViewModel: ObservableObject {
 public struct WeightSelectionView: View {
     @ObservedObject var vm: WeightSelectionViewModel
     @FocusState private var isFocused: Bool
+    @EnvironmentObject var localizations: ObservableLocalizations
 
     public init (
         vm: WeightSelectionViewModel
@@ -107,10 +111,10 @@ public struct WeightSelectionView: View {
     public var body: some View {
         VStack(spacing: 16) {
             if case WeightSelectionViewModel.ActionType.add = vm.type {
-                Text("Weight-based Assessment")
+                Text(localizations.userCreationSection.weightSelectionTitle)
                     .font(.largeInput)
             }
-            Text("Enter your current weight. This information is crucial for assessing your overall health and determining appropriate medication dosages if necessary.")
+            Text(localizations.userCreationSection.weightSelectionInfo)
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
@@ -119,7 +123,7 @@ public struct WeightSelectionView: View {
                 "Weight",
                 value: $vm.weight,
                 format: .number,
-                prompt: Text("Type your weight in kg").foregroundColor(.gray)
+                prompt: Text(localizations.userCreationSection.weightTFPrompt).foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle())
             .keyboardType(.numbersAndPunctuation)

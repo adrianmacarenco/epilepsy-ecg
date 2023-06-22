@@ -14,6 +14,7 @@ import SwiftUINavigation
 import Dependencies
 import DBClient
 import PersistenceClient
+import Localizations
 
 public class DiagnosisViewModel: ObservableObject {
     enum Destination {
@@ -84,7 +85,8 @@ public class DiagnosisViewModel: ObservableObject {
 
 public struct DiagnosisView: View {
     @ObservedObject var vm: DiagnosisViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init (
         vm: DiagnosisViewModel
     ) {
@@ -92,9 +94,9 @@ public struct DiagnosisView: View {
     }
     public var body: some View {
         VStack(spacing: 16) {
-            Text("Epilepsy Diagnosis Details")
+            Text(localizations.userCreationSection.diagnosisTitle)
                 .font(.largeInput)
-            Text("Understanding the type of epilepsy you've been diagnosed with helps us provide you with the most accurate and personalized monitoring plan. Please type your epilepsy diagnosis. If you're unsure about your diagnosis, you can consult with your physician or proceed with the 'Skip' option, and we'll do our best to support you.")
+            Text(localizations.userCreationSection.diagnosisInfo)
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
@@ -102,11 +104,11 @@ public struct DiagnosisView: View {
             TextField(
                 "Diagnosis",
                 text: $vm.diagnosis,
-                prompt: Text("Type").foregroundColor(.gray)
+                prompt: Text(localizations.defaultSection.type.capitalizedFirstLetter()).foregroundColor(.gray)
             )
             .textFieldStyle(EcgTextFieldStyle())
             Spacer()
-            Button("Next", action: vm.nextButtonTapped)
+            Button(localizations.defaultSection.next.capitalizedFirstLetter(), action: vm.nextButtonTapped)
                 .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: vm.isNextButtonEnabled))
                 .disabled(!vm.isNextButtonEnabled)
                 .padding(.bottom, 58)
@@ -123,7 +125,7 @@ public struct DiagnosisView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-            Button("Skip") {
+            Button(localizations.defaultSection.skip.capitalizedFirstLetter()) {
                 vm.skipTapped()
             }
           }

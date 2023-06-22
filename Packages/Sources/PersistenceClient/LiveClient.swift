@@ -17,7 +17,8 @@ extension PersistenceClient {
             medications: .live(key: keyPrefix + ".savedMedications"),
             medicationIntakes: .live(key: keyPrefix + ".savedMedicationIntakes"),
             apiTokenWrapper: .live(key: keyPrefix + ".apiTokenWrapper"),
-            prevEcgUploadingDate: .live(key: keyPrefix + ".prevEcgUploadingDate")
+            prevEcgUploadingDate: .live(key: keyPrefix + ".prevEcgUploadingDate"),
+            selectedLanguage: .live(key: keyPrefix + ".selectedLanguages")
         )
     }
 }

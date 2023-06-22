@@ -15,6 +15,7 @@ import Dependencies
 import DBClient
 import PersistenceClient
 import XCTestDynamicOverlay
+import Localizations
 
 public class GettingStartedViewModel: ObservableObject {
     enum Destination {
@@ -29,6 +30,8 @@ public class GettingStartedViewModel: ObservableObject {
     @Published var route: Destination?
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
+
     var userCreationFlowEnded: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
     let localUser = User(
         id: UUID().uuidString,
@@ -57,7 +60,11 @@ public class GettingStartedViewModel: ObservableObject {
     }
     
     func skipButtonTapped() {
-        route = .alert(.setUpLater)
+        route = .alert(.setUpLater(
+            title: localizations.userCreationSection.setupLaterAlertTitle,
+            message: localizations.userCreationSection.setupLaterAlertMessage,
+            yesBtnTitle: localizations.defaultSection.yes.capitalizedFirstLetter(),
+            notBtnTitle: localizations.defaultSection.no.capitalizedFirstLetter()))
     }
     func alertButtonTapped(_ action: AlertAction) {
       switch action {
@@ -73,7 +80,8 @@ public class GettingStartedViewModel: ObservableObject {
 
 public struct GettingStartedView: View {
     @ObservedObject var vm: GettingStartedViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init (
         vm: GettingStartedViewModel
     ) {
@@ -84,15 +92,15 @@ public struct GettingStartedView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 Image.gettingStarted
-                Text("Getting started")
+                Text(localizations.userCreationSection.gettingStartedTitle)
                     .font(.largeInput)
-                Text("Hey there! For the best results, we'll need you to provide some personal information. Rest assured, this data is strictly confidential and will only be used to enhance your experience within the app. Your privacy is our top priority, and we're committed to keeping your information safe and secure.")
+                Text(localizations.userCreationSection.gettingStartedInfo)
                     .padding(.horizontal, 16)
                     .font(.body1)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.gray)
                 Spacer()
-                Button("Start", action: vm.startButtonTapped)
+                Button(localizations.defaultSection.start.capitalizedFirstLetter(), action: vm.startButtonTapped)
                     .buttonStyle(MyButtonStyle.init(style: .primary))
                     .padding(.bottom, 58)
             }
@@ -101,7 +109,7 @@ public struct GettingStartedView: View {
             .background(Color.background)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Set up later") {
+                    Button(localizations.userCreationSection.setupLaterBtnTitle) {
                         vm.skipButtonTapped()
                     }
                 }
@@ -126,12 +134,14 @@ public struct GettingStartedView: View {
 }
 
 extension AlertState where Action == GettingStartedViewModel.AlertAction {
-  static let setUpLater = AlertState(
-    title: TextState("Set up later"),
-    message: TextState("Are you sure you want to skip the initial setup process? Remember, you can always modify your information in the profile section at a later time."),
-    buttons: [
-        .destructive(TextState("Yes"), action: .send(.confirmSetUpLater)),
-      .cancel(TextState("No"))
-    ]
-  )
+    static func setUpLater(title: String, message: String, yesBtnTitle: String, notBtnTitle: String) -> AlertState {
+        AlertState(
+            title: TextState(title),
+            message: TextState(message),
+            buttons: [
+                .destructive(TextState(yesBtnTitle), action: .send(.confirmSetUpLater)),
+                .cancel(TextState(notBtnTitle))
+            ]
+        )
+    }
 }

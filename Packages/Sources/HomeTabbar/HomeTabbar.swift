@@ -13,6 +13,7 @@ import StylePackage
 import TrackIntake
 import Dependencies
 import DBClient
+import Localizations
 import PersistenceClient
 
 public class HomeTabbarViewModel: ObservableObject {
@@ -56,7 +57,8 @@ public class HomeTabbarViewModel: ObservableObject {
 
 public struct HomeTabbarView: View {
     @ObservedObject var vm: HomeTabbarViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: HomeTabbarViewModel
     ) {
@@ -69,7 +71,7 @@ public struct HomeTabbarView: View {
                     VStack{
                         Image.homeTabIcon
                             .renderingMode(.template)
-                        Text("Dashboard")
+                        Text(localizations.homeTabbarSection.dashboardTapviewTitle)
                     }
                 }
                 .toolbarBackground(.visible, for: .tabBar)
@@ -80,7 +82,7 @@ public struct HomeTabbarView: View {
                     VStack{
                         Image.tackIntakeTabIcon
                             .renderingMode(.template)
-                        Text("Track intake")
+                        Text(localizations.homeTabbarSection.trackIntakeTapviewTitle)
                     }
                 }
                 .toolbarBackground(.visible, for: .tabBar)
@@ -91,7 +93,7 @@ public struct HomeTabbarView: View {
                     VStack {
                         Image.profileTabIcon
                             .renderingMode(.template)
-                        Text("Profile")
+                        Text(localizations.homeTabbarSection.profileTapviewTitle)
 
                     }
                 }

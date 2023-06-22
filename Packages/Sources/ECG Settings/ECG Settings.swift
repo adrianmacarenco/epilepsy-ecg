@@ -16,7 +16,8 @@ import PersistenceClient
 import ECG
 import SwiftUINavigation
 import MovesenseApi
-
+import Localizations
+import Shared
 
 public class EcgSettingsViewModel: ObservableObject {
     enum Destination: Equatable {
@@ -192,16 +193,7 @@ public class EcgSettingsViewModel: ObservableObject {
     
     func unsubscribeEcg() {
         guard let device else { return }
-        Task {
-            do {
-                try await bluetoothClient.unsubscribeEcg(device)
-                print("Unsubscribed ECG 🤖")
-
-            } catch {
-                print("Failed to unsubscribe 🤖")
-            }
-        }
-        
+        bluetoothClient.unsubscribeEcg(device)
     }
 }
 
@@ -214,7 +206,8 @@ extension EcgSettingsViewModel: Equatable {
 
 public struct EcgSettingsView: View {
     @ObservedObject var vm: EcgSettingsViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init(
         vm: EcgSettingsViewModel
     ) {
@@ -225,7 +218,7 @@ public struct EcgSettingsView: View {
         List {
             Section {
                 VStack(spacing: 16) {
-                    Text("ECG Preview")
+                    Text(localizations.ecgSettings.ecgPreviewLabel)
                         .font(.headline3)
                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
@@ -262,10 +255,10 @@ public struct EcgSettingsView: View {
                         
             Section {
                 HStack {
-                    Text("Interval")
+                    Text(localizations.defaultSection.interval.capitalizedFirstLetter())
                         .font(.title1)
                     Spacer()
-                    Text("\(vm.shownInterval) seconds")
+                    Text("\(vm.shownInterval) \(localizations.defaultSection.second.capitalizedFirstLetter())")
                         .font(.title1)
                         .foregroundColor(.gray)
                     Image.pickerIndicator
@@ -277,12 +270,12 @@ public struct EcgSettingsView: View {
                 ColorPicker(selection: Binding(
                     get: { vm.ecgModel.configuration.viewConfiguration.chartColor },
                     set: vm.colorChanged(_:)) ) {
-                    Text("Color")
+                        Text(localizations.defaultSection.color.capitalizedFirstLetter())
                         .font(.title1)
                 }
                 
                 HStack {
-                    Text("Frequency")
+                    Text(localizations.defaultSection.frequency.capitalizedFirstLetter())
                         .font(.title1)
                     Spacer()
                     Text("\(vm.selectedFrequency) Hz")
@@ -297,7 +290,7 @@ public struct EcgSettingsView: View {
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
         .background(Color.background)
-        .navigationTitle("ECG Settings")
+        .navigationTitle(localizations.ecgSettings.ecgPreviewScreenTitle)
         .navigationBarTitleDisplayMode(.large)
         .onAppear(perform: vm.onAppear)
         .task { await vm.task() }
@@ -309,7 +302,7 @@ public struct EcgSettingsView: View {
                     confirmSelectedValue: { vm.confirmSelection($0) },
                     cancelSelection: vm.cancelSelection
                 )
-                .navigationTitle("Configure ECG interval")
+                .navigationTitle(localizations.ecgSettings.configureEcgIntervalTitle)
             }
             .presentationDetents([.fraction(0.35)])
         }
@@ -321,7 +314,7 @@ public struct EcgSettingsView: View {
                     confirmSelectedValue: { vm.confirmSelection($0) },
                     cancelSelection: vm.cancelSelection
                 )
-                .navigationTitle("Configure ECG frequency")
+                .navigationTitle(localizations.ecgSettings.configureEcgFreqTitle)
             }
             .presentationDetents([.fraction(0.35)])
         }
@@ -337,7 +330,8 @@ struct EcgConfigPickerView<SelectionValue: Hashable & CustomStringConvertible>: 
     let selectableValues: [SelectionValue]
     let confirmSelectedValue: (SelectionValue) -> ()
     let cancelSelection: () -> ()
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     
     var body: some View {
         Picker("Time interval", selection: $selectedValue) {
@@ -348,34 +342,17 @@ struct EcgConfigPickerView<SelectionValue: Hashable & CustomStringConvertible>: 
         .pickerStyle(.wheel)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
+                Button(localizations.defaultSection.cancel.capitalizedFirstLetter()) {
                     cancelSelection()
                 }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Select") {
+                Button(localizations.defaultSection.select) {
                     confirmSelectedValue(selectedValue)
                 }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-public class BlankViewModel: ObservableObject {
-    @Published var textValue = "My blank view"
-}
-
-
-public struct BlankView: View {
-    @ObservedObject var vm: BlankViewModel
-    
-    public init(vm: BlankViewModel) {
-        self.vm = vm
-    }
-    
-    public var body: some View {
-        Text(vm.textValue)
     }
 }
 

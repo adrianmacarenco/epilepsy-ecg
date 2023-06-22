@@ -14,6 +14,7 @@ import SwiftUINavigation
 import Dependencies
 import DBClient
 import PersistenceClient
+import Localizations
 
 public class GenderSelectionViewModel: ObservableObject {
     enum Destination {
@@ -28,6 +29,7 @@ public class GenderSelectionViewModel: ObservableObject {
     @Published var selectedGender: String = ""
     @Dependency (\.dbClient) var dbClient
     @Dependency (\.persistenceClient) var persistenceClient
+    @Dependency (\.localizations) var localizations
     let type: ActionType
     var genders = ["Male", "Female"]
     
@@ -72,9 +74,9 @@ public class GenderSelectionViewModel: ObservableObject {
     var actionButtonTitle: String {
         switch type {
         case .add:
-            return "Next"
+            return localizations.defaultSection.next.capitalizedFirstLetter()
         case .edit:
-            return "Save"
+            return localizations.defaultSection.save.capitalizedFirstLetter()
         }
     }
     
@@ -118,7 +120,8 @@ public class GenderSelectionViewModel: ObservableObject {
 
 public struct GenderSelectionView: View {
     @ObservedObject var vm: GenderSelectionViewModel
-    
+    @EnvironmentObject var localizations: ObservableLocalizations
+
     public init (
         vm: GenderSelectionViewModel
     ) {
@@ -128,10 +131,10 @@ public struct GenderSelectionView: View {
         VStack(spacing: 16) {
             if case GenderSelectionViewModel.ActionType.add = vm.type {
                 Image.genderIcon
-                Text("Gender-specific Factors")
+                Text(localizations.userCreationSection.genderSelectionTitle)
                     .font(.largeInput)
             }
-            Text("Please select your gender. This information helps us consider any gender-specific factors that may impact your heart health and epilepsy management.")
+            Text(localizations.userCreationSection.genderSelectionInfo)
                 .padding(.horizontal, 16)
                 .font(.body1)
                 .multilineTextAlignment(.center)
