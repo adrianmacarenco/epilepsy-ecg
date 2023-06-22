@@ -178,6 +178,7 @@ public class TrackIntakeViewModel: ObservableObject {
                     await MainActor.run {
                         self.selectedMedication = nil
                     }
+                    UIAccessibility.post(notification: .announcement, argument: "Pill intake added")
                 case .edit(let prevIntake):
                     var updatedIntake = prevIntake
                     updatedIntake.medication = selectedMedication
@@ -188,6 +189,7 @@ public class TrackIntakeViewModel: ObservableObject {
                         self.presetInputsInfo(from: updatedIntake)
                         self.intakeEditted?()
                     }
+                    UIAccessibility.post(notification: .announcement, argument: "Pill intake edited")
                 }
                 
                 let dailyIntakes = try await dbClient.fetchDailyIntakes()
@@ -253,6 +255,8 @@ public struct TrackIntakeView: View {
                 .cornerRadius(8)
                 .foregroundColor(.black)
                 .contentShape(Rectangle())
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Select from your medication list")
                 .onTapGesture {
                     vm.medicationSelectorTapped()
                 }

@@ -39,7 +39,7 @@ extension APIClient: DependencyKey {
             carpPassword: envVars.carpPassword,
             userId: user.id
         )
-        return APIClient.live(baseUrl: envVars.baseUrl, authenticationHandler: authHandler)
+        return APIClient.live(baseUrl: envVars.baseUrl, dbBasePath: envVars.dbBasePath, authenticationHandler: authHandler)
     }
 }
 

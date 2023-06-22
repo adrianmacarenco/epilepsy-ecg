@@ -25,10 +25,9 @@ extension EnvVars: DependencyKey {
             studyId: "5300a9b7-204b-4c6b-8757-fec603507200",
             carpUserName: "adrian.macarenco@gmail.com",
             carpPassword: "Setanta1234",
-            // This directory is backed up by iTunes and iCloud, ensuring that your users won't lose their data
             dbBasePath: NSSearchPathForDirectoriesInDomains(
                 .documentDirectory, .userDomainMask, true
-            ).first!
+            ).last!
         )
     }
 }

@@ -97,6 +97,7 @@ public struct MyButtonStyle: ButtonStyle {
         .background(isEnabled ? style.backgroundColor : (style.disabledBackgroundColor ?? style.backgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
         .scaleEffect(configuration.isPressed ? 0.95 : 1)
+        .accessibilityHidden(!isEnabled)
     }
 }
 

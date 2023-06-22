@@ -588,7 +588,7 @@ public class DBManager: NSObject {
                 let ecgTimeStamp = row[ecgTimestamp]
                 let ecgData = row[ecgData]
                 
-                print("ECG:  timestamp - \(ecgTimeStamp), ecgData - \(ecgData)")
+                print("ECG:  timestamp - \(ecgTimeStamp.timeIntervalSince1970), ecgData - \(ecgData)")
             }
         } catch {
             

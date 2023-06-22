@@ -88,12 +88,6 @@ public class DashboardViewModel: ObservableObject {
         subscribeToHrStream()
         
         Task {
-            try await clock.sleep(for: . seconds(10))
-            localizations.updateLocalization(with: .da)
-            
-        }
-        
-        Task {
             try await clock.sleep(for: .seconds(1))
             guard self.discoveredDevices.isEmpty else { return }
             let apiDiscoveredDevices = bluetoothClient.getDiscoveredDevices()
@@ -160,7 +154,9 @@ public class DashboardViewModel: ObservableObject {
         Task { @MainActor in
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
                 ecgDataStream?(ecgData)
-                ecgDataEvents.append((ecgData, Date()))
+                let newRecording = (ecgData, Date())
+//                print(" ❤️ \(newRecording.1.timeIntervalSince1970) \(newRecording.0.samples.commaSeparatedString())")
+                ecgDataEvents.append(newRecording)
                 guard self.route == nil, shouldRenderEcg else { continue }
                 ecgData.samples.forEach { sample in
                     var finalSample = Double(sample)
@@ -241,7 +237,7 @@ public class DashboardViewModel: ObservableObject {
     }
     
     private func updateLocalDbData() async throws {
-        let localData = ecgDataEvents.map { (Date(), $0.0.samples.commaSeparatedString()) }
+        let localData = ecgDataEvents.map { ($0.1, $0.0.samples.commaSeparatedString()) }
         try await self.dbClient.addEcg(localData)
         ecgDataEvents = []
         print("Update local data ✅")
@@ -262,8 +258,8 @@ public class DashboardViewModel: ObservableObject {
     }
     
     private func startConnectedDeviceTasks() {
-//        startLocalUpdateTimerTask()
-//        startServerDbUploadTimerTask()
+        startLocalUpdateTimerTask()
+        startServerDbUploadTimerTask()
         startBatteryCheckTask()
         startDisconnectionStreamTask()
     }
@@ -389,12 +385,15 @@ public class DashboardViewModel: ObservableObject {
             self.isConnecting = true
             let connectedDevice = try await self.bluetoothClient.connectToDevice(deviceWrapper)
             self.isConnecting = false
-            self.connectedDevice = connectedDevice
+            withAnimation {
+                self.connectedDevice = connectedDevice
+            }
             bluetoothClient.stopScanningDevices()
             bluetoothClient.subscribeToHr(connectedDevice)
             getConnectedDeviceBattery(device: connectedDevice)
             self.updateWidgetConnectionStatus(isConnected: true)
             self.startConnectedDeviceTasks()
+            UIAccessibility.post(notification: .announcement, argument: "Device connected")
         }
     }
     
@@ -405,9 +404,12 @@ public class DashboardViewModel: ObservableObject {
             self.isDisconnecting = true
             _ = try await bluetoothClient.disconnectDevice(deviceWrapper)
             self.isDisconnecting = false
-            connectedDevice = nil
+            withAnimation {
+                connectedDevice = nil
+            }
             resetEcgData()
             self.updateWidgetConnectionStatus(isConnected: false)
+            UIAccessibility.post(notification: .announcement, argument: "Device disconnected")
         }
         
         Task {
@@ -493,7 +495,6 @@ public struct DashboardView: View {
             GeometryReader { proxy in
                 ScrollView {
                     VStack {
-                        Text(localizations.defaultSection.save)
                         if let prevDevice = vm.previousDevice {
                             DeviceCell(
                                 deviceSerialName: prevDevice,
@@ -512,31 +513,7 @@ public struct DashboardView: View {
                             .onTapGesture {
                                 vm.deviceCellTapped(prevDevice)
                             }
-                            VStack {
-                                Text("ECG Preview")
-                                    .font(.headline3)
-                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                                    .padding(.top, 16)
-                                    .padding(.horizontal, 16)
-                                HStack {
-                                    Text("See more")
-                                        .font(.body1)
-                                        .foregroundColor(.gray)
-                                    Image.openIndicator
-                                        .foregroundColor(.gray)
-                                    Spacer()
-                                    
-                                }
-                                .padding(.horizontal, 16)
-                                EcgView(
-                                    model: $vm.ecgViewModel,
-                                    computeTime: vm.computeTime
-                                )
-                                .background(Color.white)
-                                .padding([.horizontal, .bottom], 16)
-                                .onTapGesture(perform: vm.ecgViewTapped)
-                                
-                            }
+                            ecgPreview
                             .background(Color.white)
                             .cornerRadius(20)
                             .padding(.horizontal, 16)
@@ -615,6 +592,62 @@ public struct DashboardView: View {
                 }
             }
         }
+    }
+    
+    private var ecgPreview: some View {
+        VStack {
+            Text("ECG Preview")
+                .font(.headline3)
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 16)
+                .padding(.horizontal, 16)
+            VStack {
+                if vm.connectedDevice != nil {
+                    HStack {
+                        Text("See more")
+                            .font(.body1)
+                            .foregroundColor(.gray)
+                        Image.openIndicator
+                            .foregroundColor(.gray)
+                        Spacer()
+                        
+                    }
+                    EcgView(
+                        model: $vm.ecgViewModel,
+                        computeTime: vm.computeTime
+                    )
+                    .padding(.bottom, 16)
+                } else {
+                    ecgPlaceholder
+                }
+            }
+            .padding(.horizontal, 16)
+            .onTapGesture(perform: vm.ecgViewTapped)
+        }
+    }
+    
+    private var ecgPlaceholder: some View {
+        VStack {
+            Image.onboardingConnect
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: 100)
+                .padding(.bottom, 16)
+
+            Text("Connect to device")
+                .font(.largeInput)
+                .padding(.bottom, 6)
+                .accessibilityHidden(true)
+
+            Text("Visualize your ECG by connecting to your device")
+                .font(.body1)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .accessibilityHidden(true)
+
+        }
+        .padding(.bottom, 16)
+        .frame(height: 300)
     }
 }
 
@@ -709,6 +742,8 @@ struct DeviceCell: View {
                         isLoading: vm.isDisconnecting,
                         isEnabled: vm.isDisconnectEnabled
                     ))
+                    .disabled(!vm.isDisconnectEnabled)
+
             }
             .padding(.top, 10)
         }

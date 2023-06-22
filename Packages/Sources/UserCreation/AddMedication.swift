@@ -103,6 +103,7 @@ public class AddMedicationViewModel: ObservableObject {
                     persistenceClient.medications.save([medication])
                 }
                 medicationAdded(medication)
+                UIAccessibility.post(notification: .announcement, argument: "Medication added")
             } catch {
                 print("🫥 ERROR \(error) ")
             }
@@ -122,6 +123,7 @@ public class AddMedicationViewModel: ObservableObject {
                     persistenceClient.medications.save(updatedMedications)
                 }
                 medicationAdded(newMedication)
+                UIAccessibility.post(notification: .announcement, argument: "Medication edited")
             } catch {
                 print("🫥 ERROR \(error) ")
             }
