@@ -155,7 +155,7 @@ public class DashboardViewModel: ObservableObject {
             for await ecgData in bluetoothClient.dashboardEcgPacketsStream() {
                 ecgDataStream?(ecgData)
                 let newRecording = (ecgData, Date())
-//                print(" ❤️ \(newRecording.1.timeIntervalSince1970) \(newRecording.0.samples.commaSeparatedString())")
+                print(" ❤️ \(newRecording.1.description) \(newRecording.0.samples.commaSeparatedString())")
                 ecgDataEvents.append(newRecording)
                 guard self.route == nil, shouldRenderEcg else { continue }
                 ecgData.samples.forEach { sample in
@@ -240,7 +240,7 @@ public class DashboardViewModel: ObservableObject {
         let localData = ecgDataEvents.map { ($0.1, $0.0.samples.commaSeparatedString()) }
         try await self.dbClient.addEcg(localData)
         ecgDataEvents = []
-        print("Update local data ✅")
+        print("Update local data ✅ \(Date().description)")
     }
     
     // Saves ecg data to the local db every 5 seconds
@@ -277,6 +277,8 @@ public class DashboardViewModel: ObservableObject {
     }
     
     private func uploadDbToServer() async throws {
+        print("Update server started 🏁 \(Date().description)")
+
         do {
             try await apiClient.uploadDbFile()
         } catch {
@@ -287,8 +289,7 @@ public class DashboardViewModel: ObservableObject {
         } catch {
             print("🥴 error while clearing localEcgEvents: \(error.localizedDescription)")
         }
-        persistenceClient.prevEcgUploadingDate.save(Date())
-        print("Update to server 👻")
+        print("Update server completed 🤖 \(Date().description)")
 
     }
     

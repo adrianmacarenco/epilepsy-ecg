@@ -47,11 +47,6 @@ public class DBManager: NSObject {
     public init(dbConnection: Connection) {
         self.dbConnection = dbConnection
         super.init()
-        print("Creating tables..... 🤌")
-        
-        Task {
-            try await createTables()
-        }
     }
     
     // MARK: - Create tables
@@ -157,6 +152,8 @@ public class DBManager: NSObject {
     // MARK: - User Entity
     
     public func addUser(userId: String, fullName: String?, birthday: Date?, gender: String?, weight: Double?, height: Double?, diagnosis: String?) async throws -> User {
+        try? await createTables()
+
         return try await withCheckedThrowingContinuation { cont in
             do {
                 let insert = users.insert(self.userId <- userId, self.fullName <- fullName, self.birthday <- birthday, self.gender <- gender, self.weight <- weight, self.height <- height, self.diagnosis <- diagnosis)
@@ -512,6 +509,15 @@ public class DBManager: NSObject {
     
     //MARK: - ECGEvent Entity
     public func addEcg(batch: [(timestamp: Date, ecgData: String)]) async throws -> Void {
+        do {
+            let ecgTableExists = try dbConnection.scalar(ecgEvents.exists)
+            if !ecgTableExists {
+                try? await createEcgTable()
+            }
+        } catch {
+            try? await createEcgTable()
+        }
+        
         return try await withCheckedThrowingContinuation { cont in
             do {
                 var setters = [[Setter]]()
@@ -520,16 +526,9 @@ public class DBManager: NSObject {
                 }
                 let insertedIds = ecgEvents.insertMany(setters)
                 
-                let _ = try dbConnection.run(insertedIds)
-                
-//                let query = ecgEvents.select(*)
-//                
-//                for row in try dbConnection.prepare(query) {
-//                    let timestamp = row[ecgTimestamp]
-//                    let ecgData = row[ecgData]
-//                    
-//                    print("Timestamp: \(timestamp), ECG Data: \(ecgData)")
-//                }
+                try dbConnection.transaction(.immediate) {
+                    let _ = try dbConnection.run(insertedIds)
+                }
                 cont.resume(returning: ())
                 
             } catch {
@@ -598,8 +597,9 @@ public class DBManager: NSObject {
     public func deleteAllEcgEvents() async throws -> Void {
         return try await withCheckedThrowingContinuation { cont in
             do {
-                let deleteAll = ecgEvents.delete()
-                try dbConnection.run(deleteAll)
+//                let deleteAll = ecgEvents.delete()
+//                try dbConnection.run(deleteAll)
+                try dbConnection.run(ecgEvents.drop(ifExists: true))
                 cont.resume(returning: ())
             } catch {
                 cont.resume(throwing: error)
