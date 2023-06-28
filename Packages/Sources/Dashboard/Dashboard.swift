@@ -29,6 +29,7 @@ import MovesenseApi
 import WidgetKit
 import WidgetClient
 import Localizations
+import LockScreenWidgetGuide
 
 public class DashboardViewModel: ObservableObject {
     enum Destination: Equatable {
@@ -36,6 +37,7 @@ public class DashboardViewModel: ObservableObject {
         case ecgSettings(EcgSettingsViewModel)
         case onboarding(OnboardingViewModel)
         case deviceInfo(DeviceInfoViewModel)
+        case lockScreenWidget(LockScreenWidgetGuideViewModel )
     }
     
     @Published var route: Destination?
@@ -105,6 +107,7 @@ public class DashboardViewModel: ObservableObject {
     }
     
     func onAppear() {
+        presentWidgetGuideIfNecessary()
         Task {
             for await device in bluetoothClient.discoveredDevicesStream() {
                 await MainActor.run {
@@ -349,6 +352,19 @@ public class DashboardViewModel: ObservableObject {
         }
     }
     
+    private func presentWidgetGuideIfNecessary() {
+        guard UserDefaults.standard.bool(forKey: "lockscreenwidgetpresented") == false, previousDevice != nil  else {
+            return
+        }
+        let guideVm = withDependencies(from: self) {
+            LockScreenWidgetGuideViewModel { [weak self] in
+                self?.route = nil
+            }
+        }
+        route = .lockScreenWidget(guideVm)
+        UserDefaults.standard.set(true, forKey: "lockscreenwidgetpresented")
+    }
+    
     // MARK: - Actions
     func addDeviceButtonTapped() {
         let addDeviceViewModel = withDependencies(from: self) {
@@ -567,6 +583,24 @@ public struct DashboardView: View {
                 ) { $onboardingVm in
                     NavigationStack {
                         OnboardingView(vm: onboardingVm)
+                            .toolbarBackground(.visible, for: .navigationBar)
+                            .toolbarBackground(.white, for: .navigationBar)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    Button(localizations.defaultSection.close.capitalizedFirstLetter()) {
+                                        vm.closeOnboarding()
+                                    }
+                                }
+                            }
+                    }
+                    
+                }
+                .sheet(
+                    unwrapping: self.$vm.route,
+                    case: /DashboardViewModel.Destination.lockScreenWidget
+                ) { $lockScreenWidgetVm in
+                    NavigationStack {
+                        LockScreenWidgetGuideView(vm: lockScreenWidgetVm)
                             .toolbarBackground(.visible, for: .navigationBar)
                             .toolbarBackground(.white, for: .navigationBar)
                             .toolbar {

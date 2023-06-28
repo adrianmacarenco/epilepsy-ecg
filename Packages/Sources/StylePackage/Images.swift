@@ -46,5 +46,10 @@ extension Image {
     public static let onboardingPermission = Image(decorative: "onboardingPermission", bundle: .myModule)
     public static let onboardingSearch = Image(decorative: "onboardingSearch", bundle: .myModule)
     public static let onboardingGettingStarted = Image(decorative: "onboardingGettingStarted", bundle: .myModule)
-
+    
+    //Lock screen wiget guide
+    public static let addWidget = Image(decorative: "addWidget", bundle: .myModule)
+    public static let lockScreenMode = Image(decorative: "lockScreenMode", bundle: .myModule)
+    public static let customizeLockScreen = Image(decorative: "customizeLockScreen", bundle: .myModule)
+    public static let widgetGuideGettingStarted = Image(decorative: "widgetGuideGettingStarted", bundle: .myModule)
 }

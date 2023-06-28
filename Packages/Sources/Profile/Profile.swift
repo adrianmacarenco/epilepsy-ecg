@@ -15,11 +15,13 @@ import Dependencies
 import UserInformation
 import SwiftUINavigation
 import Localizations
+import LockScreenWidgetGuide
 
 public class ProfileViewModel: ObservableObject {
     enum Destination {
         case userInformation(UserInformationViewModel)
         case languageSelection(LanguageSelectionViewModel)
+        case lockScreenWidget(LockScreenWidgetGuideViewModel )
         case alert(AlertState<AlertAction>)
     }
     
@@ -48,7 +50,15 @@ public class ProfileViewModel: ObservableObject {
     
     // MARK: - Prive Interface
     
-    
+    private func presentWidgetGuide() {
+
+        let guideVm = withDependencies(from: self) {
+            LockScreenWidgetGuideViewModel { [weak self] in
+                self?.route = nil
+            }
+        }
+        route = .lockScreenWidget(guideVm)
+    }
     // MARK: - Actions
     func componentTapped(index: Int) {
         guard index < components.count else { return }
@@ -78,8 +88,8 @@ public class ProfileViewModel: ObservableObject {
             break
         case .permissions:
             break
-        case .siriShortcuts:
-            break
+        case .lockScreenWidget:
+            presentWidgetGuide()
         default:
             break
         }
@@ -99,6 +109,10 @@ public class ProfileViewModel: ObservableObject {
       case .confirmDeletion:
         self.onConfirmProfileDeletion()
       }
+    }
+    
+    func closeLockScreenGuide() {
+        route = nil
     }
 }
 
@@ -159,6 +173,24 @@ public struct ProfileView: View {
                     ) { $languageSelectionVm in
                         LanguageSelectionView(vm: languageSelectionVm)
                     }
+                    .sheet(
+                        unwrapping: self.$vm.route,
+                        case: /ProfileViewModel.Destination.lockScreenWidget
+                    ) { $lockScreenWidgetVm in
+                        NavigationStack {
+                            LockScreenWidgetGuideView(vm: lockScreenWidgetVm)
+                                .toolbarBackground(.visible, for: .navigationBar)
+                                .toolbarBackground(.white, for: .navigationBar)
+                                .toolbar {
+                                    ToolbarItem(placement: .navigationBarTrailing) {
+                                        Button(localizations.defaultSection.close.capitalizedFirstLetter()) {
+                                            vm.closeLockScreenGuide()
+                                        }
+                                    }
+                                }
+                        }
+                        
+                    }
                     .alert(
                       unwrapping: self.$vm.route,
                       case: /ProfileViewModel.Destination.alert
@@ -183,12 +215,12 @@ extension ProfileViewModel {
         case language = "Language"
         case help = "Help"
         case permissions = "Permissions"
-        case voiceControl = "Voice control"
-        case siriShortcuts = "Siri shortcuts"
+        case guides = "Guides"
+        case lockScreenWidget = "Lock Screen Widget"
         
         public func isSection() -> Bool {
             switch self {
-            case .acountDetails, .appSettings, .voiceControl:
+            case .acountDetails, .appSettings, .guides:
                 return true
             default:
                 return false
@@ -211,10 +243,10 @@ extension ProfileViewModel {
                 return profileLozalizations.helpCellTitle
             case .permissions:
                 return profileLozalizations.permissionsCellTitle
-            case .voiceControl:
-                return profileLozalizations.voiceControlCellTitle
-            case .siriShortcuts:
-                return profileLozalizations.siriShortcutsCellTitle
+            case .guides:
+                return profileLozalizations.guidesTitle
+            case .lockScreenWidget:
+                return profileLozalizations.lockScreenWidgetTitle
             }
         }
     }

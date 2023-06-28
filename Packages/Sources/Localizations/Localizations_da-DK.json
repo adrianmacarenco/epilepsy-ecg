@@ -20,7 +20,8 @@
         "color": "farve",
         "frequency": "frekvens",
         "select": "vælg",
-        "edit": "rediger"
+        "edit": "rediger",
+        "continueKey": "fortsæt"
     },
     "dashboardSection": {
         "getStartedTitle": "Overvåg din hjerteaktivitet",
@@ -80,8 +81,8 @@
         "languageCellTitle": "Sprog",
         "helpCellTitle": "Hjælp",
         "permissionsCellTitle": "Tilladelser",
-        "voiceControlCellTitle": "Stemmestyring",
-        "siriShortcutsCellTitle": "Siri-genveje",
+        "guidesTitle": "Guider",
+        "lockScreenWidgetTitle": "Lock Screen Widget",
         "deleteProfileAlertTitle": "Slet profil",
         "deleteProfileAlertMessage": "Er du sikker på, at du vil slette denne profil?",
         "deleteProfileBtnTitle": "Slet profil",
@@ -145,5 +146,17 @@
         "birthdaySelectionSelectionTitle": "Aldersberegning",
         "birthdaySelectionSelectionInfo": "Angiv venligst din fødselsdato. Denne information gør os i stand til at beregne din alder, hvilket er vigtigt for at tilpasse dine anbefalinger til hjertemonitorering og anfaldshåndtering.",
         "birthdaySelectionIdentityPrompt": "Vælg din fødselsdag"
+    },
+    "lockScreenWidgetGuideSection": {
+        "lockScreenWidgetTitle": "Lock Screen Widget",
+        "lockScreenWidgetMessage": "Aktivér EpiHeartMonitor-widgeten for at overvåge enhedsforbindelsen, selv når skærmen er låst. Fortsæt med guiden eller få adgang til den senere i din profilsektion når som helst.",
+        "lockScreenModeTitle": "Låseskærmstilstand",
+        "lockScreenModeMessage": "Begynd ved at låse din enhed og aktivere skærmen.",
+        "customizeLockScreenTitle": "Tilpas låseskærm",
+        "customizeLockScreenMessage": "For at komme ind i tilpasningstilstand skal du låse din enhed og udføre et langt tryk på skærmen. Tryk på knappen Tilpas nederst og vælg den rammede visning under urvisningen.",
+        "addWidgetTitle": "Tilføj EpiHeartMonitor-widget",
+        "addWidgetMessage": "Find EpiHeartMonitor-appen på listen og vælg den. Træk og slip EpiHeartMonitor-widgetvisningen til din låseskærm. Voila! Din låseskærm viser nu enhedsforbindelsesstatusen.",
+        "notNowBtnTitle": "Ikke nu",
+        "screenTitle": "Lock Screen Widget"
     }
 }

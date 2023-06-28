@@ -56,10 +56,14 @@ let package = Package(
             targets: ["ECG Settings"]
         ),
         
-            .library(
-                name: "Localizations",
-                targets: ["Localizations"]
-            ),
+        .library(
+            name: "Localizations",
+            targets: ["Localizations"]
+        ),
+        .library(
+            name: "LockScreenWidgetGuide",
+            targets: ["LockScreenWidgetGuide"]
+        ),
         .library(
             name: "Model",
             targets: ["Model"]
@@ -193,6 +197,7 @@ let package = Package(
                 "ECG",
                 "ECG Settings",
                 "Localizations",
+                "LockScreenWidgetGuide",
                 "Model",
                 "Onboarding",
                 "Shared",
@@ -270,6 +275,16 @@ let package = Package(
             ]
         ),
         .target(
+            name: "LockScreenWidgetGuide",
+            dependencies: [
+                "Localizations",
+                "Shared",
+                "StylePackage",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
+            ]
+        ),
+        .target(
             name: "Model",
             dependencies: [
                 .product(name: "MovesenseApi", package: "MovesenseApi-iOS")
@@ -309,6 +324,7 @@ let package = Package(
             dependencies: [
                 "DBClient",
                 "Localizations",
+                "LockScreenWidgetGuide",
                 "Model",
                 "StylePackage",
                 "PersistenceClient",

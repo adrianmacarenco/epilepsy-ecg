@@ -30,7 +30,8 @@ public final class Localizations: Codable {
     public let homeTabbarSection: HomeTabbarSection
     public let addMedicationSection: AddMedicationSection
     public let userCreationSection: UserCreationSection
-    
+    public let lockScreenWidgetGuideSection: LockScreenWidgetGuideSection
+
     public final class DefaultSection: Codable {
         public let save: String
         public let cancel: String
@@ -53,6 +54,7 @@ public final class Localizations: Codable {
         public let frequency: String
         public let select: String
         public let edit: String
+        public let continueKey: String
     }
     
     public final class DeviceInfo: Codable {
@@ -118,8 +120,8 @@ public final class Localizations: Codable {
         public let languageCellTitle: String
         public let helpCellTitle: String
         public let permissionsCellTitle: String
-        public let voiceControlCellTitle: String
-        public let siriShortcutsCellTitle: String
+        public let guidesTitle: String
+        public let lockScreenWidgetTitle: String
         public let deleteProfileAlertTitle: String
         public let deleteProfileAlertMessage: String
         public let deleteProfileBtnTitle: String
@@ -189,4 +191,16 @@ public final class Localizations: Codable {
         public let birthdaySelectionIdentityPrompt: String
     }
 
+    public final class LockScreenWidgetGuideSection: Codable {
+        public let lockScreenWidgetTitle: String
+        public let lockScreenWidgetMessage: String
+        public let lockScreenModeTitle: String
+        public let lockScreenModeMessage: String
+        public let customizeLockScreenTitle: String
+        public let customizeLockScreenMessage: String
+        public let addWidgetTitle: String
+        public let addWidgetMessage: String
+        public let notNowBtnTitle: String
+        public let screenTitle: String
+    }
 }

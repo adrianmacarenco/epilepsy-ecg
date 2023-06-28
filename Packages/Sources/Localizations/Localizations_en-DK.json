@@ -20,7 +20,8 @@
         "color": "color",
         "frequency": "frequency",
         "select": "select",
-        "edit": "edit"
+        "edit": "edit",
+        "continueKey": "continue"
     },
     "dashboardSection": {
         "getStartedTitle": "Monitor your heart activity",
@@ -80,8 +81,8 @@
         "languageCellTitle": "Language",
         "helpCellTitle": "Help",
         "permissionsCellTitle": "Permissions",
-        "voiceControlCellTitle": "Voice control",
-        "siriShortcutsCellTitle": "Siri shortcuts",
+        "guidesTitle": "Guides",
+        "lockScreenWidgetTitle": "Lock Screen Widget",
         "deleteProfileAlertTitle": "Delete profile",
         "deleteProfileAlertMessage": "Are you sure you want to delete this profile?",
         "deleteProfileBtnTitle": "Delete profile",
@@ -145,5 +146,17 @@
         "birthdaySelectionSelectionTitle": "Age Calculation",
         "birthdaySelectionSelectionInfo": "Please provide your date of birth. This information allows us to calculate your age, which is important for tailoring your heart monitoring and seizure management recommendations.",
         "birthdaySelectionIdentityPrompt": "Select your birthday"
+    },
+    "lockScreenWidgetGuideSection": {
+        "lockScreenWidgetTitle": "Lock Screen Widget",
+        "lockScreenWidgetMessage": "Enable the EpiHeartMonitor widget to monitor device connection, even when the screen is locked. Continue with the guide or access it later in your profile section anytime.",
+        "lockScreenModeTitle": "Lock screen mode",
+        "lockScreenModeMessage": "Begin by locking your device and activating the screen.",
+        "customizeLockScreenTitle": "Customize lock screen",
+        "customizeLockScreenMessage": "To enter customization mode, lock your device and perform a long tap on the screen. Tap the Customize button at the bottom and select the framed view beneath the clock view.",
+        "addWidgetTitle": "Add EpiHeartMonitor widget",
+        "addWidgetMessage": "Locate the EpiHeartMonitor app in the list and select it. Drag and drop the EpiHeartMonitor widget view onto your Lock Screen. Voila! Your lock screen now displays the device connection status.",
+        "notNowBtnTitle": "Not now",
+        "screenTitle": "Lock Screen Widget"
     }
 }
