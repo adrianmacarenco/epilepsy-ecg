@@ -6,8 +6,13 @@
 //
 
 import Foundation
+import Combine
 import SwiftUI
 import StylePackage
+import Dependencies
+import Localizations
+import XCTestDynamicOverlay
+import Shared
 
 
 public class OnboardingViewModel: ObservableObject, Equatable {
@@ -22,30 +27,30 @@ public class OnboardingViewModel: ObservableObject, Equatable {
         case scan
         case connect
         
-        func title() -> String {
+        func title(onboardingSection: Localizations.OnboardingSection) -> String {
             switch self {
             case .welcome:
-                return "Welcome to EpiHeartMonitor!"
+                return onboardingSection.welcomeTitle
             case .bluetoothPermission:
-                return "Give bluetooth permission"
+                return onboardingSection.bluetoothPermissionTitle
             case .scan:
-                return "Scan available devices"
+                return onboardingSection.scanTitle
             case .connect:
-                return "Connect to your device"
+                return onboardingSection.connectTitle
             }
         }
         
-        func message() -> String {
+        func message(onboardingSection: Localizations.OnboardingSection) ->  String {
             switch self {
                  
             case .welcome:
-                return "Thank you for choosing our app! We're excited to have you on board."
+                return onboardingSection.welcomeMessage
             case .bluetoothPermission:
-                return "Enable Bluetooth permission to access nearby devices."
+                return onboardingSection.bluetoothPermissionMessage
             case .scan:
-                return "Discover and view a list of nearby devices ready to connect."
+                return onboardingSection.scanMessage
             case .connect:
-                return "Establish a secure connection with your preferred device."
+                return onboardingSection.connectMessage
             }
         }
         
@@ -65,16 +70,21 @@ public class OnboardingViewModel: ObservableObject, Equatable {
     }
     
     @Published var currentIndex = 0
+    @Dependency(\.localizations) var localizations
+
     let onboardingSteps = OnboardingStep.allCases
+    var endOnboardingFlowAction: () -> Void = unimplemented("DeviceInfoViewModel.onConfirmDeletion")
+
     var primaryButtonTitle: String {
         if currentIndex < onboardingSteps.count {
             let step = onboardingSteps[currentIndex]
             switch step {
             case .welcome:
-                return "Start onboarding"
+                return localizations.defaultSection.continueKey.capitalizedFirstLetter()
             case .connect:
-                return "Finish"
-            default: return "Next"
+                return localizations.defaultSection.finish.capitalizedFirstLetter()
+            default:
+                return localizations.defaultSection.next.capitalizedFirstLetter()
             }
         } else {
             fatalError("Should not be greater")
@@ -89,18 +99,24 @@ public class OnboardingViewModel: ObservableObject, Equatable {
         currentIndex == 0 ? true : false
     }
     
-    public init() {}
+    public init(
+        endOnboardingFlowAction: @escaping() -> Void
+    ) {
+        self.endOnboardingFlowAction = endOnboardingFlowAction
+    }
     
     func primaryButtonTapped() {
         if currentIndex < onboardingSteps.count - 1 {
             withAnimation {
                 currentIndex += 1
             }
+        } else if currentIndex == onboardingSteps.count - 1 {
+            endOnboardingFlowAction()
         }
     }
     
     func secondaryButtonTapped() {
-        
+        endOnboardingFlowAction()
     }
     
     func nextStepDrag() {
@@ -122,6 +138,7 @@ public class OnboardingViewModel: ObservableObject, Equatable {
 
 public struct OnboardingView: View {
     @ObservedObject var vm: OnboardingViewModel
+    @EnvironmentObject var localizations: ObservableLocalizations
 
     public init (
         vm: OnboardingViewModel
@@ -134,17 +151,17 @@ public struct OnboardingView: View {
             vm.onboardingSteps[vm.currentIndex].icon()
                 .padding(.top, 32)
             
-            Text(vm.onboardingSteps[vm.currentIndex].title())
+            Text(vm.onboardingSteps[vm.currentIndex].title(onboardingSection: localizations.onboardingSection))
                 .font(.largeInput)
             
-            Text(vm.onboardingSteps[vm.currentIndex].message())
+            Text(vm.onboardingSteps[vm.currentIndex].message(onboardingSection: localizations.onboardingSection))
                 .font(.body1)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
             Spacer()
 
             if vm.showSecondaryBotton {
-                Button("No, not this time", action: vm.secondaryButtonTapped)
+                Button(localizations.onboardingSection.notNowBtnTitle, action: vm.secondaryButtonTapped)
                     .buttonStyle(MyButtonStyle.init(style: .primary, isEnabled: false))
             }
 
@@ -175,7 +192,7 @@ public struct OnboardingView: View {
             })
         )
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("Onboarding")
+        .navigationTitle(localizations.onboardingSection.screenTitle)
 
     }
 }

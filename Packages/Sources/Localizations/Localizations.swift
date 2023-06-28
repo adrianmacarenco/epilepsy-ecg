@@ -31,6 +31,7 @@ public final class Localizations: Codable {
     public let addMedicationSection: AddMedicationSection
     public let userCreationSection: UserCreationSection
     public let lockScreenWidgetGuideSection: LockScreenWidgetGuideSection
+    public let onboardingSection: OnboardingSection
 
     public final class DefaultSection: Codable {
         public let save: String
@@ -109,6 +110,7 @@ public final class Localizations: Codable {
         public let intakeHistoryTitle: String
         public let selectMedicationNavTitle: String
         public let addMedicationBtnTitle: String
+        public let emptyIntakeListMessage: String
     }
     
     public final class ProfileSection: Codable {
@@ -118,7 +120,7 @@ public final class Localizations: Codable {
         public let termsAndCondCellTitle: String
         public let appSettingsCellTitle: String
         public let languageCellTitle: String
-        public let helpCellTitle: String
+        public let onboardingTitle: String
         public let permissionsCellTitle: String
         public let guidesTitle: String
         public let lockScreenWidgetTitle: String
@@ -202,5 +204,18 @@ public final class Localizations: Codable {
         public let addWidgetMessage: String
         public let notNowBtnTitle: String
         public let screenTitle: String
+    }
+    
+    public final class OnboardingSection: Codable {
+        public let screenTitle: String
+        public let welcomeTitle: String
+        public let welcomeMessage: String
+        public let bluetoothPermissionTitle: String
+        public let bluetoothPermissionMessage: String
+        public let scanTitle: String
+        public let scanMessage: String
+        public let connectTitle: String
+        public let connectMessage: String
+        public let notNowBtnTitle: String
     }
 }

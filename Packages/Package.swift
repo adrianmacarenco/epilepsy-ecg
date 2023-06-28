@@ -303,7 +303,11 @@ let package = Package(
         .target(
             name: "Onboarding",
             dependencies: [
-                "StylePackage"
+                "Localizations",
+                "Shared",
+                "StylePackage",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
             ]
         ),
         .target(
@@ -326,6 +330,7 @@ let package = Package(
                 "Localizations",
                 "LockScreenWidgetGuide",
                 "Model",
+                "Onboarding",
                 "StylePackage",
                 "PersistenceClient",
                 "UserInformation",

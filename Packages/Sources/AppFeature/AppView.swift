@@ -96,7 +96,7 @@ public class AppViewModel: ObservableObject {
         persistenceClient.medications.save(nil)
         persistenceClient.medicationIntakes.save(nil)
         Task {
-            try await dbClient.deleteCurrentDb()
+            try await dbClient.clearDb()
             await MainActor.run { [weak self] in
                 self?.presentUserCretionFlow()
             }

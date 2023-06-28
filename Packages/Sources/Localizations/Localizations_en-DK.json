@@ -70,7 +70,8 @@
         "dailyReviewTitle": "Daily review",
         "intakeHistoryTitle": "Intake history",
         "selectMedicationNavTitle": "Select medication",
-        "addMedicationBtnTitle": "Add medication"
+        "addMedicationBtnTitle": "Add medication",
+        "emptyIntakeListMessage": "Your intake pill list is empty"
     },
     "profileSection": {
         "profileTitle": "Profile",
@@ -79,7 +80,7 @@
         "termsAndCondCellTitle": "Terms and conditions",
         "appSettingsCellTitle": "App settings",
         "languageCellTitle": "Language",
-        "helpCellTitle": "Help",
+        "onboardingTitle": "Onboarding",
         "permissionsCellTitle": "Permissions",
         "guidesTitle": "Guides",
         "lockScreenWidgetTitle": "Lock Screen Widget",
@@ -158,5 +159,17 @@
         "addWidgetMessage": "Locate the EpiHeartMonitor app in the list and select it. Drag and drop the EpiHeartMonitor widget view onto your Lock Screen. Voila! Your lock screen now displays the device connection status.",
         "notNowBtnTitle": "Not now",
         "screenTitle": "Lock Screen Widget"
-    }
+    },
+    "onboardingSection": {
+        "screenTitle": "Onboarding",
+        "welcomeTitle": "Welcome to EpiHeartMonitor!",
+        "welcomeMessage": "Thank you for choosing our app! We're excited to have you on board.",
+        "bluetoothPermissionTitle": "Give Bluetooth permission",
+        "bluetoothPermissionMessage": "Enable Bluetooth permission to access nearby devices.",
+        "scanTitle": "Scan available devices",
+        "scanMessage": "Discover and view a list of nearby devices ready to connect.",
+        "connectTitle": "Connect to your device",
+        "connectMessage": "Establish a secure connection with your preferred device.",
+        "notNowBtnTitle": "Not now"
+      }
 }

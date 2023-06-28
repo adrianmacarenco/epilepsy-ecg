@@ -76,12 +76,19 @@ public struct IntakeHistoryView: View {
     public var body: some View {
         ScrollView {
             VStack {
-                ForEach(0 ..< vm.intakes.count, id: \.self) { index in
-                    IntakeCellView(intake: vm.intakes[index], isDailyPreview: false)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            vm.dailyIntakeCellTapped(index: index)
-                        }
+                if vm.intakes.count > 0 {
+                    ForEach(0 ..< vm.intakes.count, id: \.self) { index in
+                        IntakeCellView(intake: vm.intakes[index], isDailyPreview: false)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                vm.dailyIntakeCellTapped(index: index)
+                            }
+                    }
+                } else {
+                    Spacer()
+                    Text(localizations.trackIntakeSection.emptyIntakeListMessage)
+                        .font(.title1)
+                    Spacer()
                 }
             }
             .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)

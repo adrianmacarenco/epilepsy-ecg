@@ -70,7 +70,8 @@
         "dailyReviewTitle": "Daglig gennemgang",
         "intakeHistoryTitle": "Indtagshistorik",
         "selectMedicationNavTitle": "Vælg medicin",
-        "addMedicationBtnTitle": "Tilføj medicin"
+        "addMedicationBtnTitle": "Din liste over indtagelse af piller er tom.",
+        "emptyIntakeListMessage": "Your intake pill list is empty"
     },
     "profileSection": {
         "profileTitle": "Profil",
@@ -79,7 +80,7 @@
         "termsAndCondCellTitle": "Vilkår og betingelser",
         "appSettingsCellTitle": "Appindstillinger",
         "languageCellTitle": "Sprog",
-        "helpCellTitle": "Hjælp",
+        "onboardingTitle": "Introduktion",
         "permissionsCellTitle": "Tilladelser",
         "guidesTitle": "Guider",
         "lockScreenWidgetTitle": "Lock Screen Widget",
@@ -158,5 +159,17 @@
         "addWidgetMessage": "Find EpiHeartMonitor-appen på listen og vælg den. Træk og slip EpiHeartMonitor-widgetvisningen til din låseskærm. Voila! Din låseskærm viser nu enhedsforbindelsesstatusen.",
         "notNowBtnTitle": "Ikke nu",
         "screenTitle": "Lock Screen Widget"
-    }
+    },
+    "onboardingSection": {
+        "screenTitle": "Introduktion",
+        "welcomeTitle": "Velkommen til EpiHeartMonitor!",
+        "welcomeMessage": "Tak fordi du valgte vores app! Vi er glade for at have dig med ombord.",
+        "bluetoothPermissionTitle": "Giv Bluetooth-tilladelse",
+        "bluetoothPermissionMessage": "Aktivér Bluetooth-tilladelse for at få adgang til nærliggende enheder.",
+        "scanTitle": "Skan tilgængelige enheder",
+        "scanMessage": "Opdag og se en liste over nærliggende enheder, der er klar til at oprette forbindelse.",
+        "connectTitle": "Forbind til din enhed",
+        "connectMessage": "Opret en sikker forbindelse til din foretrukne enhed.",
+        "notNowBtnTitle": "Ikke nu"
+      }
 }

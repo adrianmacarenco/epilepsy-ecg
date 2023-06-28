@@ -108,6 +108,7 @@ public class DashboardViewModel: ObservableObject {
     
     func onAppear() {
         presentWidgetGuideIfNecessary()
+        presentOnboardingIfNecessary()
         Task {
             for await device in bluetoothClient.discoveredDevicesStream() {
                 await MainActor.run {
@@ -363,6 +364,19 @@ public class DashboardViewModel: ObservableObject {
         }
         route = .lockScreenWidget(guideVm)
         UserDefaults.standard.set(true, forKey: "lockscreenwidgetpresented")
+    }
+    
+    private func presentOnboardingIfNecessary() {
+        guard UserDefaults.standard.bool(forKey: "onboardingpresented") == false, previousDevice == nil  else {
+            return
+        }
+        let onboardingVm = withDependencies(from: self) {
+            OnboardingViewModel { [weak self] in
+                self?.route = nil
+            }
+        }
+        route = .onboarding(onboardingVm)
+        UserDefaults.standard.set(true, forKey: "onboardingpresented")
     }
     
     // MARK: - Actions
