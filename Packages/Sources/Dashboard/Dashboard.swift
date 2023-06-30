@@ -109,6 +109,7 @@ public class DashboardViewModel: ObservableObject {
     func onAppear() {
         presentWidgetGuideIfNecessary()
         presentOnboardingIfNecessary()
+        updateWidgetConnectionStatus(isConnected: connectedDevice != nil)
         Task {
             for await device in bluetoothClient.discoveredDevicesStream() {
                 await MainActor.run {
@@ -247,8 +248,7 @@ public class DashboardViewModel: ObservableObject {
         print("Update local data ✅ \(Date().description)")
     }
     
-    // Saves ecg data to the local db every 5 seconds
-    // Empty the local array every time after a successful saving
+
     private func startServerDbUploadTimerTask() {
         serverUploadTask = Task(priority: .background, operation: { [weak self, clock, serverUploadInterval] in
             for await _ in clock.timer(interval: .seconds(serverUploadInterval)) {

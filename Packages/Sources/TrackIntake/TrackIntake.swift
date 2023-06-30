@@ -287,11 +287,13 @@ public struct TrackIntakeView: View {
                 }
                 
                 if vm.isAddType {
-                    Text(localizations.trackIntakeSection.dailyReviewTitle)
-                        .font(.sectionTitle)
-                        .foregroundColor(.sectionTitle)
-                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 22)
+                    if !vm.dailyIntakes.isEmpty {
+                        Text(localizations.trackIntakeSection.dailyReviewTitle)
+                            .font(.sectionTitle)
+                            .foregroundColor(.sectionTitle)
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 22)
+                    }
                     ForEach( 0 ..< vm.dailyIntakes.count, id: \.self) { index in
                         IntakeCellView(intake: vm.dailyIntakes[index], isDailyPreview: true)
                         .contentShape(Rectangle())

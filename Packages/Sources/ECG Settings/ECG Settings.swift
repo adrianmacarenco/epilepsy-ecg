@@ -25,23 +25,9 @@ public class EcgSettingsViewModel: ObservableObject {
         case frequencySelector
     }
     
-    public enum EcgChartType: String, CaseIterable, Equatable {
-        case live = "Live"
-        case history = "History"
-    }
-    
     var device: DeviceWrapper?
     @Published var ecgModel: EcgViewModel
     @Published var route: Destination?
-    @Published var ecgChartType: EcgChartType = .live {
-        didSet {
-            if ecgChartType == .history {
-                
-            }
-        }
-    }
-    @Published var selectedHistoryOption = 60
-    
     
     let availableFrequencies = [128, 256]
     let availableIntervals = Array(stride(from: 4, to: 20, by: 1))
@@ -221,35 +207,11 @@ public struct EcgSettingsView: View {
                     Text(localizations.ecgSettings.ecgPreviewLabel)
                         .font(.headline3)
                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-
-                    Picker("", selection: $vm.ecgChartType) {
-                        ForEach(EcgSettingsViewModel.EcgChartType.allCases, id: \.self) { type in
-                            VStack {
-                                Text(type.rawValue)
-                                    .font(.title1)
-                            }
-                            
-                        }
-                    }
-                    .pickerStyle(.segmented)
                     Divider()
-                    switch vm.ecgChartType {
-                    case .live:
-
-                        EcgView(
-                            model: $vm.ecgModel,
-                            computeTime: vm.computeTime
-                        )
-                    case .history:
-                        HistorySegmentedController(
-                            selectedVale: $vm.selectedHistoryOption,
-                            values: vm.availableHistoryOptions
-                        )
-                        EcgView(
-                            model: $vm.ecgModel,
-                            computeTime: vm.computeTime
-                        )
-                    }
+                    EcgView(
+                        model: $vm.ecgModel,
+                        computeTime: vm.computeTime
+                    )
                 }
             }
                         
